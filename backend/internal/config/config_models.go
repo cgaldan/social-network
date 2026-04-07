@@ -8,3 +8,7 @@ type ServerConfig struct {
 	WriteTimeout time.Duration
 	IdleTimeout  time.Duration
 }
+
+type DatabaseConfig struct {
+	Path string
+}
