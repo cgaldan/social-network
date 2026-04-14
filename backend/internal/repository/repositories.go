@@ -3,15 +3,18 @@ package repository
 import (
 	"database/sql"
 	"social-network/internal/domain"
+	"time"
 )
 
 type Repositories struct {
-	User UserRepositoryInterface
+	User    UserRepositoryInterface
+	Session SessionRepositoryInterface
 }
 
 func NewRepositories(db *sql.DB) *Repositories {
 	return &Repositories{
-		User: NewUserRepository(db),
+		User:    NewUserRepository(db),
+		Session: NewSessionRepository(db),
 	}
 }
 
@@ -20,4 +23,10 @@ type UserRepositoryInterface interface {
 	GetUserByID(userID int) (*domain.User, error)
 	GetUserByIdentifier(identifier string) (*domain.User, string, error)
 	UpdateLastSeen(userID int) error
+}
+
+type SessionRepositoryInterface interface {
+	CreateSession(sessionID string, userID int, expiresAt time.Time) error
+	GetSessionBySessionID(sessionID string) (*domain.Session, error)
+	DeleteSession(sessionID string) error
 }
