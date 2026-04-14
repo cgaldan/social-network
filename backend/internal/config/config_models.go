@@ -12,3 +12,7 @@ type ServerConfig struct {
 type DatabaseConfig struct {
 	Path string
 }
+
+type SessionConfig struct {
+	Duration time.Duration
+}
