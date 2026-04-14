@@ -7,10 +7,11 @@ type User struct {
 	Email       string    `json:"email"`
 	FirstName   string    `json:"first_name"`
 	LastName    string    `json:"last_name"`
-	DateOfBirth int       `json:"date_of_birth"`
+	DateOfBirth time.Time `json:"date_of_birth"`
 	Nickname    string    `json:"nickname"`
 	Gender      string    `json:"gender"`
-	AvatarURL   string    `json:"avatar_url"`
+	AvatarPath  string    `json:"avatar_path"`
+	AboutMe     string    `json:"about_me"`
 	IsOnline    bool      `json:"is_online"`
 	IsPublic    bool      `json:"is_public"`
 	CreatedAt   time.Time `json:"created_at"`
