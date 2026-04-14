@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
     avatar_path TEXT,
     about_me TEXT,
     is_public BOOLEAN DEFAULT TRUE,
-    is_active BOOLEAN DEFAULT TRUE,
+    is_online BOOLEAN DEFAULT TRUE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     last_seen DATETIME DEFAULT CURRENT_TIMESTAMP
 );

@@ -20,7 +20,7 @@ func LoadConfig() (*Config, error) {
 			IdleTimeout:  getEnvDuration("SERVER_IDLE_TIMEOUT", 60*time.Second),
 		},
 		Database: DatabaseConfig{
-			Path: getEnv("DATABASE_PATH", "./data/database/forum.db"),
+			Path: getEnv("DATABASE_PATH", "./data/database/social.db"),
 		},
 	}
 
