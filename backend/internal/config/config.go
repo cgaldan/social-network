@@ -8,6 +8,7 @@ type Config struct {
 	Environment string
 	Server      ServerConfig
 	Database    DatabaseConfig
+	Session     SessionConfig
 }
 
 func LoadConfig() (*Config, error) {
@@ -21,6 +22,9 @@ func LoadConfig() (*Config, error) {
 		},
 		Database: DatabaseConfig{
 			Path: getEnv("DATABASE_PATH", "./data/database/social.db"),
+		},
+		Session: SessionConfig{
+			Duration: getEnvDuration("SESSION_DURATION", 24*time.Hour),
 		},
 	}
 
