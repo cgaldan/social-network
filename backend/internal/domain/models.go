@@ -19,14 +19,16 @@ type User struct {
 }
 
 type Post struct {
-	ID        int       `json:"id"`
-	UserID    int       `json:"user_id"`
-	Title     string    `json:"title"`
-	Content   string    `json:"content"`
-	Category  string    `json:"category"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Author    string    `json:"author"`
+	ID           int       `json:"id"`
+	UserID       int       `json:"user_id"`
+	Title        string    `json:"title"`
+	Content      string    `json:"content"`
+	Category     string    `json:"category"`
+	PrivacyLevel string    `json:"privacy_level"` // public, almost_private, private
+	ImageURL     string    `json:"image_url,omitempty"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+	Author       string    `json:"author"`
 }
 
 type Comment struct {
