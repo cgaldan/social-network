@@ -10,6 +10,7 @@ type Repositories struct {
 	User    UserRepositoryInterface
 	Session SessionRepositoryInterface
 	Post    PostRepositoryInterface
+	Comment CommentRepositoryInterface
 }
 
 func NewRepositories(db *sql.DB) *Repositories {
@@ -17,6 +18,7 @@ func NewRepositories(db *sql.DB) *Repositories {
 		User:    NewUserRepository(db),
 		Session: NewSessionRepository(db),
 		Post:    NewPostRepository(db),
+		Comment: NewCommentRepository(db),
 	}
 }
 
@@ -39,4 +41,11 @@ type PostRepositoryInterface interface {
 	ListPosts(category string, limit, offset int) ([]domain.Post, error)
 	GetPostsByUserID(userID int, limit, offset int) ([]domain.Post, error)
 	PostExists(postID int) (bool, error)
+}
+
+type CommentRepositoryInterface interface {
+	CreateComment(userID, postID int, content, imageURL string) (int64, error)
+	GetCommentsByPostID(postID int) ([]domain.Comment, error)
+	GetCommentByID(commentID int) (*domain.Comment, error)
+	GetCommentsByUserID(userID int, limit, offset int) ([]domain.Comment, error)
 }
