@@ -9,12 +9,14 @@ import (
 type Repositories struct {
 	User    UserRepositoryInterface
 	Session SessionRepositoryInterface
+	Post    PostRepositoryInterface
 }
 
 func NewRepositories(db *sql.DB) *Repositories {
 	return &Repositories{
 		User:    NewUserRepository(db),
 		Session: NewSessionRepository(db),
+		Post:    NewPostRepository(db),
 	}
 }
 
@@ -29,4 +31,12 @@ type SessionRepositoryInterface interface {
 	CreateSession(sessionID string, userID int, expiresAt time.Time) error
 	GetSessionBySessionID(sessionID string) (*domain.Session, error)
 	DeleteSession(sessionID string) error
+}
+
+type PostRepositoryInterface interface {
+	CreatePost(userID int, title, content, category, privacyLevel, imageURL string) (int64, error)
+	GetPostByID(postID int) (*domain.Post, error)
+	ListPosts(category string, limit, offset int) ([]domain.Post, error)
+	GetPostsByUserID(userID int, limit, offset int) ([]domain.Post, error)
+	PostExists(postID int) (bool, error)
 }
