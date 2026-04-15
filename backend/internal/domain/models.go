@@ -71,6 +71,14 @@ type Conversation struct {
 	UnreadCount int       `json:"unread_count"`
 }
 
+type Follower struct {
+	ID          int       `json:"id"`
+	FollowerID  int       `json:"follower_id"`
+	FollowingID int       `json:"following_id"`
+	Status      string    `json:"status"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
 type PostDetail struct {
 	Post     *Post     `json:"post"`
 	Comments []Comment `json:"comments"`
