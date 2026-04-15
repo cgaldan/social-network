@@ -9,9 +9,9 @@ import (
 	"syscall"
 	"time"
 
-	"real-time-forum/internal/config"
-	"real-time-forum/internal/database"
-	"real-time-forum/packages/logger"
+	"social-network/internal/config"
+	"social-network/internal/database"
+	"social-network/packages/logger"
 )
 
 func main() {
