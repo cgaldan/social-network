@@ -27,7 +27,9 @@ type Post struct {
 	Content      string    `json:"content"`
 	Category     string    `json:"category"`
 	PrivacyLevel string    `json:"privacy_level"` // public, almost_private, private
-	ImageURL     string    `json:"image_url,omitempty"`
+	MediaURL     string    `json:"media_url,omitempty"`
+	LikeCount    int       `json:"like_count"`
+	CommentCount int       `json:"comment_count"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 	Author       string    `json:"author"`
@@ -38,7 +40,7 @@ type Comment struct {
 	PostID    int       `json:"post_id"`
 	UserID    int       `json:"user_id"`
 	Content   string    `json:"content"`
-	ImageURL  string    `json:"image_url,omitempty"`
+	MediaURL  string    `json:"media_url,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	Author    string    `json:"author"`

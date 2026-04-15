@@ -36,7 +36,7 @@ type SessionRepositoryInterface interface {
 }
 
 type PostRepositoryInterface interface {
-	CreatePost(userID int, title, content, category, privacyLevel, imageURL string) (int64, error)
+	CreatePost(userID int, title, content, category, privacyLevel, mediaURL string) (int64, error)
 	GetPostByID(postID int) (*domain.Post, error)
 	ListPosts(category string, limit, offset int) ([]domain.Post, error)
 	GetPostsByUserID(userID int, limit, offset int) ([]domain.Post, error)
@@ -44,7 +44,7 @@ type PostRepositoryInterface interface {
 }
 
 type CommentRepositoryInterface interface {
-	CreateComment(userID, postID int, content, imageURL string) (int64, error)
+	CreateComment(userID, postID int, content, mediaURL string) (int64, error)
 	GetCommentsByPostID(postID int) ([]domain.Comment, error)
 	GetCommentByID(commentID int) (*domain.Comment, error)
 	GetCommentsByUserID(userID int, limit, offset int) ([]domain.Comment, error)
