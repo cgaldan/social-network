@@ -14,7 +14,7 @@ func NewPostRepository(db *sql.DB) *PostRepository {
 	return &PostRepository{db: db}
 }
 
-func (r *PostRepository) CreatePost(userID int, title, content, category, privacyLevel, imageURL string) (int64, error) {
+func (r *PostRepository) CreatePost(userID int, title, content, category, privacyLevel, mediaURL string) (int64, error) {
 	result, err := r.db.Exec(`
 		INSERT INTO posts (
 			user_id, 
@@ -22,7 +22,7 @@ func (r *PostRepository) CreatePost(userID int, title, content, category, privac
 			content, 
 			category, 
 			privacy_level, 
-			image_url
+			media_url
 		)
 		VALUES (?, ?, ?, ?, ?, ?)`,
 		userID,
@@ -30,7 +30,7 @@ func (r *PostRepository) CreatePost(userID int, title, content, category, privac
 		content,
 		category,
 		privacyLevel,
-		imageURL,
+		mediaURL,
 	)
 
 	if err != nil {
@@ -50,7 +50,9 @@ func (r *PostRepository) GetPostByID(postID int) (*domain.Post, error) {
 			p.content, 
 			p.category, 
 			p.privacy_level, 
-			p.image_url, 
+			p.media_url,
+			p.like_count,
+			p.comment_count,
 			p.created_at, 
 			p.updated_at, 
 			u.nickname
@@ -64,7 +66,9 @@ func (r *PostRepository) GetPostByID(postID int) (*domain.Post, error) {
 		&post.Content,
 		&post.Category,
 		&post.PrivacyLevel,
-		&post.ImageURL,
+		&post.MediaURL,
+		&post.LikeCount,
+		&post.CommentCount,
 		&post.CreatedAt,
 		&post.UpdatedAt,
 		&post.Author,
@@ -93,7 +97,9 @@ func (r *PostRepository) ListPosts(category string, limit, offset int) ([]domain
 				p.content, 
 				p.category, 
 				p.privacy_level, 
-				p.image_url, 
+				p.media_url,
+				p.like_count,
+				p.comment_count,
 				p.created_at, 
 				p.updated_at, 
 				u.nickname
@@ -111,7 +117,9 @@ func (r *PostRepository) ListPosts(category string, limit, offset int) ([]domain
 				p.content, 
 				p.category, 
 				p.privacy_level, 
-				p.image_url, 
+				p.media_url,
+				p.like_count,
+				p.comment_count,
 				p.created_at, 
 				p.updated_at, 
 				u.nickname
@@ -137,7 +145,9 @@ func (r *PostRepository) ListPosts(category string, limit, offset int) ([]domain
 			&post.Content,
 			&post.Category,
 			&post.PrivacyLevel,
-			&post.ImageURL,
+			&post.MediaURL,
+			&post.LikeCount,
+			&post.CommentCount,
 			&post.CreatedAt,
 			&post.UpdatedAt,
 			&post.Author)
@@ -159,7 +169,9 @@ func (r *PostRepository) GetPostsByUserID(userID int, limit, offset int) ([]doma
 			p.content, 
 			p.category, 
 			p.privacy_level, 
-			p.image_url, 
+			p.media_url,
+			p.like_count,
+			p.comment_count,
 			p.created_at, 
 			p.updated_at, 
 			u.nickname
@@ -184,7 +196,9 @@ func (r *PostRepository) GetPostsByUserID(userID int, limit, offset int) ([]doma
 			&post.Content,
 			&post.Category,
 			&post.PrivacyLevel,
-			&post.ImageURL,
+			&post.MediaURL,
+			&post.LikeCount,
+			&post.CommentCount,
 			&post.CreatedAt,
 			&post.UpdatedAt,
 			&post.Author)

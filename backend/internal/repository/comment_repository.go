@@ -14,19 +14,19 @@ func NewCommentRepository(db *sql.DB) *CommentRepository {
 	return &CommentRepository{db: db}
 }
 
-func (r *CommentRepository) CreateComment(userID, postID int, content, imageURL string) (int64, error) {
+func (r *CommentRepository) CreateComment(userID, postID int, content, mediaURL string) (int64, error) {
 	result, err := r.db.Exec(`
 		INSERT INTO comments (
 			user_id, 
 			post_id, 
 			content, 
-			image_url
+			media_url
 		)
 		VALUES (?, ?, ?, ?)`,
 		userID,
 		postID,
 		content,
-		imageURL,
+		mediaURL,
 	)
 
 	if err != nil {
@@ -43,7 +43,7 @@ func (r *CommentRepository) GetCommentsByPostID(postID int) ([]domain.Comment, e
 			c.post_id, 
 			c.user_id, 
 			c.content, 
-			c.image_url, 
+			c.media_url, 
 			c.created_at, 
 			c.updated_at, 
 			u.nickname
@@ -65,7 +65,7 @@ func (r *CommentRepository) GetCommentsByPostID(postID int) ([]domain.Comment, e
 			&comment.PostID,
 			&comment.UserID,
 			&comment.Content,
-			&comment.ImageURL,
+			&comment.MediaURL,
 			&comment.CreatedAt,
 			&comment.UpdatedAt,
 			&comment.Author); err != nil {
@@ -85,7 +85,7 @@ func (r *CommentRepository) GetCommentByID(commentID int) (*domain.Comment, erro
 			c.post_id, 
 			c.user_id, 
 			c.content, 
-			c.image_url, 
+			c.media_url, 
 			c.created_at, 
 			c.updated_at, 
 			u.nickname
@@ -97,7 +97,7 @@ func (r *CommentRepository) GetCommentByID(commentID int) (*domain.Comment, erro
 		&comment.PostID,
 		&comment.UserID,
 		&comment.Content,
-		&comment.ImageURL,
+		&comment.MediaURL,
 		&comment.CreatedAt,
 		&comment.UpdatedAt,
 		&comment.Author,
@@ -120,7 +120,7 @@ func (r *CommentRepository) GetCommentsByUserID(userID int, limit, offset int) (
 			c.post_id, 
 			c.user_id, 
 			c.content, 
-			c.image_url, 
+			c.media_url, 
 			c.created_at, 
 			c.updated_at, 
 			u.nickname
@@ -142,7 +142,7 @@ func (r *CommentRepository) GetCommentsByUserID(userID int, limit, offset int) (
 			&comment.PostID,
 			&comment.UserID,
 			&comment.Content,
-			&comment.ImageURL,
+			&comment.MediaURL,
 			&comment.CreatedAt,
 			&comment.UpdatedAt,
 			&comment.Author); err != nil {
