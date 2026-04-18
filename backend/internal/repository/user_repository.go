@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"social-network/internal/domain"
+	"time"
 )
 
 type UserRepository struct {
@@ -14,7 +15,7 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 	return &UserRepository{db: db}
 }
 
-func (r *UserRepository) CreateUser(email, passwordHash, firstName, lastName string, dateOfBirth int, nickname, gender, avatar_path, aboutMe string, isPublic bool) (int64, error) {
+func (r *UserRepository) CreateUser(email, passwordHash, firstName, lastName string, dateOfBirth time.Time, nickname, gender, avatar_path, aboutMe string, isPublic bool) (int64, error) {
 	result, err := r.db.Exec(`
 		INSERT INTO users (
 			email,
