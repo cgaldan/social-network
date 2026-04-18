@@ -39,17 +39,6 @@ func SetupTestServices(t *testing.T) *Services {
 	return services
 }
 
-func CreateTestPost(t *testing.T, services *Services, userID int, postData domain.CreatePostRequest) *domain.Post {
-	t.Helper()
-
-	post, err := services.Content.CreatePost(userID, postData)
-	if err != nil {
-		t.Fatalf("Failed to create test post: %v", err)
-	}
-
-	return post
-}
-
 func CreateTestUser(t *testing.T, services *Services, nickname, email, password, firstName, lastName string, dateOfBirth time.Time, gender string) int {
 	t.Helper()
 
@@ -66,4 +55,15 @@ func CreateTestUser(t *testing.T, services *Services, nickname, email, password,
 	}
 
 	return int(userID)
+}
+
+func CreateTestPost(t *testing.T, services *Services, userID int, postData domain.CreatePostRequest) *domain.Post {
+	t.Helper()
+
+	post, err := services.Content.CreatePost(userID, postData)
+	if err != nil {
+		t.Fatalf("Failed to create test post: %v", err)
+	}
+
+	return post
 }

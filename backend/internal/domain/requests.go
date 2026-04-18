@@ -19,3 +19,11 @@ type LoginRequest struct {
 	Identifier string `json:"identifier"`
 	Password   string `json:"password"`
 }
+
+type CreatePostRequest struct {
+	Title        string `json:"title"`
+	Content      string `json:"content"`
+	Category     string `json:"category"`
+	PrivacyLevel string `json:"privacy_level"`
+	MediaURL     string `json:"media_url,omitempty"`
+}
