@@ -13,7 +13,9 @@ func (c *Config) Validate() error {
 	if c.Database.Path == "" {
 		return fmt.Errorf("database path is required")
 	}
-
+	if c.Session.Duration < time.Minute {
+		return fmt.Errorf("session duration must be at least 1 minute")
+	}
 	return nil
 }
 

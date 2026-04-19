@@ -9,8 +9,10 @@ CREATE TABLE IF NOT EXISTS users (
     gender TEXT,
     avatar_path TEXT,
     about_me TEXT,
+    following_count INTEGER DEFAULT 0,
+    followers_count INTEGER DEFAULT 0,
     is_public BOOLEAN DEFAULT TRUE,
-    is_active BOOLEAN DEFAULT TRUE,
+    is_online BOOLEAN DEFAULT TRUE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     last_seen DATETIME DEFAULT CURRENT_TIMESTAMP
 );

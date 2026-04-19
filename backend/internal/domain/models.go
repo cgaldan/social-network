@@ -3,29 +3,36 @@ package domain
 import "time"
 
 type User struct {
-	ID          int       `json:"id"`
-	Email       string    `json:"email"`
-	FirstName   string    `json:"first_name"`
-	LastName    string    `json:"last_name"`
-	DateOfBirth int       `json:"date_of_birth"`
-	Nickname    string    `json:"nickname"`
-	Gender      string    `json:"gender"`
-	AvatarURL   string    `json:"avatar_url"`
-	IsOnline    bool      `json:"is_online"`
-	IsPublic    bool      `json:"is_public"`
-	CreatedAt   time.Time `json:"created_at"`
-	LastSeen    time.Time `json:"last_seen"`
+	ID             int       `json:"id"`
+	Email          string    `json:"email"`
+	FirstName      string    `json:"first_name"`
+	LastName       string    `json:"last_name"`
+	DateOfBirth    time.Time `json:"date_of_birth"`
+	Nickname       string    `json:"nickname"`
+	Gender         string    `json:"gender"`
+	AvatarPath     string    `json:"avatar_path"`
+	AboutMe        string    `json:"about_me"`
+	FollowingCount int       `json:"following_count"`
+	FollowersCount int       `json:"followers_count"`
+	IsOnline       bool      `json:"is_online"`
+	IsPublic       bool      `json:"is_public"`
+	CreatedAt      time.Time `json:"created_at"`
+	LastSeen       time.Time `json:"last_seen"`
 }
 
 type Post struct {
-	ID        int       `json:"id"`
-	UserID    int       `json:"user_id"`
-	Title     string    `json:"title"`
-	Content   string    `json:"content"`
-	Category  string    `json:"category"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Author    string    `json:"author"`
+	ID           int       `json:"id"`
+	UserID       int       `json:"user_id"`
+	Title        string    `json:"title"`
+	Content      string    `json:"content"`
+	Category     string    `json:"category"`
+	PrivacyLevel string    `json:"privacy_level"` // public, almost_private, private
+	MediaURL     string    `json:"media_url,omitempty"`
+	LikeCount    int       `json:"like_count"`
+	CommentCount int       `json:"comment_count"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+	Author       string    `json:"author"`
 }
 
 type Comment struct {
@@ -33,6 +40,7 @@ type Comment struct {
 	PostID    int       `json:"post_id"`
 	UserID    int       `json:"user_id"`
 	Content   string    `json:"content"`
+	MediaURL  string    `json:"media_url,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	Author    string    `json:"author"`
