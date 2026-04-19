@@ -67,3 +67,14 @@ func CreateTestPost(t *testing.T, services *Services, userID int, postData domai
 
 	return post
 }
+
+func CreateTestComment(t *testing.T, services *Services, userID int, postID int, commentData domain.CreateCommentRequest) *domain.Comment {
+	t.Helper()
+
+	comment, err := services.Comment.CreateComment(userID, postID, commentData)
+	if err != nil {
+		t.Fatalf("Failed to create test comment: %v", err)
+	}
+
+	return comment
+}

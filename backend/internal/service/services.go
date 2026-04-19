@@ -10,6 +10,7 @@ type Services struct {
 	Auth    AuthServiceInterface
 	Content ContentServiceInterface
 	Post    PostServiceInterface
+	Comment CommentServiceInterface
 }
 
 func NewServices(repos *repository.Repositories, logger *logger.Logger) *Services {
@@ -17,6 +18,7 @@ func NewServices(repos *repository.Repositories, logger *logger.Logger) *Service
 		Auth:    NewAuthService(repos.User, repos.Session, logger),
 		Content: NewContentService(repos.Post, logger),
 		Post:    NewPostService(repos.Post, logger),
+		Comment: NewCommentService(repos.Comment, repos.Post, logger),
 	}
 }
 
@@ -35,4 +37,10 @@ type PostServiceInterface interface {
 	GetPostByID(postID int) (*domain.Post, error)
 	ListPosts(category string, limit, offset int) ([]domain.Post, error)
 	GetPostsByUserID(userID int, limit, offset int) ([]domain.Post, error)
+}
+
+type CommentServiceInterface interface {
+	CreateComment(userID int, postID int, commentData domain.CreateCommentRequest) (*domain.Comment, error)
+	GetCommentsByPostID(postID int) ([]domain.Comment, error)
+	GetCommentsByUserID(userID, limit, offset int) ([]domain.Comment, error)
 }

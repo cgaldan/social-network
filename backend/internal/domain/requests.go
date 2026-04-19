@@ -27,3 +27,8 @@ type CreatePostRequest struct {
 	PrivacyLevel string `json:"privacy_level"`
 	MediaURL     string `json:"media_url,omitempty"`
 }
+
+type CreateCommentRequest struct {
+	Content  string `json:"content"`
+	MediaURL string `json:"media_url,omitempty"`
+}
