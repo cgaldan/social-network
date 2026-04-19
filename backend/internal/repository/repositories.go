@@ -7,18 +7,20 @@ import (
 )
 
 type Repositories struct {
-	User    UserRepositoryInterface
-	Session SessionRepositoryInterface
-	Post    PostRepositoryInterface
-	Comment CommentRepositoryInterface
+	User     UserRepositoryInterface
+	Session  SessionRepositoryInterface
+	Post     PostRepositoryInterface
+	Comment  CommentRepositoryInterface
+	Follower FollowerRepositoryInterface
 }
 
 func NewRepositories(db *sql.DB) *Repositories {
 	return &Repositories{
-		User:    NewUserRepository(db),
-		Session: NewSessionRepository(db),
-		Post:    NewPostRepository(db),
-		Comment: NewCommentRepository(db),
+		User:     NewUserRepository(db),
+		Session:  NewSessionRepository(db),
+		Post:     NewPostRepository(db),
+		Comment:  NewCommentRepository(db),
+		Follower: NewFollowerRepository(db),
 	}
 }
 
@@ -48,4 +50,15 @@ type CommentRepositoryInterface interface {
 	GetCommentsByPostID(postID int) ([]domain.Comment, error)
 	GetCommentByID(commentID int) (*domain.Comment, error)
 	GetCommentsByUserID(userID int, limit, offset int) ([]domain.Comment, error)
+}
+
+type FollowerRepositoryInterface interface {
+	CreateFollower(followerID, followingID int, status string) (int64, error)
+	GetFollowerByID(followerID int) (*domain.Follower, error)
+	GetFollowersByUserID(userID int, limit, offset int) ([]domain.Follower, error)
+	GetFollowingByUserID(userID int, limit, offset int) ([]domain.Follower, error)
+	UpdateFollowerStatus(followerID int, status string) error
+	DeleteFollower(followerID int) error
+	FollowExists(followerID, followingID int) (bool, error)
+	GetFollowStatus(followerID, followingID int) (string, error)
 }
