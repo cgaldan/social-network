@@ -2,6 +2,7 @@ package repository
 
 import (
 	"testing"
+	"time"
 )
 
 func TestPostRepository_CreatePost(t *testing.T) {
@@ -9,7 +10,7 @@ func TestPostRepository_CreatePost(t *testing.T) {
 	userRepo := repos.User
 	postRepo := repos.Post
 
-	userID, err := userRepo.CreateUser("test@example.com", "hashedpass", "John", "Doe", 25, "testuser", "male", "", "", false)
+	userID, err := userRepo.CreateUser("test@example.com", "hashedpass", "John", "Doe", time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC), "testuser", "male", "", "", false)
 	if err != nil {
 		t.Fatalf("Failed to create user: %v", err)
 	}
@@ -29,7 +30,7 @@ func TestPostRepository_GetPostByID(t *testing.T) {
 	userRepo := repos.User
 	postRepo := repos.Post
 
-	userID, _ := userRepo.CreateUser("test@example.com", "hashedpass", "John", "Doe", 25, "testuser", "male", "", "", false)
+	userID, _ := userRepo.CreateUser("test@example.com", "hashedpass", "John", "Doe", time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC), "testuser", "male", "", "", false)
 	postID, _ := postRepo.CreatePost(int(userID), "Test Post", "This is a test post content.", "General", "public", "")
 
 	post, err := postRepo.GetPostByID(int(postID))
@@ -53,7 +54,7 @@ func TestPostRepository_ListPosts(t *testing.T) {
 	userRepo := repos.User
 	postRepo := repos.Post
 
-	userID, _ := userRepo.CreateUser("test@example.com", "hashedpass", "John", "Doe", 25, "testuser", "male", "", "", false)
+	userID, _ := userRepo.CreateUser("test@example.com", "hashedpass", "John", "Doe", time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC), "testuser", "male", "", "", false)
 	postRepo.CreatePost(int(userID), "Test Post 1", "Content 1", "General", "public", "")
 	postRepo.CreatePost(int(userID), "Test Post 2", "Content 2", "General", "public", "")
 	postRepo.CreatePost(int(userID), "Test Post 3", "Content 3", "General", "private", "")
@@ -74,8 +75,8 @@ func TestPostRepository_GetPostsByUserID(t *testing.T) {
 	userRepo := repos.User
 	postRepo := repos.Post
 
-	userID1, _ := userRepo.CreateUser("user1@example.com", "hashedpass1", "User", "One", 30, "user1", "male", "", "", false)
-	userID2, _ := userRepo.CreateUser("user2@example.com", "hashedpass2", "User", "Two", 35, "user2", "female", "", "", false)
+	userID1, _ := userRepo.CreateUser("user1@example.com", "hashedpass1", "User", "One", time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC), "user1", "male", "", "", false)
+	userID2, _ := userRepo.CreateUser("user2@example.com", "hashedpass2", "User", "Two", time.Date(1985, time.June, 1, 0, 0, 0, 0, time.UTC), "user2", "female", "", "", false)
 
 	postRepo.CreatePost(int(userID1), "User 1 Post", "Content for user 1", "General", "public", "")
 	postRepo.CreatePost(int(userID2), "User 2 Post", "Content for user 2", "General", "public", "")
@@ -98,7 +99,7 @@ func TestPostRepository_PostExists(t *testing.T) {
 	userRepo := repos.User
 	postRepo := repos.Post
 
-	userID, _ := userRepo.CreateUser("test@example.com", "hashedpass", "John", "Doe", 25, "testuser", "male", "", "", false)
+	userID, _ := userRepo.CreateUser("test@example.com", "hashedpass", "John", "Doe", time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC), "testuser", "male", "", "", false)
 	postID, _ := postRepo.CreatePost(int(userID), "Test Post", "This is a test post content.", "General", "public", "")
 
 	exists, err := postRepo.PostExists(int(postID))

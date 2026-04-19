@@ -2,6 +2,7 @@ package repository
 
 import (
 	"testing"
+	"time"
 )
 
 func TestFollowerRepository_CreateFollower(t *testing.T) {
@@ -9,12 +10,12 @@ func TestFollowerRepository_CreateFollower(t *testing.T) {
 	userRepo := repos.User
 	followerRepo := repos.Follower
 
-	userID1, err := userRepo.CreateUser("user1@example.com", "hashedpass1", "User", "One", 25, "user1", "male", "", "", false)
+	userID1, err := userRepo.CreateUser("user1@example.com", "hashedpass1", "User", "One", time.Date(1995, time.January, 1, 0, 0, 0, 0, time.UTC), "user1", "male", "", "", false)
 	if err != nil {
 		t.Fatalf("Failed to create user 1: %v", err)
 	}
 
-	userID2, err := userRepo.CreateUser("user2@example.com", "hashedpass2", "User", "Two", 30, "user2", "female", "", "", false)
+	userID2, err := userRepo.CreateUser("user2@example.com", "hashedpass2", "User", "Two", time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC), "user2", "female", "", "", false)
 	if err != nil {
 		t.Fatalf("Failed to create user 2: %v", err)
 	}
@@ -34,8 +35,8 @@ func TestFollowerRepository_GetFollowerByID(t *testing.T) {
 	userRepo := repos.User
 	followerRepo := repos.Follower
 
-	userID1, _ := userRepo.CreateUser("user1@example.com", "hashedpass1", "User", "One", 25, "user1", "male", "", "", false)
-	userID2, _ := userRepo.CreateUser("user2@example.com", "hashedpass2", "User", "Two", 30, "user2", "female", "", "", false)
+	userID1, _ := userRepo.CreateUser("user1@example.com", "hashedpass1", "User", "One", time.Date(1995, time.January, 1, 0, 0, 0, 0, time.UTC), "user1", "male", "", "", false)
+	userID2, _ := userRepo.CreateUser("user2@example.com", "hashedpass2", "User", "Two", time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC), "user2", "female", "", "", false)
 
 	followerID, _ := followerRepo.CreateFollower(int(userID1), int(userID2), "pending")
 
@@ -60,9 +61,9 @@ func TestFollowerRepository_GetFollowersByUserID(t *testing.T) {
 	userRepo := repos.User
 	followerRepo := repos.Follower
 
-	userID1, _ := userRepo.CreateUser("user1@example.com", "hashedpass1", "User", "One", 25, "user1", "male", "", "", false)
-	userID2, _ := userRepo.CreateUser("user2@example.com", "hashedpass2", "User", "Two", 30, "user2", "female", "", "", false)
-	userID3, _ := userRepo.CreateUser("user3@example.com", "hashedpass3", "User", "Three", 35, "user3", "male", "", "", false)
+	userID1, _ := userRepo.CreateUser("user1@example.com", "hashedpass1", "User", "One", time.Date(1995, time.January, 1, 0, 0, 0, 0, time.UTC), "user1", "male", "", "", false)
+	userID2, _ := userRepo.CreateUser("user2@example.com", "hashedpass2", "User", "Two", time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC), "user2", "female", "", "", false)
+	userID3, _ := userRepo.CreateUser("user3@example.com", "hashedpass3", "User", "Three", time.Date(1985, time.June, 1, 0, 0, 0, 0, time.UTC), "user3", "male", "", "", false)
 
 	followerRepo.CreateFollower(int(userID1), int(userID3), "accepted")
 	followerRepo.CreateFollower(int(userID2), int(userID3), "pending")
@@ -82,9 +83,9 @@ func TestFollowerRepository_GetFollowingByUserID(t *testing.T) {
 	userRepo := repos.User
 	followerRepo := repos.Follower
 
-	userID1, _ := userRepo.CreateUser("user1@example.com", "hashedpass1", "User", "One", 25, "user1", "male", "", "", false)
-	userID2, _ := userRepo.CreateUser("user2@example.com", "hashedpass2", "User", "Two", 30, "user2", "female", "", "", false)
-	userID3, _ := userRepo.CreateUser("user3@example.com", "hashedpass3", "User", "Three", 35, "user3", "male", "", "", false)
+	userID1, _ := userRepo.CreateUser("user1@example.com", "hashedpass1", "User", "One", time.Date(1995, time.January, 1, 0, 0, 0, 0, time.UTC), "user1", "male", "", "", false)
+	userID2, _ := userRepo.CreateUser("user2@example.com", "hashedpass2", "User", "Two", time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC), "user2", "female", "", "", false)
+	userID3, _ := userRepo.CreateUser("user3@example.com", "hashedpass3", "User", "Three", time.Date(1985, time.June, 1, 0, 0, 0, 0, time.UTC), "user3", "male", "", "", false)
 
 	followerRepo.CreateFollower(int(userID1), int(userID2), "accepted")
 	followerRepo.CreateFollower(int(userID1), int(userID3), "pending")
@@ -104,8 +105,8 @@ func TestFollowerRepository_UpdateFollowerStatus(t *testing.T) {
 	userRepo := repos.User
 	followerRepo := repos.Follower
 
-	userID1, _ := userRepo.CreateUser("user1@example.com", "hashedpass1", "User", "One", 25, "user1", "male", "", "", false)
-	userID2, _ := userRepo.CreateUser("user2@example.com", "hashedpass2", "User", "Two", 30, "user2", "female", "", "", false)
+	userID1, _ := userRepo.CreateUser("user1@example.com", "hashedpass1", "User", "One", time.Date(1995, time.January, 1, 0, 0, 0, 0, time.UTC), "user1", "male", "", "", false)
+	userID2, _ := userRepo.CreateUser("user2@example.com", "hashedpass2", "User", "Two", time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC), "user2", "female", "", "", false)
 
 	followerID, _ := followerRepo.CreateFollower(int(userID1), int(userID2), "pending")
 
@@ -125,8 +126,8 @@ func TestFollowerRepository_DeleteFollower(t *testing.T) {
 	userRepo := repos.User
 	followerRepo := repos.Follower
 
-	userID1, _ := userRepo.CreateUser("user1@example.com", "hashedpass1", "User", "One", 25, "user1", "male", "", "", false)
-	userID2, _ := userRepo.CreateUser("user2@example.com", "hashedpass2", "User", "Two", 30, "user2", "female", "", "", false)
+	userID1, _ := userRepo.CreateUser("user1@example.com", "hashedpass1", "User", "One", time.Date(1995, time.January, 1, 0, 0, 0, 0, time.UTC), "user1", "male", "", "", false)
+	userID2, _ := userRepo.CreateUser("user2@example.com", "hashedpass2", "User", "Two", time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC), "user2", "female", "", "", false)
 
 	followerID, _ := followerRepo.CreateFollower(int(userID1), int(userID2), "pending")
 
@@ -146,8 +147,8 @@ func TestFollowerRepository_FollowExists(t *testing.T) {
 	userRepo := repos.User
 	followerRepo := repos.Follower
 
-	userID1, _ := userRepo.CreateUser("user1@example.com", "hashedpass1", "User", "One", 25, "user1", "male", "", "", false)
-	userID2, _ := userRepo.CreateUser("user2@example.com", "hashedpass2", "User", "Two", 30, "user2", "female", "", "", false)
+	userID1, _ := userRepo.CreateUser("user1@example.com", "hashedpass1", "User", "One", time.Date(1995, time.January, 1, 0, 0, 0, 0, time.UTC), "user1", "male", "", "", false)
+	userID2, _ := userRepo.CreateUser("user2@example.com", "hashedpass2", "User", "Two", time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC), "user2", "female", "", "", false)
 
 	followerRepo.CreateFollower(int(userID1), int(userID2), "pending")
 
@@ -171,8 +172,8 @@ func TestFollowerRepository_GetFollowStatus(t *testing.T) {
 	userRepo := repos.User
 	followerRepo := repos.Follower
 
-	userID1, _ := userRepo.CreateUser("user1@example.com", "hashedpass1", "User", "One", 25, "user1", "male", "", "", false)
-	userID2, _ := userRepo.CreateUser("user2@example.com", "hashedpass2", "User", "Two", 30, "user2", "female", "", "", false)
+	userID1, _ := userRepo.CreateUser("user1@example.com", "hashedpass1", "User", "One", time.Date(1995, time.January, 1, 0, 0, 0, 0, time.UTC), "user1", "male", "", "", false)
+	userID2, _ := userRepo.CreateUser("user2@example.com", "hashedpass2", "User", "Two", time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC), "user2", "female", "", "", false)
 
 	followerRepo.CreateFollower(int(userID1), int(userID2), "accepted")
 
