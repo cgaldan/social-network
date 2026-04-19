@@ -10,6 +10,9 @@ func (c *Config) Validate() error {
 	if c.Server.Port == "" {
 		return fmt.Errorf("server port is required")
 	}
+	if c.Database.Path == "" {
+		return fmt.Errorf("database path is required")
+	}
 
 	return nil
 }

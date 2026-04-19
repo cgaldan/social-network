@@ -31,4 +31,10 @@ go.work.sum
 .idea/
 .vscode/
 
+# Database files
+*.db
+*.db-shm
+*.db-wal
+data/
+
 *.http

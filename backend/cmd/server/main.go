@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"real-time-forum/internal/config"
+	"real-time-forum/internal/database"
 	"real-time-forum/packages/logger"
 )
 
@@ -24,6 +25,22 @@ func main() {
 	if err := config.Validate(); err != nil {
 		appLogger.Fatal("Invalid configuration", "error", err)
 	}
+
+	appLogger.Info("Configuration loaded succesfully", "environment", config.Environment)
+
+	db, err := database.NewDatabase(config.Database.Path)
+	if err != nil {
+		appLogger.Fatal("Failed to connect to database", "error", err)
+	}
+	defer db.Close()
+
+	appLogger.Info("Database initialized", "path", config.Database.Path)
+
+	if err := database.RunMigrations(db); err != nil {
+		appLogger.Fatal("Failed to run migrations", "error", err)
+	}
+
+	appLogger.Info("Migrations applied successfully")
 
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%s", config.Server.Port),
