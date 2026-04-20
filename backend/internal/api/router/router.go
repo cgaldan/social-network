@@ -5,17 +5,19 @@ import (
 	"social-network/internal/api/handlers"
 	"social-network/internal/config"
 	"social-network/internal/service"
+	"social-network/internal/websocket"
 	"social-network/packages/logger"
 
 	"github.com/gorilla/mux"
 )
 
-func NewRouter(services *service.Services, config *config.Config, logger *logger.Logger) *mux.Router {
+func NewRouter(services *service.Services, config *config.Config, hub *websocket.Hub, logger *logger.Logger) *mux.Router {
 	r := mux.NewRouter()
 
 	authHandler := handlers.NewAuthHandler(services.Auth, logger)
 	postHandler := handlers.NewPostHandler(services.Post, services.Auth, services.Content, logger)
 	commentHandler := handlers.NewCommentHandler(services.Comment, services.Auth, logger)
+	websocketHandler := handlers.NewWebSocketHandler(hub, services.Auth, logger)
 
 	api := r.PathPrefix("/api").Subrouter()
 
@@ -30,6 +32,9 @@ func NewRouter(services *service.Services, config *config.Config, logger *logger
 	api.HandleFunc("/posts", postHandler.CreatePost).Methods("POST")
 	api.HandleFunc("/posts/{id}", postHandler.GetPostByID).Methods("GET")
 	api.HandleFunc("/posts/{id}/comments", commentHandler.CreateComment).Methods("POST")
+
+	// Websocket routes
+	r.HandleFunc("/ws", websocketHandler.HandleWebSocket)
 
 	frontendPath := "../frontend"
 	if config.Environment == "production" {

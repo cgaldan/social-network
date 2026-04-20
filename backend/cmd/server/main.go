@@ -14,6 +14,7 @@ import (
 	"social-network/internal/database"
 	"social-network/internal/repository"
 	"social-network/internal/service"
+	"social-network/internal/websocket"
 	"social-network/packages/logger"
 )
 
@@ -48,9 +49,14 @@ func main() {
 
 	repos := repository.NewRepositories(db)
 
+	hub := websocket.NewHub(appLogger, repos.User)
+	go hub.Run()
+
+	appLogger.Info("WebSocket hub initialized")
+
 	services := service.NewServices(repos, appLogger)
 
-	router := router.NewRouter(services, config, appLogger)
+	router := router.NewRouter(services, config, hub, appLogger)
 
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%s", config.Server.Port),
