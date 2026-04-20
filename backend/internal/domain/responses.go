@@ -24,3 +24,9 @@ type PostDetailResponse struct {
 	Message string `json:"message,omitempty"`
 	Post    *Post  `json:"post,omitempty"`
 }
+
+type CommentResponse struct {
+	Success bool     `json:"success"`
+	Message string   `json:"message,omitempty"`
+	Comment *Comment `json:"comment,omitempty"`
+}
