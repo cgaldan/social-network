@@ -7,20 +7,20 @@ import (
 )
 
 type Repositories struct {
-	User     UserRepositoryInterface
-	Session  SessionRepositoryInterface
-	Post     PostRepositoryInterface
-	Comment  CommentRepositoryInterface
-	Follower FollowerRepositoryInterface
+	User    UserRepositoryInterface
+	Session SessionRepositoryInterface
+	Post    PostRepositoryInterface
+	Comment CommentRepositoryInterface
+	Follow  FollowRepositoryInterface
 }
 
 func NewRepositories(db *sql.DB) *Repositories {
 	return &Repositories{
-		User:     NewUserRepository(db),
-		Session:  NewSessionRepository(db),
-		Post:     NewPostRepository(db),
-		Comment:  NewCommentRepository(db),
-		Follower: NewFollowerRepository(db),
+		User:    NewUserRepository(db),
+		Session: NewSessionRepository(db),
+		Post:    NewPostRepository(db),
+		Comment: NewCommentRepository(db),
+		Follow:  NewFollowRepository(db),
 	}
 }
 
@@ -29,6 +29,7 @@ type UserRepositoryInterface interface {
 	GetUserByID(userID int) (*domain.User, error)
 	GetUserByIdentifier(identifier string) (*domain.User, string, error)
 	UpdateLastSeen(userID int) error
+	GetUserPrivacyByUserID(userID int) (bool, error)
 }
 
 type SessionRepositoryInterface interface {
@@ -52,13 +53,13 @@ type CommentRepositoryInterface interface {
 	GetCommentsByUserID(userID int, limit, offset int) ([]domain.Comment, error)
 }
 
-type FollowerRepositoryInterface interface {
-	CreateFollower(followerID, followingID int, status string) (int64, error)
-	GetFollowerByID(followerID int) (*domain.Follower, error)
-	GetFollowersByUserID(userID int, limit, offset int) ([]domain.Follower, error)
-	GetFollowingByUserID(userID int, limit, offset int) ([]domain.Follower, error)
-	UpdateFollowerStatus(followerID int, status string) error
-	DeleteFollower(followerID int) error
+type FollowRepositoryInterface interface {
+	CreateFollow(followerID, followingID int, status string) (int64, error)
+	GetFollowByID(followerID int) (*domain.Follow, error)
+	GetFollowersByUserID(userID int, limit, offset int) ([]domain.Follow, error)
+	GetFollowingByUserID(userID int, limit, offset int) ([]domain.Follow, error)
+	UpdateFollowStatus(followerID int, status string) error
+	DeleteFollow(followerID int) error
 	FollowExists(followerID, followingID int) (bool, error)
-	GetFollowStatus(followerID, followingID int) (string, error)
+	GetFollowStatusByFollowID(followID int) (string, error)
 }

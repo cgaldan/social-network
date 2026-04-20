@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS followers (
+CREATE TABLE IF NOT EXISTS follows (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     follower_id INTEGER NOT NULL,
     following_id INTEGER NOT NULL,
@@ -8,3 +8,6 @@ CREATE TABLE IF NOT EXISTS followers (
     FOREIGN KEY (following_id) REFERENCES users(id) ON DELETE CASCADE,
     UNIQUE (follower_id, following_id)
 );
+
+CREATE INDEX IF NOT EXISTS follower_id_index ON follows(follower_id);
+CREATE INDEX IF NOT EXISTS following_id_index ON follows(following_id);

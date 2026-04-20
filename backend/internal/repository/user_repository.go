@@ -156,3 +156,15 @@ func (r *UserRepository) UpdateLastSeen(userID int) error {
 	_, err := r.db.Exec("UPDATE users SET last_seen = CURRENT_TIMESTAMP WHERE id = ?", userID)
 	return err
 }
+
+func (r *UserRepository) GetUserPrivacyByUserID(userID int) (bool, error) {
+	var isPublic bool
+	err := r.db.QueryRow("SELECT is_public FROM users WHERE id = ?", userID).Scan(&isPublic)
+	if err == sql.ErrNoRows {
+		return false, fmt.Errorf("user not found")
+	}
+	if err != nil {
+		return false, fmt.Errorf("failed to get user privacy: %w", err)
+	}
+	return isPublic, nil
+}
