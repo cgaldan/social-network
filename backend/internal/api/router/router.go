@@ -1,0 +1,41 @@
+package router
+
+import (
+	"net/http"
+	"social-network/internal/api/handlers"
+	"social-network/internal/config"
+	"social-network/internal/service"
+	"social-network/packages/logger"
+
+	"github.com/gorilla/mux"
+)
+
+func NewRouter(services *service.Services, config *config.Config, logger *logger.Logger) *mux.Router {
+	r := mux.NewRouter()
+
+	authHandler := handlers.NewAuthHandler(services.Auth, logger)
+	postHandler := handlers.NewPostHandler(services.Post, services.Auth, services.Content, logger)
+	commentHandler := handlers.NewCommentHandler(services.Comment, services.Auth, logger)
+
+	api := r.PathPrefix("/api").Subrouter()
+
+	// Auth routes
+	api.HandleFunc("/auth/register", authHandler.Register).Methods("POST")
+	api.HandleFunc("/auth/login", authHandler.Login).Methods("POST")
+	api.HandleFunc("/auth/logout", authHandler.Logout).Methods("POST")
+	api.HandleFunc("/auth/me", authHandler.GetCurrentUser).Methods("GET")
+
+	// Post routes
+	api.HandleFunc("/posts", postHandler.GetPosts).Methods("GET")
+	api.HandleFunc("/posts", postHandler.CreatePost).Methods("POST")
+	api.HandleFunc("/posts/{id}", postHandler.GetPostByID).Methods("GET")
+	api.HandleFunc("/posts/{id}/comments", commentHandler.CreateComment).Methods("POST")
+
+	frontendPath := "../frontend"
+	if config.Environment == "production" {
+		frontendPath = config.Frontend.Path
+	}
+	r.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir(frontendPath))))
+
+	return r
+}
