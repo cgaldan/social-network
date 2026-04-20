@@ -16,3 +16,14 @@ type DatabaseConfig struct {
 type SessionConfig struct {
 	Duration time.Duration
 }
+type WebSocketConfig struct {
+	ReadBufferSize  int
+	WriteBufferSize int
+	PingPeriod      time.Duration
+	PongWait        time.Duration
+	WriteWait       time.Duration
+}
+
+type FrontendConfig struct {
+	Path string
+}

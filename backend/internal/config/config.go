@@ -9,6 +9,8 @@ type Config struct {
 	Server      ServerConfig
 	Database    DatabaseConfig
 	Session     SessionConfig
+	Websocket   WebSocketConfig
+	Frontend    FrontendConfig
 }
 
 func LoadConfig() (*Config, error) {
@@ -25,6 +27,16 @@ func LoadConfig() (*Config, error) {
 		},
 		Session: SessionConfig{
 			Duration: getEnvDuration("SESSION_DURATION", 24*time.Hour),
+		},
+		Websocket: WebSocketConfig{
+			ReadBufferSize:  getIntEnv("WS_READ_BUFFER_SIZE", 1024),
+			WriteBufferSize: getIntEnv("WS_WRITE_BUFFER_SIZE", 1024),
+			PingPeriod:      getEnvDuration("WS_PING_PERIOD", 54*time.Second),
+			PongWait:        getEnvDuration("WS_PONG_WAIT", 60*time.Second),
+			WriteWait:       getEnvDuration("WS_WRITE_WAIT", 10*time.Second),
+		},
+		Frontend: FrontendConfig{
+			Path: getEnv("FRONTEND_PATH", "./frontend"),
 		},
 	}
 
