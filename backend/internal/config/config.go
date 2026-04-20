@@ -9,6 +9,7 @@ type Config struct {
 	Server      ServerConfig
 	Database    DatabaseConfig
 	Session     SessionConfig
+	RateLimit   RateLimitConfig
 	Websocket   WebSocketConfig
 	Frontend    FrontendConfig
 }
@@ -27,6 +28,10 @@ func LoadConfig() (*Config, error) {
 		},
 		Session: SessionConfig{
 			Duration: getEnvDuration("SESSION_DURATION", 24*time.Hour),
+		},
+		RateLimit: RateLimitConfig{
+			RequestsPerMinute: getIntEnv("RATE_LIMIT_RPM", 100),
+			Enabled:           getBoolEnv("RATE_LIMIT_ENABLED", true),
 		},
 		Websocket: WebSocketConfig{
 			ReadBufferSize:  getIntEnv("WS_READ_BUFFER_SIZE", 1024),
