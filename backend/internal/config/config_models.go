@@ -22,6 +22,12 @@ type RateLimitConfig struct {
 	Enabled           bool
 }
 
+type CORSConfig struct {
+	AllowedOrigins []string
+	AllowedMethods []string
+	AllowedHeaders []string
+}
+
 type WebSocketConfig struct {
 	ReadBufferSize  int
 	WriteBufferSize int
