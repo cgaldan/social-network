@@ -16,6 +16,12 @@ type DatabaseConfig struct {
 type SessionConfig struct {
 	Duration time.Duration
 }
+
+type RateLimitConfig struct {
+	RequestsPerMinute int
+	Enabled           bool
+}
+
 type WebSocketConfig struct {
 	ReadBufferSize  int
 	WriteBufferSize int

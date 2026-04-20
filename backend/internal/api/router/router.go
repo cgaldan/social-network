@@ -3,6 +3,7 @@ package router
 import (
 	"net/http"
 	"social-network/internal/api/handlers"
+	"social-network/internal/api/middleware"
 	"social-network/internal/config"
 	"social-network/internal/service"
 	"social-network/internal/websocket"
@@ -41,6 +42,8 @@ func NewRouter(services *service.Services, config *config.Config, hub *websocket
 		frontendPath = config.Frontend.Path
 	}
 	r.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir(frontendPath))))
+
+	r.Use(middleware.RateLimiterMiddleware(config))
 
 	return r
 }
