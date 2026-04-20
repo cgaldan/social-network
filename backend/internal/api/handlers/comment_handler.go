@@ -7,6 +7,8 @@ import (
 	"social-network/internal/service"
 	"social-network/packages/logger"
 	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 type CommentHandler struct {
@@ -44,12 +46,9 @@ func (h *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	idStr := r.PathValue("id")
-	postID, err := strconv.Atoi(idStr)
-
 	// WITH GORILLA PKG IMPLEMANTATION
-	// vars := mux.Vars(r)
-	// postID, err := strconv.Atoi(vars["id"])
+	vars := mux.Vars(r)
+	postID, err := strconv.Atoi(vars["id"])
 
 	if err != nil || postID <= 0 {
 		json.NewEncoder(w).Encode(domain.CommentResponse{
