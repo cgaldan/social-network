@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -16,6 +17,11 @@ type Config struct {
 }
 
 func LoadConfig() (*Config, error) {
+	err := loadEnvFile(".env")
+	if err != nil {
+		return nil, fmt.Errorf("failed to load environment variables: %w", err)
+	}
+
 	cfg := &Config{
 		Environment: getEnv("ENVIRONMENT", "development"),
 		Server: ServerConfig{
