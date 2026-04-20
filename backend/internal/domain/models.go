@@ -83,3 +83,9 @@ type PostDetail struct {
 	Post     *Post     `json:"post"`
 	Comments []Comment `json:"comments"`
 }
+
+type UserStatus struct {
+	UserID   int    `json:"user_id"`
+	Nickname string `json:"nickname"`
+	IsOnline bool   `json:"is_online"`
+}
