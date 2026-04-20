@@ -43,6 +43,7 @@ func NewRouter(services *service.Services, config *config.Config, hub *websocket
 	}
 	r.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir(frontendPath))))
 
+	r.Use(middleware.CORSMiddleware(config))
 	r.Use(middleware.RateLimiterMiddleware(config))
 
 	return r
