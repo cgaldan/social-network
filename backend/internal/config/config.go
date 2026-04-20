@@ -10,6 +10,7 @@ type Config struct {
 	Database    DatabaseConfig
 	Session     SessionConfig
 	RateLimit   RateLimitConfig
+	CORS        CORSConfig
 	Websocket   WebSocketConfig
 	Frontend    FrontendConfig
 }
@@ -32,6 +33,11 @@ func LoadConfig() (*Config, error) {
 		RateLimit: RateLimitConfig{
 			RequestsPerMinute: getIntEnv("RATE_LIMIT_RPM", 100),
 			Enabled:           getBoolEnv("RATE_LIMIT_ENABLED", true),
+		},
+		CORS: CORSConfig{
+			AllowedOrigins: []string{getEnv("CORS_ALLOWED_ORIGINS", "*")},
+			AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+			AllowedHeaders: []string{"Content-Type", "Authorization"},
 		},
 		Websocket: WebSocketConfig{
 			ReadBufferSize:  getIntEnv("WS_READ_BUFFER_SIZE", 1024),
