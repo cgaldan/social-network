@@ -9,7 +9,16 @@ import (
 func TestPostService_GetPostByID(t *testing.T) {
 	services := SetupTestServices(t)
 
-	userID := CreateTestUser(t, services, "testuser", "test@example.com", "password123", "John", "Doe", time.Now().AddDate(-25, 0, 0), "male")
+	userID := CreateTestUser(t, services, domain.RegisterRequest{
+		Email:       "test@example.com",
+		Password:    "password123",
+		FirstName:   "John",
+		LastName:    "Doe",
+		DateOfBirth: time.Now().AddDate(-25, 0, 0),
+		Nickname:    "testuser",
+		Gender:      "male",
+		IsPublic:    true,
+	})
 
 	post := CreateTestPost(t, services, userID, domain.CreatePostRequest{
 		Title:    "Test Post",
@@ -47,7 +56,16 @@ func TestPostService_GetPostByID(t *testing.T) {
 func TestPostService_ListPosts(t *testing.T) {
 	services := SetupTestServices(t)
 
-	userID := CreateTestUser(t, services, "testuser", "test@example.com", "password123", "John", "Doe", time.Now().AddDate(-25, 0, 0), "male")
+	userID := CreateTestUser(t, services, domain.RegisterRequest{
+		Email:       "test@example.com",
+		Password:    "password123",
+		FirstName:   "John",
+		LastName:    "Doe",
+		DateOfBirth: time.Now().AddDate(-25, 0, 0),
+		Nickname:    "testuser",
+		Gender:      "male",
+		IsPublic:    true,
+	})
 
 	posts := []domain.CreatePostRequest{
 		{Title: "Post 1", Content: "Content 1 with enough characters", Category: "general"},
@@ -102,8 +120,26 @@ func TestPostService_ListPosts(t *testing.T) {
 func TestPostService_GetPostsByUserID(t *testing.T) {
 	services := SetupTestServices(t)
 
-	user1ID := CreateTestUser(t, services, "user1", "user1@example.com", "password123", "John", "Doe", time.Now().AddDate(-25, 0, 0), "male")
-	user2ID := CreateTestUser(t, services, "user2", "user2@example.com", "password123", "Jane", "Smith", time.Now().AddDate(-30, 0, 0), "female")
+	user1ID := CreateTestUser(t, services, domain.RegisterRequest{
+		Email:       "user1@example.com",
+		Password:    "password123",
+		FirstName:   "John",
+		LastName:    "Doe",
+		DateOfBirth: time.Now().AddDate(-25, 0, 0),
+		Nickname:    "user1",
+		Gender:      "male",
+		IsPublic:    true,
+	})
+	user2ID := CreateTestUser(t, services, domain.RegisterRequest{
+		Email:       "user2@example.com",
+		Password:    "password123",
+		FirstName:   "Jane",
+		LastName:    "Smith",
+		DateOfBirth: time.Now().AddDate(-30, 0, 0),
+		Nickname:    "user2",
+		Gender:      "female",
+		IsPublic:    true,
+	})
 
 	CreateTestPost(t, services, user1ID, domain.CreatePostRequest{
 		Title: "User1 Post 1", Content: "Content 1 with enough characters for validation", Category: "general",

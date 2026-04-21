@@ -146,7 +146,16 @@ func TestAuthService_Register(t *testing.T) {
 func TestAuthService_Login(t *testing.T) {
 	services := SetupTestServices(t)
 
-	userID := CreateTestUser(t, services, "testuser", "test@example.com", "password123", "John", "Doe", time.Now().AddDate(-25, 0, 0), "male")
+	userID := CreateTestUser(t, services, domain.RegisterRequest{
+		Email:       "test@example.com",
+		Password:    "password123",
+		FirstName:   "John",
+		LastName:    "Doe",
+		DateOfBirth: time.Now().AddDate(-25, 0, 0),
+		Nickname:    "testuser",
+		Gender:      "male",
+		IsPublic:    true,
+	})
 
 	tests := []struct {
 		name        string
@@ -220,7 +229,16 @@ func TestAuthService_Login(t *testing.T) {
 func TestAuthService_ValidateSession(t *testing.T) {
 	services := SetupTestServices(t)
 
-	CreateTestUser(t, services, "testuser", "test@example.com", "password123", "John", "Doe", time.Now().AddDate(-25, 0, 0), "male")
+	CreateTestUser(t, services, domain.RegisterRequest{
+		Email:       "test@example.com",
+		Password:    "password123",
+		FirstName:   "John",
+		LastName:    "Doe",
+		DateOfBirth: time.Now().AddDate(-25, 0, 0),
+		Nickname:    "testuser",
+		Gender:      "male",
+		IsPublic:    true,
+	})
 
 	_, sessionID, err := services.Auth.Login(domain.LoginRequest{
 		Identifier: "testuser",
@@ -256,7 +274,16 @@ func TestAuthService_ValidateSession(t *testing.T) {
 func TestAuthService_Logout(t *testing.T) {
 	services := SetupTestServices(t)
 
-	CreateTestUser(t, services, "testuser", "test@example.com", "password123", "John", "Doe", time.Now().AddDate(-25, 0, 0), "male")
+	CreateTestUser(t, services, domain.RegisterRequest{
+		Email:       "test@example.com",
+		Password:    "password123",
+		FirstName:   "John",
+		LastName:    "Doe",
+		DateOfBirth: time.Now().AddDate(-25, 0, 0),
+		Nickname:    "testuser",
+		Gender:      "male",
+		IsPublic:    true,
+	})
 
 	_, sessionID, err := services.Auth.Login(domain.LoginRequest{
 		Identifier: "testuser",
