@@ -7,20 +7,24 @@ import (
 )
 
 type Repositories struct {
-	User    UserRepositoryInterface
-	Session SessionRepositoryInterface
-	Post    PostRepositoryInterface
-	Comment CommentRepositoryInterface
-	Follow  FollowRepositoryInterface
+	User         UserRepositoryInterface
+	Session      SessionRepositoryInterface
+	Post         PostRepositoryInterface
+	Comment      CommentRepositoryInterface
+	Follow       FollowRepositoryInterface
+	Message      MessageRepositoryInterface
+	Conversation ConversationRepositoryInterface
 }
 
 func NewRepositories(db *sql.DB) *Repositories {
 	return &Repositories{
-		User:    NewUserRepository(db),
-		Session: NewSessionRepository(db),
-		Post:    NewPostRepository(db),
-		Comment: NewCommentRepository(db),
-		Follow:  NewFollowRepository(db),
+		User:         NewUserRepository(db),
+		Session:      NewSessionRepository(db),
+		Post:         NewPostRepository(db),
+		Comment:      NewCommentRepository(db),
+		Follow:       NewFollowRepository(db),
+		Message:      NewMessageRepository(db),
+		Conversation: NewConversationRepository(db),
 	}
 }
 
@@ -62,4 +66,13 @@ type FollowRepositoryInterface interface {
 	DeleteFollow(followerID int) error
 	FollowExists(followerID, followingID int) (bool, error)
 	GetFollowStatusByFollowID(followID int) (string, error)
+}
+
+type ConversationRepositoryInterface interface {
+	CreateConversation(conversation *domain.Conversation) (int64, error)
+	GetConversationByID(conversationID int) (*domain.Conversation, error)
+}
+
+type MessageRepositoryInterface interface {
+	SendMessage(message *domain.Message) (int64, error)
 }
