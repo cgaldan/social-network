@@ -46,16 +46,6 @@ type Comment struct {
 	Author    string    `json:"author"`
 }
 
-type Message struct {
-	ID         int        `json:"id"`
-	SenderID   int        `json:"sender_id"`
-	ReceiverID int        `json:"receiver_id"`
-	Content    string     `json:"content"`
-	CreatedAt  time.Time  `json:"created_at"`
-	ReadAt     *time.Time `json:"read_at,omitempty"`
-	SenderName string     `json:"sender_name"`
-}
-
 type Session struct {
 	ID        string    `json:"id"`
 	UserID    int       `json:"user_id"`
@@ -64,11 +54,34 @@ type Session struct {
 }
 
 type Conversation struct {
-	UserID      int       `json:"user_id"`
-	Nickname    string    `json:"nickname"`
-	LastMessage string    `json:"last_message"`
-	LastTime    time.Time `json:"last_time"`
-	UnreadCount int       `json:"unread_count"`
+	ID        int       `json:"id"`
+	Name      string    `json:"name"`
+	Type      string    `json:"type"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type ConversationUser struct {
+	ConversationID int       `json:"conversation_id"`
+	UserID         int       `json:"user_id"`
+	JoinedAt       time.Time `json:"joined_at"`
+	LastReadAt     time.Time `json:"last_read_at"`
+}
+
+type ConversationView struct {
+	ConversationID   int       `json:"conversation_id"`
+	ConversationName string    `json:"conversation_name"`
+	ConversationType string    `json:"conversation_type"`
+	LastMessage      string    `json:"last_message"`
+	LastTime         time.Time `json:"last_time"`
+	UnreadCount      int       `json:"unread_count"`
+}
+
+type Message struct {
+	ID             int       `json:"id"`
+	ConversationID int       `json:"conversation_id"`
+	SenderID       int       `json:"sender_id"`
+	Content        string    `json:"content"`
+	CreatedAt      time.Time `json:"created_at"`
 }
 
 type Follow struct {
