@@ -40,7 +40,7 @@ func (r *ConversationRepository) GetConversationByID(conversationID int) (*domai
 			con.type, 
 			con.created_at
 		FROM conversations con
-		WHERE con.conversation_id = ?`, conversationID,
+		WHERE con.id = ?`, conversationID,
 	).Scan(
 		&conversation.ID,
 		&conversation.Name,

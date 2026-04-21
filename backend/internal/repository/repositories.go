@@ -74,5 +74,6 @@ type ConversationRepositoryInterface interface {
 }
 
 type MessageRepositoryInterface interface {
-	SendMessage(message *domain.Message) (int64, error)
+	CreateMessage(message *domain.Message) (int64, error)
+	GetMessageByID(messageID int) (*domain.Message, error)
 }
