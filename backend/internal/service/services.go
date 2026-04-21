@@ -11,6 +11,7 @@ type Services struct {
 	Content ContentServiceInterface
 	Post    PostServiceInterface
 	Comment CommentServiceInterface
+	Follow  FollowServiceInterface
 }
 
 func NewServices(repos *repository.Repositories, logger *logger.Logger) *Services {
@@ -19,6 +20,7 @@ func NewServices(repos *repository.Repositories, logger *logger.Logger) *Service
 		Content: NewContentService(repos.Post, logger),
 		Post:    NewPostService(repos.Post, logger),
 		Comment: NewCommentService(repos.Comment, repos.Post, logger),
+		Follow:  NewFollowService(repos.Follow, repos.User, logger),
 	}
 }
 
@@ -43,4 +45,8 @@ type CommentServiceInterface interface {
 	CreateComment(userID int, postID int, commentData domain.CreateCommentRequest) (*domain.Comment, error)
 	GetCommentsByPostID(postID int) ([]domain.Comment, error)
 	GetCommentsByUserID(userID, limit, offset int) ([]domain.Comment, error)
+}
+
+type FollowServiceInterface interface {
+	FollowUser(followData domain.FollowRequest) (status string, err error)
 }

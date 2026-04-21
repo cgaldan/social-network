@@ -7,7 +7,6 @@ import (
 	"social-network/internal/repository"
 	"social-network/packages/logger"
 	"testing"
-	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -39,17 +38,17 @@ func SetupTestServices(t *testing.T) *Services {
 	return services
 }
 
-func CreateTestUser(t *testing.T, services *Services, nickname, email, password, firstName, lastName string, dateOfBirth time.Time, gender string) int {
+func CreateTestUser(t *testing.T, services *Services, req domain.RegisterRequest) int {
 	t.Helper()
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		t.Fatalf("Failed to hash password: %v", err)
 	}
 
 	authSvc := services.Auth.(*AuthService)
 
-	userID, err := authSvc.userRepo.CreateUser(email, string(hashedPassword), firstName, lastName, dateOfBirth, nickname, gender, "", "", true)
+	userID, err := authSvc.userRepo.CreateUser(req.Email, string(hashedPassword), req.FirstName, req.LastName, req.DateOfBirth, req.Nickname, req.Gender, req.AvatarPath, req.AboutMe, req.IsPublic)
 	if err != nil {
 		t.Fatalf("Failed to create test user: %v", err)
 	}
