@@ -66,11 +66,13 @@ type FollowRepositoryInterface interface {
 	DeleteFollow(followerID int) error
 	FollowExists(followerID, followingID int) (bool, error)
 	GetFollowStatusByFollowID(followID int) (string, error)
+	EitherUserFollows(userID1, userID2 int) (bool, error)
 }
 
 type ConversationRepositoryInterface interface {
-	CreateConversation(conversation *domain.Conversation) (int64, error)
-	GetConversationByID(conversationID int) (*domain.Conversation, error)
+	IsUserInConversation(conversationID, userID int) (bool, error)
+	CreateDirectConversation(userID1, userID2 int) (*domain.Conversation, error)
+	GetDirectConversation(userID1, userID2 int) (*domain.Conversation, error)
 }
 
 type MessageRepositoryInterface interface {
