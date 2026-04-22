@@ -36,3 +36,9 @@ type FollowResponse struct {
 	Message string `json:"message,omitempty"`
 	Status  string `json:"status,omitempty"`
 }
+
+type HealthResponse struct {
+	Status    string `json:"status"`
+	Timestamp string `json:"timestamp"`
+	Version   string `json:"version"`
+}

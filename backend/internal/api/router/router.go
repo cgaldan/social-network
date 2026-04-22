@@ -20,8 +20,11 @@ func NewRouter(services *service.Services, config *config.Config, hub *websocket
 	commentHandler := handlers.NewCommentHandler(services.Comment, services.Auth, logger)
 	websocketHandler := handlers.NewWebSocketHandler(hub, services.Auth, logger)
 	followHandler := handlers.NewFollowHandler(services.Follow, services.Auth, logger)
+	healthHandler := handlers.NewHealthHandler("1.0.0")
 
 	api := r.PathPrefix("/api").Subrouter()
+
+	r.HandleFunc("/health", healthHandler.Health).Methods("GET")
 
 	// Auth routes
 	api.HandleFunc("/auth/register", authHandler.Register).Methods("POST")
