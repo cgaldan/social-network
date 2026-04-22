@@ -43,3 +43,8 @@ type DirectConversationRequest struct {
 	SenderID   int `json:"user_id_1"`
 	ReceiverID int `json:"user_id_2"`
 }
+
+type SendMessageRequest struct {
+	ConversationID int    `json:"conversation_id"`
+	Content        string `json:"content"`
+}
