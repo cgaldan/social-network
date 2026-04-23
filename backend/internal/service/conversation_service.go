@@ -40,7 +40,10 @@ func (s *ConversationService) CreateDirectConversation(convData domain.DirectCon
 	}
 
 	existingConv, err := s.convRepo.GetDirectConversation(userID1, userID2)
-	if err == nil && existingConv != nil {
+	if err != nil {
+		return nil, fmt.Errorf("failed to get conversation: %w", err)
+	}
+	if existingConv != nil {
 		return existingConv, nil
 	}
 

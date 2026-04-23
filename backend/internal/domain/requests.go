@@ -40,8 +40,8 @@ type FollowRequest struct {
 }
 
 type DirectConversationRequest struct {
-	SenderID   int `json:"user_id_1"`
-	ReceiverID int `json:"user_id_2"`
+	SenderID   int `json:"sender_id"`
+	ReceiverID int `json:"receiver_id"`
 }
 
 type SendMessageRequest struct {

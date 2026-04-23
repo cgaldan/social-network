@@ -20,6 +20,8 @@ func NewRouter(services *service.Services, config *config.Config, hub *websocket
 	commentHandler := handlers.NewCommentHandler(services.Comment, services.Auth, logger)
 	websocketHandler := handlers.NewWebSocketHandler(hub, services.Auth, logger)
 	followHandler := handlers.NewFollowHandler(services.Follow, services.Auth, logger)
+	conversationHandler := handlers.NewConversationHandler(services.Conversation, services.Auth, logger)
+	messageHandler := handlers.NewMessageHandler(services.Message, services.Auth, logger)
 
 	api := r.PathPrefix("/api").Subrouter()
 
@@ -37,6 +39,10 @@ func NewRouter(services *service.Services, config *config.Config, hub *websocket
 
 	// Follow routes
 	api.HandleFunc("/follow/{id}", followHandler.FollowUser).Methods("POST")
+
+	// Chat routes
+	api.HandleFunc("/conversations/direct", conversationHandler.CreateDirectConversation).Methods("POST")
+	api.HandleFunc("/messages", messageHandler.SendMessage).Methods("POST")
 
 	// Websocket routes
 	r.HandleFunc("/ws", websocketHandler.HandleWebSocket)

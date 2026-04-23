@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS conversations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name  TEXT NOT NULL DEFAULT '',
     type TEXT NOT NULL CHECK (type IN ('private', 'group')),
+    pair_key TEXT UNIQUE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

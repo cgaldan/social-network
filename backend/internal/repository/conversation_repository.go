@@ -21,8 +21,9 @@ func (r *ConversationRepository) CreateDirectConversation(userID1, userID2 int) 
 	defer tx.Rollback()
 
 	result, err := tx.Exec(`
-		INSERT INTO conversations (type) 
-		VALUES ('private')`,
+		INSERT INTO conversations (type, pair_key) 
+		VALUES ('private', ?)`,
+		makePairKey(userID1, userID2),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create conversation: %w", err)
@@ -55,19 +56,11 @@ func (r *ConversationRepository) CreateDirectConversation(userID1, userID2 int) 
 func (r *ConversationRepository) GetDirectConversation(userID1, userID2 int) (*domain.Conversation, error) {
 	var conversation domain.Conversation
 	err := r.db.QueryRow(`
-		SELECT 
-			con.id, 
-			con.name, 
-			con.type, 
-			con.created_at
-		FROM conversations con
-		JOIN conversation_participants cp1 ON con.id = cp1.conversation_id AND cp1.user_id = ?
-		JOIN conversation_participants cp2 ON con.id = cp2.conversation_id AND cp2.user_id = ?
-		WHERE con.type = 'private'`,
-		userID1, userID2,
+		SELECT id, type, created_at 
+		FROM conversations 
+		WHERE pair_key = ?`, makePairKey(userID1, userID2),
 	).Scan(
 		&conversation.ID,
-		&conversation.Name,
 		&conversation.Type,
 		&conversation.CreatedAt,
 	)
@@ -95,4 +88,11 @@ func (r *ConversationRepository) IsUserInConversation(conversationID, userID int
 	}
 
 	return count > 0, nil
+}
+
+func makePairKey(userID1, userID2 int) string {
+	if userID1 > userID2 {
+		userID1, userID2 = userID2, userID1
+	}
+	return fmt.Sprintf("%d-%d", userID2, userID1)
 }
