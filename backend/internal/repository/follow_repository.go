@@ -225,3 +225,20 @@ func (r *FollowRepository) GetFollowStatusByFollowID(followID int) (string, erro
 
 	return status, nil
 }
+
+func (r *FollowRepository) EitherUserFollows(userID1, userID2 int) (bool, error) {
+	var count int
+	err := r.db.QueryRow(`
+		SELECT COUNT(*) 
+		FROM follows 
+		WHERE (follower_id = ? AND following_id = ?) 
+		   OR (follower_id = ? AND following_id = ?)`,
+		userID1, userID2, userID2, userID1,
+	).Scan(&count)
+
+	if err != nil {
+		return false, fmt.Errorf("failed to check follow relationship: %w", err)
+	}
+
+	return count > 0, nil
+}

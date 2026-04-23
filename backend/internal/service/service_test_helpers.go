@@ -77,3 +77,21 @@ func CreateTestComment(t *testing.T, services *Services, userID int, postID int,
 
 	return comment
 }
+
+func CreateTestDirectChat(t *testing.T, services *Services, userID1, userID2 int) *domain.Conversation {
+	t.Helper()
+
+	conversation, err := services.Conversation.CreateDirectConversation(domain.DirectConversationRequest{
+		SenderID:   userID1,
+		ReceiverID: userID2,
+	})
+	if err != nil {
+		t.Fatalf("Failed to create test direct chat: %v", err)
+	}
+
+	if conversation == nil {
+		t.Fatalf("CreateDirectConversation returned nil conversation with no error")
+	}
+
+	return conversation
+}

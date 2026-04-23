@@ -37,6 +37,18 @@ type FollowResponse struct {
 	Status  string `json:"status,omitempty"`
 }
 
+type MessageResponse struct {
+	Success bool     `json:"success"`
+	Message string   `json:"message,omitempty"`
+	Msg     *Message `json:"msg,omitempty"`
+}
+
+type ConversationResponse struct {
+	Success      bool          `json:"success"`
+	Message      string        `json:"message,omitempty"`
+	Conversation *Conversation `json:"conversation,omitempty"`
+}
+
 type HealthResponse struct {
 	Status    string `json:"status"`
 	Timestamp string `json:"timestamp"`

@@ -38,3 +38,13 @@ type FollowRequest struct {
 	FolloweeID int    `json:"followee_id"`
 	Status     string `json:"status"`
 }
+
+type DirectConversationRequest struct {
+	SenderID   int `json:"sender_id"`
+	ReceiverID int `json:"receiver_id"`
+}
+
+type SendMessageRequest struct {
+	ConversationID int    `json:"conversation_id"`
+	Content        string `json:"content"`
+}

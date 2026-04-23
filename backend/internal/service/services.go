@@ -7,20 +7,24 @@ import (
 )
 
 type Services struct {
-	Auth    AuthServiceInterface
-	Content ContentServiceInterface
-	Post    PostServiceInterface
-	Comment CommentServiceInterface
-	Follow  FollowServiceInterface
+	Auth         AuthServiceInterface
+	Content      ContentServiceInterface
+	Post         PostServiceInterface
+	Comment      CommentServiceInterface
+	Follow       FollowServiceInterface
+	Message      MessageServiceInterface
+	Conversation ConversationServiceInterface
 }
 
 func NewServices(repos *repository.Repositories, logger *logger.Logger) *Services {
 	return &Services{
-		Auth:    NewAuthService(repos.User, repos.Session, logger),
-		Content: NewContentService(repos.Post, logger),
-		Post:    NewPostService(repos.Post, logger),
-		Comment: NewCommentService(repos.Comment, repos.Post, logger),
-		Follow:  NewFollowService(repos.Follow, repos.User, logger),
+		Auth:         NewAuthService(repos.User, repos.Session, logger),
+		Content:      NewContentService(repos.Post, logger),
+		Post:         NewPostService(repos.Post, logger),
+		Comment:      NewCommentService(repos.Comment, repos.Post, logger),
+		Follow:       NewFollowService(repos.Follow, repos.User, logger),
+		Message:      NewMessageService(repos.Message, repos.User, repos.Conversation, logger),
+		Conversation: NewConversationService(repos.Conversation, repos.Follow, logger),
 	}
 }
 
@@ -49,4 +53,12 @@ type CommentServiceInterface interface {
 
 type FollowServiceInterface interface {
 	FollowUser(followData domain.FollowRequest) (status string, err error)
+}
+
+type MessageServiceInterface interface {
+	SendMessage(convID, senderID int, content string) (*domain.Message, error)
+}
+
+type ConversationServiceInterface interface {
+	CreateDirectConversation(convData domain.DirectConversationRequest) (*domain.Conversation, error)
 }

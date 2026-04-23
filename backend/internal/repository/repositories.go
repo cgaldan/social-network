@@ -7,20 +7,24 @@ import (
 )
 
 type Repositories struct {
-	User    UserRepositoryInterface
-	Session SessionRepositoryInterface
-	Post    PostRepositoryInterface
-	Comment CommentRepositoryInterface
-	Follow  FollowRepositoryInterface
+	User         UserRepositoryInterface
+	Session      SessionRepositoryInterface
+	Post         PostRepositoryInterface
+	Comment      CommentRepositoryInterface
+	Follow       FollowRepositoryInterface
+	Message      MessageRepositoryInterface
+	Conversation ConversationRepositoryInterface
 }
 
 func NewRepositories(db *sql.DB) *Repositories {
 	return &Repositories{
-		User:    NewUserRepository(db),
-		Session: NewSessionRepository(db),
-		Post:    NewPostRepository(db),
-		Comment: NewCommentRepository(db),
-		Follow:  NewFollowRepository(db),
+		User:         NewUserRepository(db),
+		Session:      NewSessionRepository(db),
+		Post:         NewPostRepository(db),
+		Comment:      NewCommentRepository(db),
+		Follow:       NewFollowRepository(db),
+		Message:      NewMessageRepository(db),
+		Conversation: NewConversationRepository(db),
 	}
 }
 
@@ -62,4 +66,16 @@ type FollowRepositoryInterface interface {
 	DeleteFollow(followerID int) error
 	FollowExists(followerID, followingID int) (bool, error)
 	GetFollowStatusByFollowID(followID int) (string, error)
+	EitherUserFollows(userID1, userID2 int) (bool, error)
+}
+
+type ConversationRepositoryInterface interface {
+	IsUserInConversation(conversationID, userID int) (bool, error)
+	CreateDirectConversation(userID1, userID2 int) (*domain.Conversation, error)
+	GetDirectConversation(userID1, userID2 int) (*domain.Conversation, error)
+}
+
+type MessageRepositoryInterface interface {
+	CreateMessage(message *domain.Message) (int64, error)
+	GetMessageByID(messageID int) (*domain.Message, error)
 }
