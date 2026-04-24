@@ -14,6 +14,7 @@ type Services struct {
 	Follow       FollowServiceInterface
 	Message      MessageServiceInterface
 	Conversation ConversationServiceInterface
+	Group        GroupServiceInterface
 }
 
 func NewServices(repos *repository.Repositories, logger *logger.Logger) *Services {
@@ -25,6 +26,7 @@ func NewServices(repos *repository.Repositories, logger *logger.Logger) *Service
 		Follow:       NewFollowService(repos.Follow, repos.User, logger),
 		Message:      NewMessageService(repos.Message, repos.User, repos.Conversation, logger),
 		Conversation: NewConversationService(repos.Conversation, repos.Follow, logger),
+		Group:        NewGroupService(repos.Group, logger),
 	}
 }
 
@@ -61,4 +63,8 @@ type MessageServiceInterface interface {
 
 type ConversationServiceInterface interface {
 	CreateDirectConversation(convData domain.DirectConversationRequest) (*domain.Conversation, error)
+}
+
+type GroupServiceInterface interface {
+	CreateGroup(group *domain.Group) (*domain.Group, error)
 }
