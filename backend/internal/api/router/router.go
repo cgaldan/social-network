@@ -22,6 +22,7 @@ func NewRouter(services *service.Services, config *config.Config, hub *websocket
 	followHandler := handlers.NewFollowHandler(services.Follow, services.Auth, logger)
 	conversationHandler := handlers.NewConversationHandler(services.Conversation, services.Auth, logger)
 	messageHandler := handlers.NewMessageHandler(services.Message, services.Auth, logger)
+	groupHandler := handlers.NewGroupHandler(services.Group, services.Auth, logger)
 	healthHandler := handlers.NewHealthHandler("1.0.0")
 
 	r.HandleFunc("/health", healthHandler.Health).Methods("GET")
@@ -46,6 +47,9 @@ func NewRouter(services *service.Services, config *config.Config, hub *websocket
 	// Chat routes
 	api.HandleFunc("/conversations/direct", conversationHandler.CreateDirectConversation).Methods("POST")
 	api.HandleFunc("/messages", messageHandler.SendMessage).Methods("POST")
+
+	// Group routes
+	api.HandleFunc("/groups", groupHandler.CreateGroup).Methods("POST")
 
 	// Websocket routes
 	r.HandleFunc("/ws", websocketHandler.HandleWebSocket)

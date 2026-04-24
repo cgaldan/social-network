@@ -49,6 +49,12 @@ type ConversationResponse struct {
 	Conversation *Conversation `json:"conversation,omitempty"`
 }
 
+type GroupResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message,omitempty"`
+	Group   *Group `json:"group,omitempty"`
+}
+
 type HealthResponse struct {
 	Status    string `json:"status"`
 	Timestamp string `json:"timestamp"`
