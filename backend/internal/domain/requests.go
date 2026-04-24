@@ -48,3 +48,10 @@ type SendMessageRequest struct {
 	ConversationID int    `json:"conversation_id"`
 	Content        string `json:"content"`
 }
+
+type CreateGroupRequest struct {
+	CreatorID      int    `json:"creator_id"`
+	Title          string `json:"title"`
+	Description    string `json:"description"`
+	ConversationID int    `json:"conversation_id"`
+}

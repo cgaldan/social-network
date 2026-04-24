@@ -14,6 +14,7 @@ type Repositories struct {
 	Follow       FollowRepositoryInterface
 	Message      MessageRepositoryInterface
 	Conversation ConversationRepositoryInterface
+	Group        GroupRepositoryInterface
 }
 
 func NewRepositories(db *sql.DB) *Repositories {
@@ -25,6 +26,7 @@ func NewRepositories(db *sql.DB) *Repositories {
 		Follow:       NewFollowRepository(db),
 		Message:      NewMessageRepository(db),
 		Conversation: NewConversationRepository(db),
+		Group:        NewGroupRepository(db),
 	}
 }
 
@@ -78,4 +80,13 @@ type ConversationRepositoryInterface interface {
 type MessageRepositoryInterface interface {
 	CreateMessage(message *domain.Message) (int64, error)
 	GetMessageByID(messageID int) (*domain.Message, error)
+}
+
+type GroupRepositoryInterface interface {
+	CreateGroup(group *domain.Group) (int64, error)
+	GetGroupByID(groupID int) (*domain.Group, error)
+
+	AddMember(groupID, userID int, role string) error
+	RemoveMember(groupID, userID int) error
+	GetMembersByGroupID(groupID int) ([]domain.GroupMember, error)
 }

@@ -102,3 +102,20 @@ type UserStatus struct {
 	Nickname string `json:"nickname"`
 	IsOnline bool   `json:"is_online"`
 }
+
+type Group struct {
+	ID             int       `json:"id"`
+	CreatorID      int       `json:"creator_id"`
+	Title          string    `json:"name"`
+	Description    string    `json:"description"`
+	ConversationID int       `json:"conversation_id"`
+	CreatedAt      time.Time `json:"created_at"`
+}
+
+type GroupMember struct {
+	ID       int       `json:"id"`
+	GroupID  int       `json:"group_id"`
+	UserID   int       `json:"user_id"`
+	Role     string    `json:"role"`
+	JoinedAt time.Time `json:"joined_at"`
+}
