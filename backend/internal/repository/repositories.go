@@ -73,6 +73,11 @@ type ConversationRepositoryInterface interface {
 	IsUserInConversation(conversationID, userID int) (bool, error)
 	CreateDirectConversation(userID1, userID2 int) (*domain.Conversation, error)
 	GetDirectConversation(userID1, userID2 int) (*domain.Conversation, error)
+
+	CreateGroupConversation(name string, initialUserIDs ...int) (*domain.Conversation, error)
+	GetGroupConversationByID(conversationID int) (*domain.Conversation, error)
+	AddConversationParticipant(conversationID, userID int) error
+	RemoveConversationParticipant(conversationID, userID int) error
 }
 
 type MessageRepositoryInterface interface {
