@@ -61,3 +61,28 @@ func (s *ConversationService) CreateDirectConversation(convData domain.DirectCon
 
 	return newConv, nil
 }
+
+func (s *ConversationService) CreateGroupConversation(name string, initialUserIDs ...int) (*domain.Conversation, error) {
+	conversation, err := s.convRepo.CreateGroupConversation(name, initialUserIDs...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create conversation: %w", err)
+	}
+
+	return conversation, nil
+}
+
+func (s *ConversationService) AddConversationParticipant(convID, userID int) error {
+	err := s.convRepo.AddConversationParticipant(convID, userID)
+	if err != nil {
+		return fmt.Errorf("failed to add conversation participant: %w", err)
+	}
+	return nil
+}
+
+func (s *ConversationService) RemoveConversationParticipant(convID, userID int) error {
+	err := s.convRepo.RemoveConversationParticipant(convID, userID)
+	if err != nil {
+		return fmt.Errorf("failed to remove conversation participant: %w", err)
+	}
+	return nil
+}
