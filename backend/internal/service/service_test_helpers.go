@@ -95,3 +95,14 @@ func CreateTestDirectChat(t *testing.T, services *Services, userID1, userID2 int
 
 	return conversation
 }
+
+func CreateTestGroupConversation(t *testing.T, services *Services, name string, initialUserIDs ...int) *domain.Conversation {
+	t.Helper()
+
+	conversation, err := services.Conversation.CreateGroupConversation(name, initialUserIDs...)
+	if err != nil {
+		t.Fatalf("Failed to create test group conversation: %v", err)
+	}
+
+	return conversation
+}

@@ -18,15 +18,24 @@ type Services struct {
 }
 
 func NewServices(repos *repository.Repositories, logger *logger.Logger) *Services {
+	authService := NewAuthService(repos.User, repos.Session, logger)
+	contentService := NewContentService(repos.Post, logger)
+	postService := NewPostService(repos.Post, logger)
+	commentService := NewCommentService(repos.Comment, repos.Post, logger)
+	followService := NewFollowService(repos.Follow, repos.User, logger)
+	messageService := NewMessageService(repos.Message, repos.User, repos.Conversation, logger)
+	conversationService := NewConversationService(repos.Conversation, repos.Follow, logger)
+	groupService := NewGroupService(repos.Group, conversationService, logger)
+
 	return &Services{
-		Auth:         NewAuthService(repos.User, repos.Session, logger),
-		Content:      NewContentService(repos.Post, logger),
-		Post:         NewPostService(repos.Post, logger),
-		Comment:      NewCommentService(repos.Comment, repos.Post, logger),
-		Follow:       NewFollowService(repos.Follow, repos.User, logger),
-		Message:      NewMessageService(repos.Message, repos.User, repos.Conversation, logger),
-		Conversation: NewConversationService(repos.Conversation, repos.Follow, logger),
-		Group:        NewGroupService(repos.Group, logger),
+		Auth:         authService,
+		Content:      contentService,
+		Post:         postService,
+		Comment:      commentService,
+		Follow:       followService,
+		Message:      messageService,
+		Conversation: conversationService,
+		Group:        groupService,
 	}
 }
 
@@ -63,8 +72,14 @@ type MessageServiceInterface interface {
 
 type ConversationServiceInterface interface {
 	CreateDirectConversation(convData domain.DirectConversationRequest) (*domain.Conversation, error)
+	CreateGroupConversation(name string, initialUserIDs ...int) (*domain.Conversation, error)
+	AddConversationParticipant(convID, userID int) error
+	RemoveConversationParticipant(convID, userID int) error
 }
 
 type GroupServiceInterface interface {
 	CreateGroup(group *domain.Group) (*domain.Group, error)
+	GetMembersByGroupID(groupID int) ([]domain.GroupMember, error)
+	AddMember(convID, groupID, userID int, role string) error
+	RemoveMember(convID, groupID, userID int) error
 }
