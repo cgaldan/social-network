@@ -115,3 +115,132 @@ func (r *GroupRepository) GetMembersByGroupID(groupID int) ([]domain.GroupMember
 	}
 	return members, nil
 }
+
+func (r *GroupRepository) CreateGroupInvitation(groupID, inviterID, inviteeID int) error {
+	_, err := r.db.Exec(`
+		INSERT INTO group_invitations (
+			group_id,
+			inviter_id,
+			invitee_id
+		)
+		VALUES (?, ?, ?)`,
+		groupID,
+		inviterID,
+		inviteeID,
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to create group invitation: %w", err)
+	}
+	return nil
+}
+
+func (r *GroupRepository) CreateGroupJoinRequest(groupID, userID int) error {
+	_, err := r.db.Exec(`
+		INSERT INTO group_join_requests (
+			group_id,
+			user_id
+		)
+		VALUES (?, ?)`,
+		groupID,
+		userID,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create group join request: %w", err)
+	}
+	return nil
+}
+
+func (r *GroupRepository) GetGroupInvitationsByGroupID(groupID int) ([]domain.GroupInvitation, error) {
+	rows, err := r.db.Query(`
+		SELECT id, group_id, inviter_id, invitee_id, status, created_at
+		FROM group_invitations
+		WHERE group_id = ?`,
+		groupID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get group invitations: %w", err)
+	}
+	defer rows.Close()
+
+	invitations := []domain.GroupInvitation{}
+	for rows.Next() {
+		var invitation domain.GroupInvitation
+		err := rows.Scan(&invitation.ID, &invitation.GroupID, &invitation.InviterID, &invitation.InviteeID, &invitation.Status, &invitation.CreatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan invitation: %w", err)
+		}
+		invitations = append(invitations, invitation)
+	}
+	return invitations, nil
+}
+
+func (r *GroupRepository) GetGroupJoinRequestsByGroupID(groupID int) ([]domain.GroupJoinRequest, error) {
+	rows, err := r.db.Query(`
+		SELECT id, group_id, user_id, status, created_at
+		FROM group_join_requests
+		WHERE group_id = ?`,
+		groupID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get group join requests: %w", err)
+	}
+	defer rows.Close()
+
+	requests := []domain.GroupJoinRequest{}
+	for rows.Next() {
+		var request domain.GroupJoinRequest
+		err := rows.Scan(&request.ID, &request.GroupID, &request.UserID, &request.Status, &request.CreatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan request: %w", err)
+		}
+		requests = append(requests, request)
+	}
+	return requests, nil
+}
+
+func (r *GroupRepository) UpdateGroupInvitationStatus(invitationID int, status string) error {
+	_, err := r.db.Exec(`
+		UPDATE group_invitations
+		SET status = ?
+		WHERE id = ?`,
+		status,
+		invitationID,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to update group invitation status: %w", err)
+	}
+	return nil
+}
+
+func (r *GroupRepository) UpdateGroupJoinRequestStatus(requestID int, status string) error {
+	_, err := r.db.Exec(`
+		UPDATE group_join_requests
+		SET status = ?
+		WHERE id = ?`,
+		status,
+		requestID,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to update group join request status: %w", err)
+	}
+	return nil
+}
+
+func (r *GroupRepository) DeleteGroupInvitation(invitationID int) error {
+	_, err := r.db.Exec(`
+		DELETE FROM group_invitations
+		WHERE id = ?`,
+		invitationID,
+	)
+	return err
+}
+
+func (r *GroupRepository) DeleteGroupJoinRequest(requestID int) error {
+	_, err := r.db.Exec(`
+		DELETE FROM group_join_requests
+		WHERE id = ?`,
+		requestID,
+	)
+	return err
+}

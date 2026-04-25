@@ -94,4 +94,16 @@ type GroupRepositoryInterface interface {
 	AddMember(groupID, userID int, role string) error
 	RemoveMember(groupID, userID int) error
 	GetMembersByGroupID(groupID int) ([]domain.GroupMember, error)
+
+	CreateGroupInvitation(groupID, inviterID, inviteeID int) error
+	CreateGroupJoinRequest(groupID, userID int) error
+
+	GetGroupInvitationsByGroupID(groupID int) ([]domain.GroupInvitation, error)
+	GetGroupJoinRequestsByGroupID(groupID int) ([]domain.GroupJoinRequest, error)
+
+	UpdateGroupInvitationStatus(invitationID int, status string) error
+	UpdateGroupJoinRequestStatus(requestID int, status string) error
+
+	DeleteGroupInvitation(invitationID int) error
+	DeleteGroupJoinRequest(requestID int) error
 }
