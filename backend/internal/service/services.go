@@ -82,4 +82,13 @@ type GroupServiceInterface interface {
 	GetMembersByGroupID(groupID int) ([]domain.GroupMember, error)
 	AddMember(convID, groupID, userID int, role string) error
 	RemoveMember(convID, groupID, userID int) error
+
+	CreateGroupInvitation(groupID, inviterID, inviteeID int) error
+	CreateGroupJoinRequest(groupID, userID int) error
+	AcceptGroupInvitation(invitation *domain.GroupInvitation) error
+	AcceptGroupJoinRequest(answererID int, request *domain.GroupJoinRequest) error
+	DeclineGroupInvitation(invitation *domain.GroupInvitation) error
+	DeclineGroupJoinRequest(answererID int, request *domain.GroupJoinRequest) error
+	GetGroupInvitationsByGroupID(groupID int) ([]domain.GroupInvitation, error)
+	GetGroupJoinRequestsByGroupID(groupID int) ([]domain.GroupJoinRequest, error)
 }

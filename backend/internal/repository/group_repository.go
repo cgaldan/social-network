@@ -244,3 +244,36 @@ func (r *GroupRepository) DeleteGroupJoinRequest(requestID int) error {
 	)
 	return err
 }
+
+func (r *GroupRepository) IsUserInGroup(groupID, userID int) (bool, error) {
+	var count int
+	err := r.db.QueryRow(`
+		SELECT COUNT(*)
+		FROM group_members
+		WHERE group_id = ? AND user_id = ?`,
+		groupID,
+		userID,
+	).Scan(&count)
+
+	if err != nil {
+		return false, fmt.Errorf("failed to check if user is in group: %w", err)
+	}
+
+	return count > 0, nil
+}
+
+func (r *GroupRepository) IsUserAdmin(groupID, userID int) (bool, error) {
+	var count int
+	err := r.db.QueryRow(`
+		SELECT COUNT(*)
+		FROM group_members
+		WHERE group_id = ? AND user_id = ? AND role = 'admin'`,
+		groupID,
+		userID,
+	).Scan(&count)
+	if err != nil {
+		return false, fmt.Errorf("failed to check if user is admin: %w", err)
+	}
+
+	return count > 0, nil
+}

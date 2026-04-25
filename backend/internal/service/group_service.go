@@ -81,3 +81,203 @@ func (s *GroupService) RemoveMember(convID, groupID, userID int) error {
 
 	return nil
 }
+
+func (s *GroupService) CreateGroupInvitation(groupID, inviterID, inviteeID int) error {
+	isUserInGroup, err := s.groupRepo.IsUserInGroup(groupID, inviteeID)
+	if err != nil {
+		return fmt.Errorf("failed to check if user is in group: %w", err)
+	}
+	if isUserInGroup {
+		return fmt.Errorf("user is already in group")
+	}
+
+	isUserInGroup, err = s.groupRepo.IsUserInGroup(groupID, inviterID)
+	if err != nil {
+		return fmt.Errorf("failed to check if user is in group: %w", err)
+	}
+	if !isUserInGroup {
+		return fmt.Errorf("inviter is not in group")
+	}
+
+	err = s.groupRepo.CreateGroupInvitation(groupID, inviterID, inviteeID)
+	if err != nil {
+		return fmt.Errorf("failed to create group invitation: %w", err)
+	}
+	return nil
+}
+
+func (s *GroupService) CreateGroupJoinRequest(groupID, userID int) error {
+	isUserInGroup, err := s.groupRepo.IsUserInGroup(groupID, userID)
+	if err != nil {
+		return fmt.Errorf("failed to check if user is in group: %w", err)
+	}
+	if isUserInGroup {
+		return fmt.Errorf("user is already in group")
+	}
+
+	err = s.groupRepo.CreateGroupJoinRequest(groupID, userID)
+	if err != nil {
+		return fmt.Errorf("failed to create group join request: %w", err)
+	}
+	return nil
+}
+
+func (s *GroupService) AcceptGroupInvitation(invitation *domain.GroupInvitation) error {
+	if invitation.Status != "pending" {
+		return fmt.Errorf("invitation is not pending")
+	}
+
+	isUserInGroup, err := s.groupRepo.IsUserInGroup(invitation.GroupID, invitation.InviteeID)
+	if err != nil {
+		return fmt.Errorf("failed to check if user is in group: %w", err)
+	}
+	if isUserInGroup {
+		return fmt.Errorf("user is already in group")
+	}
+
+	isUserInGroup, err = s.groupRepo.IsUserInGroup(invitation.GroupID, invitation.InviterID)
+	if err != nil {
+		return fmt.Errorf("failed to check if user is in group: %w", err)
+	}
+	if !isUserInGroup {
+		return fmt.Errorf("inviter is not in group")
+	}
+
+	err = s.groupRepo.UpdateGroupInvitationStatus(invitation.ID, "accepted")
+	if err != nil {
+		return fmt.Errorf("failed to accept group invitation: %w", err)
+	}
+
+	err = s.AddMember(invitation.GroupID, invitation.GroupID, invitation.InviteeID, "member")
+	if err != nil {
+		return fmt.Errorf("failed to add member: %w", err)
+	}
+
+	return nil
+}
+
+func (s *GroupService) AcceptGroupJoinRequest(answererID int, request *domain.GroupJoinRequest) error {
+	if request.Status != "pending" {
+		return fmt.Errorf("join request is not pending")
+	}
+
+	isUserInGroup, err := s.groupRepo.IsUserInGroup(request.GroupID, answererID)
+	if err != nil {
+		return fmt.Errorf("failed to check if user is in group: %w", err)
+	}
+	if !isUserInGroup {
+		return fmt.Errorf("answerer is not in group")
+	}
+
+	isUserInGroup, err = s.groupRepo.IsUserInGroup(request.GroupID, request.UserID)
+	if err != nil {
+		return fmt.Errorf("failed to check if user is in group: %w", err)
+	}
+	if isUserInGroup {
+		return fmt.Errorf("user is already in group")
+	}
+
+	isAdmin, err := s.groupRepo.IsUserAdmin(request.GroupID, answererID)
+	if err != nil {
+		return fmt.Errorf("failed to check if user is admin: %w", err)
+	}
+	if !isAdmin {
+		return fmt.Errorf("answerer is not authorized to accept join requests")
+	}
+
+	err = s.groupRepo.UpdateGroupJoinRequestStatus(request.ID, "accepted")
+	if err != nil {
+		return fmt.Errorf("failed to accept group join request: %w", err)
+	}
+
+	err = s.AddMember(request.GroupID, request.GroupID, request.UserID, "member")
+	if err != nil {
+		return fmt.Errorf("failed to add member: %w", err)
+	}
+
+	return nil
+}
+
+func (s *GroupService) DeclineGroupInvitation(invitation *domain.GroupInvitation) error {
+	if invitation.Status != "pending" {
+		return fmt.Errorf("invitation is not pending")
+	}
+
+	isUserInGroup, err := s.groupRepo.IsUserInGroup(invitation.GroupID, invitation.InviteeID)
+	if err != nil {
+		return fmt.Errorf("failed to check if user is in group: %w", err)
+	}
+	if isUserInGroup {
+		return fmt.Errorf("user is already in group")
+	}
+
+	isUserInGroup, err = s.groupRepo.IsUserInGroup(invitation.GroupID, invitation.InviterID)
+	if err != nil {
+		return fmt.Errorf("failed to check if user is in group: %w", err)
+	}
+	if !isUserInGroup {
+		return fmt.Errorf("inviter is not in group")
+	}
+
+	err = s.groupRepo.UpdateGroupInvitationStatus(invitation.ID, "declined")
+	if err != nil {
+		return fmt.Errorf("failed to decline group invitation: %w", err)
+	}
+
+	err = s.groupRepo.DeleteGroupInvitation(invitation.ID)
+	if err != nil {
+		return fmt.Errorf("failed to delete group invitation: %w", err)
+	}
+
+	return nil
+}
+
+func (s *GroupService) DeclineGroupJoinRequest(answererID int, request *domain.GroupJoinRequest) error {
+	if request.Status != "pending" {
+		return fmt.Errorf("join request is not pending")
+	}
+
+	isUserInGroup, err := s.groupRepo.IsUserInGroup(request.GroupID, answererID)
+	if err != nil {
+		return fmt.Errorf("failed to check if user is in group: %w", err)
+	}
+	if !isUserInGroup {
+		return fmt.Errorf("answerer is not in group")
+	}
+
+	isUserInGroup, err = s.groupRepo.IsUserInGroup(request.GroupID, request.UserID)
+	if err != nil {
+		return fmt.Errorf("failed to check if user is in group: %w", err)
+	}
+	if isUserInGroup {
+		return fmt.Errorf("user is already in group")
+	}
+
+	isAdmin, err := s.groupRepo.IsUserAdmin(request.GroupID, answererID)
+	if err != nil {
+		return fmt.Errorf("failed to check if user is admin: %w", err)
+	}
+	if !isAdmin {
+		return fmt.Errorf("answerer is not authorized to decline join requests")
+	}
+
+	err = s.groupRepo.UpdateGroupJoinRequestStatus(request.ID, "declined")
+	if err != nil {
+		return fmt.Errorf("failed to decline group join request: %w", err)
+	}
+
+	err = s.groupRepo.DeleteGroupJoinRequest(request.ID)
+	if err != nil {
+		return fmt.Errorf("failed to delete group join request: %w", err)
+	}
+
+	return nil
+}
+
+func (s *GroupService) GetGroupInvitationsByGroupID(groupID int) ([]domain.GroupInvitation, error) {
+	return s.groupRepo.GetGroupInvitationsByGroupID(groupID)
+}
+
+func (s *GroupService) GetGroupJoinRequestsByGroupID(groupID int) ([]domain.GroupJoinRequest, error) {
+	return s.groupRepo.GetGroupJoinRequestsByGroupID(groupID)
+}

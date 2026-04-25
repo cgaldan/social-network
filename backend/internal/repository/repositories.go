@@ -106,4 +106,7 @@ type GroupRepositoryInterface interface {
 
 	DeleteGroupInvitation(invitationID int) error
 	DeleteGroupJoinRequest(requestID int) error
+
+	IsUserInGroup(groupID, userID int) (bool, error)
+	IsUserAdmin(groupID, userID int) (bool, error)
 }
