@@ -168,7 +168,7 @@ func TestGroupService_CreateGroupInvitation(t *testing.T) {
 		t.Errorf("Expected 1 invitation, got %d", len(invitations))
 	}
 
-	err = services.Group.AcceptGroupInvitation(&invitations[0])
+	err = services.Group.AcceptGroupInvitation(userID2, &invitations[0])
 	if err != nil {
 		t.Fatalf("Failed to accept group invitation: %v", err)
 	}
@@ -195,7 +195,7 @@ func TestGroupService_CreateGroupInvitation(t *testing.T) {
 		t.Errorf("Expected invitation status accepted, got %q", invitations[0].Status)
 	}
 
-	err = services.Group.DeclineGroupInvitation(&invitations[0])
+	err = services.Group.DeclineGroupInvitation(userID2, &invitations[0])
 	if err != nil {
 		if err.Error() != "invitation is not pending" {
 			t.Fatalf("Expected invitation is not pending error, got %v", err)
@@ -215,7 +215,7 @@ func TestGroupService_CreateGroupInvitation(t *testing.T) {
 		t.Errorf("Expected 2 invitations, got %d", len(invitations))
 	}
 
-	err = services.Group.DeclineGroupInvitation(&invitations[0])
+	err = services.Group.DeclineGroupInvitation(userID2, &invitations[0])
 	if err != nil {
 		if err.Error() != "invitation is not pending" {
 			t.Fatalf("Expected invitation is not pending error, got %v", err)

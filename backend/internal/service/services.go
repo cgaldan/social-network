@@ -85,10 +85,13 @@ type GroupServiceInterface interface {
 
 	CreateGroupInvitation(groupID, inviterID, inviteeID int) error
 	CreateGroupJoinRequest(groupID, userID int) error
-	AcceptGroupInvitation(invitation *domain.GroupInvitation) error
+	AcceptGroupInvitation(userID int, invitation *domain.GroupInvitation) error
 	AcceptGroupJoinRequest(answererID int, request *domain.GroupJoinRequest) error
-	DeclineGroupInvitation(invitation *domain.GroupInvitation) error
+	DeclineGroupInvitation(userID int, invitation *domain.GroupInvitation) error
 	DeclineGroupJoinRequest(answererID int, request *domain.GroupJoinRequest) error
+
+	GetGroupInvitationByID(invitationID int) (*domain.GroupInvitation, error)
+	GetGroupJoinRequestByID(requestID int) (*domain.GroupJoinRequest, error)
 	GetGroupInvitationsByGroupID(groupID int) ([]domain.GroupInvitation, error)
 	GetGroupJoinRequestsByGroupID(groupID int) ([]domain.GroupJoinRequest, error)
 }
