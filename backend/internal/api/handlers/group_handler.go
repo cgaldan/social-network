@@ -224,3 +224,154 @@ func (h *GroupHandler) DeclineGroupInvitation(w http.ResponseWriter, r *http.Req
 		Invitation: invitation,
 	})
 }
+
+func (h *GroupHandler) JoinGroup(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	token := r.Header.Get("Authorization")
+	user, err := h.authService.ValidateSession(token)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.GroupResponse{
+			Success: false,
+			Message: "Unauthorized",
+		})
+		return
+	}
+
+	var req domain.JoinGroupRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		json.NewEncoder(w).Encode(domain.GroupResponse{
+			Success: false,
+			Message: "Invalid JSON",
+		})
+		return
+	}
+
+	err = h.groupService.CreateGroupJoinRequest(req.GroupID, user.ID)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.GroupResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	json.NewEncoder(w).Encode(domain.GroupJoinRequestResponse{
+		Success: true,
+		Message: "Joine group request created successfully",
+	})
+}
+
+func (h *GroupHandler) AcceptGroupJoinRequest(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	token := r.Header.Get("Authorization")
+	answerer, err := h.authService.ValidateSession(token)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.GroupJoinRequestResponse{
+			Success: false,
+			Message: "Unauthorized",
+		})
+		return
+	}
+
+	vars := mux.Vars(r)
+	requestID, err := strconv.Atoi(vars["id"])
+	if err != nil || requestID <= 0 {
+		json.NewEncoder(w).Encode(domain.GroupJoinRequestResponse{
+			Success: false,
+			Message: "Invalid request ID",
+		})
+		return
+	}
+
+	request, err := h.groupService.GetGroupJoinRequestByID(requestID)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.GroupJoinRequestResponse{
+			Success: false,
+			Message: "Request not found",
+		})
+		return
+	}
+
+	err = h.groupService.AcceptGroupJoinRequest(answerer.ID, request)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.GroupJoinRequestResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	request, err = h.groupService.GetGroupJoinRequestByID(requestID)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.GroupJoinRequestResponse{
+			Success: false,
+			Message: "Request not found",
+		})
+		return
+	}
+
+	json.NewEncoder(w).Encode(domain.GroupJoinRequestResponse{
+		Success: true,
+		Message: "Request accepted successfully",
+		Request: request,
+	})
+}
+
+func (h *GroupHandler) DeclineGroupJoinRequest(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	token := r.Header.Get("Authorization")
+	answerer, err := h.authService.ValidateSession(token)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.GroupJoinRequestResponse{
+			Success: false,
+			Message: "Unauthorized",
+		})
+		return
+	}
+
+	vars := mux.Vars(r)
+	requestID, err := strconv.Atoi(vars["id"])
+	if err != nil || requestID <= 0 {
+		json.NewEncoder(w).Encode(domain.GroupJoinRequestResponse{
+			Success: false,
+			Message: "Invalid request ID",
+		})
+		return
+	}
+
+	request, err := h.groupService.GetGroupJoinRequestByID(requestID)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.GroupJoinRequestResponse{
+			Success: false,
+			Message: "Request not found",
+		})
+		return
+	}
+
+	err = h.groupService.DeclineGroupJoinRequest(answerer.ID, request)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.GroupJoinRequestResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	request, err = h.groupService.GetGroupJoinRequestByID(requestID)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.GroupJoinRequestResponse{
+			Success: false,
+			Message: "Request not found",
+		})
+		return
+	}
+
+	json.NewEncoder(w).Encode(domain.GroupJoinRequestResponse{
+		Success: true,
+		Message: "Request declined successfully",
+		Request: request,
+	})
+}

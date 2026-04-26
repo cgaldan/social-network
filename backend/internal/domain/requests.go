@@ -61,3 +61,8 @@ type InviteToGroupRequest struct {
 	InviterID int `json:"inviter_id"`
 	InviteeID int `json:"invitee_id"`
 }
+
+type JoinGroupRequest struct {
+	GroupID int `json:"group_id"`
+	UserID  int `json:"user_id"`
+}
