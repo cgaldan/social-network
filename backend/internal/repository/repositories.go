@@ -98,6 +98,9 @@ type GroupRepositoryInterface interface {
 	CreateGroupInvitation(groupID, inviterID, inviteeID int) error
 	CreateGroupJoinRequest(groupID, userID int) error
 
+	GetGroupInvitationByID(invitationID int) (*domain.GroupInvitation, error)
+	GetGroupJoinRequestByID(requestID int) (*domain.GroupJoinRequest, error)
+
 	GetGroupInvitationsByGroupID(groupID int) ([]domain.GroupInvitation, error)
 	GetGroupJoinRequestsByGroupID(groupID int) ([]domain.GroupJoinRequest, error)
 

@@ -151,6 +151,46 @@ func (r *GroupRepository) CreateGroupJoinRequest(groupID, userID int) error {
 	return nil
 }
 
+func (r *GroupRepository) GetGroupInvitationByID(invitationID int) (*domain.GroupInvitation, error) {
+	invitation := &domain.GroupInvitation{}
+	err := r.db.QueryRow(`
+		SELECT id, group_id, inviter_id, invitee_id, status, created_at
+		FROM group_invitations
+		WHERE id = ?`,
+		invitationID,
+	).Scan(&invitation.ID, &invitation.GroupID, &invitation.InviterID, &invitation.InviteeID, &invitation.Status, &invitation.CreatedAt)
+
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("group invitation not found")
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get group invitation: %w", err)
+	}
+
+	return invitation, nil
+}
+
+func (r *GroupRepository) GetGroupJoinRequestByID(requestID int) (*domain.GroupJoinRequest, error) {
+	request := &domain.GroupJoinRequest{}
+	err := r.db.QueryRow(`
+		SELECT id, group_id, user_id, status, created_at
+		FROM group_join_requests
+		WHERE id = ?`,
+		requestID,
+	).Scan(&request.ID, &request.GroupID, &request.UserID, &request.Status, &request.CreatedAt)
+
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("group join request not found")
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get group join request: %w", err)
+	}
+
+	return request, nil
+}
+
 func (r *GroupRepository) GetGroupInvitationsByGroupID(groupID int) ([]domain.GroupInvitation, error) {
 	rows, err := r.db.Query(`
 		SELECT id, group_id, inviter_id, invitee_id, status, created_at
