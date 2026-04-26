@@ -50,6 +50,9 @@ func NewRouter(services *service.Services, config *config.Config, hub *websocket
 
 	// Group routes
 	api.HandleFunc("/groups", groupHandler.CreateGroup).Methods("POST")
+	api.HandleFunc("/groups/invitations", groupHandler.InviteToGroup).Methods("POST")
+	api.HandleFunc("/groups/invitations/{id}/accept", groupHandler.AcceptGroupInvitation).Methods("POST")
+	api.HandleFunc("/groups/invitations/{id}/decline", groupHandler.DeclineGroupInvitation).Methods("POST")
 
 	// Websocket routes
 	r.HandleFunc("/ws", websocketHandler.HandleWebSocket)

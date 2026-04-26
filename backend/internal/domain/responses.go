@@ -60,3 +60,15 @@ type HealthResponse struct {
 	Timestamp string `json:"timestamp"`
 	Version   string `json:"version"`
 }
+
+type GroupInvitationResponse struct {
+	Success    bool             `json:"success"`
+	Message    string           `json:"message,omitempty"`
+	Invitation *GroupInvitation `json:"invitation,omitempty"`
+}
+
+type GroupJoinRequestResponse struct {
+	Success bool              `json:"success"`
+	Message string            `json:"message,omitempty"`
+	Request *GroupJoinRequest `json:"request,omitempty"`
+}
