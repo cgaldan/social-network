@@ -71,6 +71,8 @@ type FollowServiceInterface interface {
 	FollowUser(followData domain.FollowRequest) (status string, err error)
 	AcceptFollowRequest(userID int, followRequest *domain.Follow) error
 	DeclineFollowRequest(userID int, followRequest *domain.Follow) error
+	UnfollowUser(unfollowData domain.UnfollowRequest) error
+	RemoveFollower(removeData domain.RemoveFollowerRequest) error
 	GetFollowByID(followID int) (*domain.Follow, error)
 }
 
