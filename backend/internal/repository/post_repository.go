@@ -14,7 +14,12 @@ func NewPostRepository(db *sql.DB) *PostRepository {
 	return &PostRepository{db: db}
 }
 
-func (r *PostRepository) CreatePost(userID int, title, content, category, privacyLevel, mediaURL string) (int64, error) {
+func (r *PostRepository) CreatePost(userID int, title, content, category, privacyLevel, mediaURL string, groupID int) (int64, error) {
+	var groupIDArg interface{}
+	if groupID > 0 {
+		groupIDArg = groupID
+	}
+
 	result, err := r.db.Exec(`
 		INSERT INTO posts (
 			user_id, 
@@ -22,15 +27,17 @@ func (r *PostRepository) CreatePost(userID int, title, content, category, privac
 			content, 
 			category, 
 			privacy_level, 
-			media_url
+			media_url,
+			group_id
 		)
-		VALUES (?, ?, ?, ?, ?, ?)`,
+		VALUES (?, ?, ?, ?, ?, ?, ?)`,
 		userID,
 		title,
 		content,
 		category,
 		privacyLevel,
 		mediaURL,
+		groupIDArg,
 	)
 
 	if err != nil {
@@ -42,10 +49,12 @@ func (r *PostRepository) CreatePost(userID int, title, content, category, privac
 
 func (r *PostRepository) GetPostByID(postID int) (*domain.Post, error) {
 	var post domain.Post
+	var groupID sql.NullInt64
 	err := r.db.QueryRow(`
 		SELECT 
 			p.id, 
 			p.user_id, 
+			p.group_id,
 			p.title, 
 			p.content, 
 			p.category, 
@@ -62,6 +71,7 @@ func (r *PostRepository) GetPostByID(postID int) (*domain.Post, error) {
 	).Scan(
 		&post.ID,
 		&post.UserID,
+		&groupID,
 		&post.Title,
 		&post.Content,
 		&post.Category,
@@ -79,6 +89,10 @@ func (r *PostRepository) GetPostByID(postID int) (*domain.Post, error) {
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get post: %w", err)
+	}
+
+	if groupID.Valid {
+		post.GroupID = int(groupID.Int64)
 	}
 
 	return &post, nil
@@ -105,7 +119,7 @@ func (r *PostRepository) ListPosts(category string, limit, offset int) ([]domain
 				u.nickname
 			FROM posts p
 			JOIN users u ON p.user_id = u.id
-			WHERE p.category = ? AND p.privacy_level = 'public'
+			WHERE p.category = ? AND p.privacy_level = 'public' AND p.group_id IS NULL
 			ORDER BY p.created_at DESC
 			LIMIT ? OFFSET ?`, category, limit, offset)
 	} else {
@@ -125,7 +139,7 @@ func (r *PostRepository) ListPosts(category string, limit, offset int) ([]domain
 				u.nickname
 			FROM posts p
 			JOIN users u ON p.user_id = u.id
-			WHERE p.privacy_level = 'public'
+			WHERE p.privacy_level = 'public' AND p.group_id IS NULL
 			ORDER BY p.created_at DESC
 			LIMIT ? OFFSET ?`, limit, offset)
 	}
@@ -160,6 +174,63 @@ func (r *PostRepository) ListPosts(category string, limit, offset int) ([]domain
 	return posts, nil
 }
 
+func (r *PostRepository) ListPostsByGroupID(groupID, limit, offset int) ([]domain.Post, error) {
+	rows, err := r.db.Query(`
+		SELECT 
+			p.id, 
+			p.user_id, 
+			p.group_id,
+			p.title, 
+			p.content, 
+			p.category, 
+			p.privacy_level, 
+			p.media_url,
+			p.like_count,
+			p.comment_count,
+			p.created_at, 
+			p.updated_at, 
+			u.nickname
+		FROM posts p
+		JOIN users u ON p.user_id = u.id
+		WHERE p.group_id = ?
+		ORDER BY p.created_at DESC
+		LIMIT ? OFFSET ?`, groupID, limit, offset)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to list group posts: %w", err)
+	}
+	defer rows.Close()
+
+	posts := []domain.Post{}
+	for rows.Next() {
+		var post domain.Post
+		var postGroupID sql.NullInt64
+		err := rows.Scan(
+			&post.ID,
+			&post.UserID,
+			&postGroupID,
+			&post.Title,
+			&post.Content,
+			&post.Category,
+			&post.PrivacyLevel,
+			&post.MediaURL,
+			&post.LikeCount,
+			&post.CommentCount,
+			&post.CreatedAt,
+			&post.UpdatedAt,
+			&post.Author)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan post: %w", err)
+		}
+		if postGroupID.Valid {
+			post.GroupID = int(postGroupID.Int64)
+		}
+		posts = append(posts, post)
+	}
+
+	return posts, nil
+}
+
 func (r *PostRepository) GetPostsByUserID(userID int, limit, offset int) ([]domain.Post, error) {
 	rows, err := r.db.Query(`
 		SELECT 
@@ -177,7 +248,7 @@ func (r *PostRepository) GetPostsByUserID(userID int, limit, offset int) ([]doma
 			u.nickname
 		FROM posts p
 		JOIN users u ON p.user_id = u.id
-		WHERE p.user_id = ?
+		WHERE p.user_id = ? AND p.group_id IS NULL
 		ORDER BY p.created_at DESC
 		LIMIT ? OFFSET ?`, userID, limit, offset)
 

@@ -45,9 +45,10 @@ type SessionRepositoryInterface interface {
 }
 
 type PostRepositoryInterface interface {
-	CreatePost(userID int, title, content, category, privacyLevel, mediaURL string) (int64, error)
+	CreatePost(userID int, title, content, category, privacyLevel, mediaURL string, groupID int) (int64, error)
 	GetPostByID(postID int) (*domain.Post, error)
 	ListPosts(category string, limit, offset int) ([]domain.Post, error)
+	ListPostsByGroupID(groupID, limit, offset int) ([]domain.Post, error)
 	GetPostsByUserID(userID int, limit, offset int) ([]domain.Post, error)
 	PostExists(postID int) (bool, error)
 }

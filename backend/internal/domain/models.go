@@ -23,6 +23,7 @@ type User struct {
 type Post struct {
 	ID           int       `json:"id"`
 	UserID       int       `json:"user_id"`
+	GroupID      int       `json:"group_id,omitempty"`
 	Title        string    `json:"title"`
 	Content      string    `json:"content"`
 	Category     string    `json:"category"`
