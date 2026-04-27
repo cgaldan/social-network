@@ -7,28 +7,37 @@ import (
 )
 
 type Repositories struct {
-	User     UserRepositoryInterface
-	Session  SessionRepositoryInterface
-	Post     PostRepositoryInterface
-	Comment  CommentRepositoryInterface
-	Follower FollowerRepositoryInterface
+	User         UserRepositoryInterface
+	Session      SessionRepositoryInterface
+	Post         PostRepositoryInterface
+	Comment      CommentRepositoryInterface
+	Follow       FollowRepositoryInterface
+	Message      MessageRepositoryInterface
+	Conversation ConversationRepositoryInterface
+	Group        GroupRepositoryInterface
+	Notification NotificationRepositoryInterface
 }
 
 func NewRepositories(db *sql.DB) *Repositories {
 	return &Repositories{
-		User:     NewUserRepository(db),
-		Session:  NewSessionRepository(db),
-		Post:     NewPostRepository(db),
-		Comment:  NewCommentRepository(db),
-		Follower: NewFollowerRepository(db),
+		User:         NewUserRepository(db),
+		Session:      NewSessionRepository(db),
+		Post:         NewPostRepository(db),
+		Comment:      NewCommentRepository(db),
+		Follow:       NewFollowRepository(db),
+		Message:      NewMessageRepository(db),
+		Conversation: NewConversationRepository(db),
+		Group:        NewGroupRepository(db),
+		Notification: NewNotificationRepository(db),
 	}
 }
 
 type UserRepositoryInterface interface {
-	CreateUser(email, passwordHash, firstName, lastName string, dateOfBirth int, nickname, gender, avatar_path, aboutMe string, isPublic bool) (int64, error)
+	CreateUser(email, passwordHash, firstName, lastName string, dateOfBirth time.Time, nickname, gender, avatar_path, aboutMe string, isPublic bool) (int64, error)
 	GetUserByID(userID int) (*domain.User, error)
 	GetUserByIdentifier(identifier string) (*domain.User, string, error)
 	UpdateLastSeen(userID int) error
+	GetUserPrivacyByUserID(userID int) (bool, error)
 }
 
 type SessionRepositoryInterface interface {
@@ -38,9 +47,10 @@ type SessionRepositoryInterface interface {
 }
 
 type PostRepositoryInterface interface {
-	CreatePost(userID int, title, content, category, privacyLevel, mediaURL string) (int64, error)
+	CreatePost(userID int, title, content, category, privacyLevel, mediaURL string, groupID int) (int64, error)
 	GetPostByID(postID int) (*domain.Post, error)
 	ListPosts(category string, limit, offset int) ([]domain.Post, error)
+	ListPostsByGroupID(groupID, limit, offset int) ([]domain.Post, error)
 	GetPostsByUserID(userID int, limit, offset int) ([]domain.Post, error)
 	PostExists(postID int) (bool, error)
 }
@@ -52,13 +62,73 @@ type CommentRepositoryInterface interface {
 	GetCommentsByUserID(userID int, limit, offset int) ([]domain.Comment, error)
 }
 
-type FollowerRepositoryInterface interface {
-	CreateFollower(followerID, followingID int, status string) (int64, error)
-	GetFollowerByID(followerID int) (*domain.Follower, error)
-	GetFollowersByUserID(userID int, limit, offset int) ([]domain.Follower, error)
-	GetFollowingByUserID(userID int, limit, offset int) ([]domain.Follower, error)
-	UpdateFollowerStatus(followerID int, status string) error
-	DeleteFollower(followerID int) error
+type FollowRepositoryInterface interface {
+	CreateFollow(followerID, followingID int, status string) (int64, error)
+	GetFollowByID(followerID int) (*domain.Follow, error)
+	GetFollowersByUserID(userID int, limit, offset int) ([]domain.Follow, error)
+	GetFollowingByUserID(userID int, limit, offset int) ([]domain.Follow, error)
+	UpdateFollowStatus(followerID int, status string) error
+	DeleteFollow(followerID int) error
 	FollowExists(followerID, followingID int) (bool, error)
-	GetFollowStatus(followerID, followingID int) (string, error)
+	GetFollowStatusByFollowID(followID int) (string, error)
+	EitherUserFollows(userID1, userID2 int) (bool, error)
+}
+
+type ConversationRepositoryInterface interface {
+	IsUserInConversation(conversationID, userID int) (bool, error)
+	CreateDirectConversation(userID1, userID2 int) (*domain.Conversation, error)
+	GetDirectConversation(userID1, userID2 int) (*domain.Conversation, error)
+
+	CreateGroupConversation(name string, initialUserIDs ...int) (*domain.Conversation, error)
+	GetGroupConversationByID(conversationID int) (*domain.Conversation, error)
+	AddConversationParticipant(conversationID, userID int) error
+	RemoveConversationParticipant(conversationID, userID int) error
+}
+
+type MessageRepositoryInterface interface {
+	CreateMessage(message *domain.Message) (int64, error)
+	GetMessageByID(messageID int) (*domain.Message, error)
+}
+
+type GroupRepositoryInterface interface {
+	CreateGroup(group *domain.Group) (int64, error)
+	GetGroupByID(groupID int) (*domain.Group, error)
+	ListGroups(limit, offset int) ([]domain.Group, error)
+
+	AddMember(groupID, userID int, role string) error
+	RemoveMember(groupID, userID int) error
+	GetMembersByGroupID(groupID int) ([]domain.GroupMember, error)
+
+	CreateGroupInvitation(groupID, inviterID, inviteeID int) error
+	CreateGroupJoinRequest(groupID, userID int) error
+
+	GetGroupInvitationByID(invitationID int) (*domain.GroupInvitation, error)
+	GetGroupJoinRequestByID(requestID int) (*domain.GroupJoinRequest, error)
+
+	GetGroupInvitationsByGroupID(groupID int) ([]domain.GroupInvitation, error)
+	GetGroupJoinRequestsByGroupID(groupID int) ([]domain.GroupJoinRequest, error)
+
+	UpdateGroupInvitationStatus(invitationID int, status string) error
+	UpdateGroupJoinRequestStatus(requestID int, status string) error
+
+	DeleteGroupInvitation(invitationID int) error
+	DeleteGroupJoinRequest(requestID int) error
+
+	IsUserInGroup(groupID, userID int) (bool, error)
+	IsUserAdmin(groupID, userID int) (bool, error)
+
+	CreateGroupEvent(event *domain.GroupEvent) (int64, error)
+	GetGroupEventByID(eventID int) (*domain.GroupEvent, error)
+	ListGroupEvents(groupID, limit, offset int) ([]domain.GroupEvent, error)
+	SetGroupEventRSVP(eventID, userID int, response string) error
+	GetGroupEventRSVP(eventID, userID int) (*domain.GroupEventRSVP, error)
+}
+
+type NotificationRepositoryInterface interface {
+	CreateNotification(notification *domain.Notification) (*domain.Notification, error)
+	ListNotifications(recipientID, limit, offset int) ([]domain.Notification, error)
+	CountUnreadNotifications(recipientID int) (int, error)
+	MarkNotificationRead(notificationID, recipientID int) error
+	MarkAllNotificationsRead(recipientID int) error
+	GetNotificationByID(notificationID, recipientID int) (*domain.Notification, error)
 }

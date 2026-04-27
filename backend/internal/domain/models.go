@@ -23,6 +23,7 @@ type User struct {
 type Post struct {
 	ID           int       `json:"id"`
 	UserID       int       `json:"user_id"`
+	GroupID      int       `json:"group_id,omitempty"`
 	Title        string    `json:"title"`
 	Content      string    `json:"content"`
 	Category     string    `json:"category"`
@@ -46,16 +47,6 @@ type Comment struct {
 	Author    string    `json:"author"`
 }
 
-type Message struct {
-	ID         int        `json:"id"`
-	SenderID   int        `json:"sender_id"`
-	ReceiverID int        `json:"receiver_id"`
-	Content    string     `json:"content"`
-	CreatedAt  time.Time  `json:"created_at"`
-	ReadAt     *time.Time `json:"read_at,omitempty"`
-	SenderName string     `json:"sender_name"`
-}
-
 type Session struct {
 	ID        string    `json:"id"`
 	UserID    int       `json:"user_id"`
@@ -64,11 +55,42 @@ type Session struct {
 }
 
 type Conversation struct {
-	UserID      int       `json:"user_id"`
-	Nickname    string    `json:"nickname"`
-	LastMessage string    `json:"last_message"`
-	LastTime    time.Time `json:"last_time"`
-	UnreadCount int       `json:"unread_count"`
+	ID        int       `json:"id"`
+	Name      string    `json:"name"`
+	Type      string    `json:"type"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type ConversationUser struct {
+	ConversationID int       `json:"conversation_id"`
+	UserID         int       `json:"user_id"`
+	JoinedAt       time.Time `json:"joined_at"`
+	LastReadAt     time.Time `json:"last_read_at"`
+}
+
+type ConversationView struct {
+	ConversationID   int       `json:"conversation_id"`
+	ConversationName string    `json:"conversation_name"`
+	ConversationType string    `json:"conversation_type"`
+	LastMessage      string    `json:"last_message"`
+	LastTime         time.Time `json:"last_time"`
+	UnreadCount      int       `json:"unread_count"`
+}
+
+type Message struct {
+	ID             int       `json:"id"`
+	ConversationID int       `json:"conversation_id"`
+	SenderID       int       `json:"sender_id"`
+	Content        string    `json:"content"`
+	CreatedAt      time.Time `json:"created_at"`
+}
+
+type Follow struct {
+	ID          int       `json:"id"`
+	FollowerID  int       `json:"follower_id"`
+	FollowingID int       `json:"following_id"`
+	Status      string    `json:"status"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 type Follower struct {
@@ -82,4 +104,78 @@ type Follower struct {
 type PostDetail struct {
 	Post     *Post     `json:"post"`
 	Comments []Comment `json:"comments"`
+}
+
+type UserStatus struct {
+	UserID   int    `json:"user_id"`
+	Nickname string `json:"nickname"`
+	IsOnline bool   `json:"is_online"`
+}
+
+type Group struct {
+	ID             int       `json:"id"`
+	CreatorID      int       `json:"creator_id"`
+	Title          string    `json:"name"`
+	Description    string    `json:"description"`
+	ConversationID int       `json:"conversation_id"`
+	CreatedAt      time.Time `json:"created_at"`
+}
+
+type GroupMember struct {
+	ID       int       `json:"id"`
+	GroupID  int       `json:"group_id"`
+	UserID   int       `json:"user_id"`
+	Role     string    `json:"role"`
+	JoinedAt time.Time `json:"joined_at"`
+}
+
+type GroupInvitation struct {
+	ID        int       `json:"id"`
+	GroupID   int       `json:"group_id"`
+	InviterID int       `json:"inviter_id"`
+	InviteeID int       `json:"invitee_id"`
+	Status    string    `json:"status"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type GroupJoinRequest struct {
+	ID        int       `json:"id"`
+	GroupID   int       `json:"group_id"`
+	UserID    int       `json:"user_id"`
+	Status    string    `json:"status"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type GroupEvent struct {
+	ID          int       `json:"id"`
+	GroupID     int       `json:"group_id"`
+	CreatorID   int       `json:"creator_id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	StartsAt    time.Time `json:"starts_at"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
+type GroupEventRSVP struct {
+	ID        int       `json:"id"`
+	EventID   int       `json:"event_id"`
+	UserID    int       `json:"user_id"`
+	Response  string    `json:"response"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type Notification struct {
+	ID          int        `json:"id"`
+	RecipientID int        `json:"recipient_id"`
+	ActorID     *int       `json:"actor_id,omitempty"`
+	Type        string     `json:"type"`
+	Title       string     `json:"title"`
+	Body        string     `json:"body"`
+	EntityType  *string    `json:"entity_type,omitempty"`
+	EntityID    *int       `json:"entity_id,omitempty"`
+	ActionURL   *string    `json:"action_url,omitempty"`
+	Metadata    *string    `json:"metadata,omitempty"`
+	ReadAt      *time.Time `json:"read_at,omitempty"`
+	CreatedAt   time.Time  `json:"created_at"`
 }

@@ -1,0 +1,85 @@
+package service
+
+import (
+	"social-network/internal/domain"
+	"testing"
+	"time"
+)
+
+func TestFollowService_FollowUser_Success_PublicUser(t *testing.T) {
+	services := SetupTestServices(t)
+
+	user1ID := CreateTestUser(t, services, domain.RegisterRequest{
+		Email:       "follower@example.com",
+		Password:    "password123",
+		FirstName:   "John",
+		LastName:    "Follower",
+		DateOfBirth: time.Now().AddDate(-25, 0, 0),
+		Nickname:    "follower_user",
+		Gender:      "male",
+		IsPublic:    true,
+	})
+
+	user2ID := CreateTestUser(t, services, domain.RegisterRequest{
+		Email:       "public@example.com",
+		Password:    "password123",
+		FirstName:   "Jane",
+		LastName:    "Public",
+		DateOfBirth: time.Now().AddDate(-30, 0, 0),
+		Nickname:    "public_user",
+		Gender:      "female",
+		IsPublic:    true,
+	})
+
+	status, err := services.Follow.FollowUser(domain.FollowRequest{
+		FollowerID: user1ID,
+		FolloweeID: user2ID,
+	})
+
+	if err != nil {
+		t.Fatalf("Expected no error when following a public user, got: %v", err)
+	}
+
+	if status != "accepted" {
+		t.Errorf("Expected status 'accepted' for public user, got: %s", status)
+	}
+}
+
+func TestFollowService_FollowUser_Success_PrivateUser(t *testing.T) {
+	services := SetupTestServices(t)
+
+	user1ID := CreateTestUser(t, services, domain.RegisterRequest{
+		Email:       "follower2@example.com",
+		Password:    "password123",
+		FirstName:   "John",
+		LastName:    "Follower",
+		DateOfBirth: time.Now().AddDate(-25, 0, 0),
+		Nickname:    "follower_user2",
+		Gender:      "male",
+		IsPublic:    true,
+	})
+
+	user2ID := CreateTestUser(t, services, domain.RegisterRequest{
+		Email:       "private@example.com",
+		Password:    "password123",
+		FirstName:   "Jane",
+		LastName:    "Private",
+		DateOfBirth: time.Now().AddDate(-30, 0, 0),
+		Nickname:    "private_user",
+		Gender:      "female",
+		IsPublic:    false,
+	})
+
+	status, err := services.Follow.FollowUser(domain.FollowRequest{
+		FollowerID: user1ID,
+		FolloweeID: user2ID,
+	})
+
+	if err != nil {
+		t.Fatalf("Expected no error when following a private user, got: %v", err)
+	}
+
+	if status != "pending" {
+		t.Errorf("Expected status 'pending' for private user, got: %s", status)
+	}
+}

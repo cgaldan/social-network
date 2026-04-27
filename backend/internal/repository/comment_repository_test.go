@@ -2,6 +2,7 @@ package repository
 
 import (
 	"testing"
+	"time"
 )
 
 func TestCommentRepository_CreateComment(t *testing.T) {
@@ -10,8 +11,8 @@ func TestCommentRepository_CreateComment(t *testing.T) {
 	postRepo := repos.Post
 	userRepo := repos.User
 
-	userID, _ := userRepo.CreateUser("test@example.com", "hashedpass", "John", "Doe", 25, "testuser", "male", "", "", false)
-	postID, _ := postRepo.CreatePost(int(userID), "Test Post", "This is a test post content.", "General", "public", "")
+	userID, _ := userRepo.CreateUser("test@example.com", "hashedpass", "John", "Doe", time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC), "testuser", "male", "", "", false)
+	postID, _ := postRepo.CreatePost(int(userID), "Test Post", "This is a test post content.", "General", "public", "", 0)
 
 	commentID, err := commentRepo.CreateComment(int(userID), int(postID), "This is a test comment.", "")
 	if err != nil {
@@ -29,8 +30,8 @@ func TestCommentRepository_GetCommentsByPostID(t *testing.T) {
 	postRepo := repos.Post
 	userRepo := repos.User
 
-	userID, _ := userRepo.CreateUser("test@example.com", "hashedpass", "John", "Doe", 25, "testuser", "male", "", "", false)
-	postID, _ := postRepo.CreatePost(int(userID), "Test Post", "This is a test post content.", "General", "public", "")
+	userID, _ := userRepo.CreateUser("test@example.com", "hashedpass", "John", "Doe", time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC), "testuser", "male", "", "", false)
+	postID, _ := postRepo.CreatePost(int(userID), "Test Post", "This is a test post content.", "General", "public", "", 0)
 
 	commentRepo.CreateComment(int(userID), int(postID), "This is a test comment.", "")
 
@@ -50,8 +51,8 @@ func TestCommentRepository_GetCommentByID(t *testing.T) {
 	postRepo := repos.Post
 	userRepo := repos.User
 
-	userID, _ := userRepo.CreateUser("test@example.com", "hashedpass", "John", "Doe", 25, "testuser", "male", "", "", false)
-	postID, _ := postRepo.CreatePost(int(userID), "Test Post", "This is a test post content.", "General", "public", "")
+	userID, _ := userRepo.CreateUser("test@example.com", "hashedpass", "John", "Doe", time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC), "testuser", "male", "", "", false)
+	postID, _ := postRepo.CreatePost(int(userID), "Test Post", "This is a test post content.", "General", "public", "", 0)
 
 	commentID, err := commentRepo.CreateComment(int(userID), int(postID), "This is a test comment.", "")
 	if err != nil {
@@ -74,8 +75,8 @@ func TestCommentRepository_GetCommentsByUserID(t *testing.T) {
 	userRepo := repos.User
 	postRepo := repos.Post
 
-	userID, _ := userRepo.CreateUser("test@example.com", "hashedpass", "John", "Doe", 25, "testuser", "male", "", "", false)
-	postID, _ := postRepo.CreatePost(int(userID), "Test Post", "This is a test post content.", "General", "public", "")
+	userID, _ := userRepo.CreateUser("test@example.com", "hashedpass", "John", "Doe", time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC), "testuser", "male", "", "", false)
+	postID, _ := postRepo.CreatePost(int(userID), "Test Post", "This is a test post content.", "General", "public", "", 0)
 
 	for i := 0; i < 5; i++ {
 		commentRepo.CreateComment(int(userID), int(postID), "comment", "")

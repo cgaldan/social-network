@@ -6,17 +6,17 @@ import (
 	"social-network/internal/domain"
 )
 
-type FollowerRepository struct {
+type FollowRepository struct {
 	db *sql.DB
 }
 
-func NewFollowerRepository(db *sql.DB) *FollowerRepository {
-	return &FollowerRepository{db: db}
+func NewFollowRepository(db *sql.DB) *FollowRepository {
+	return &FollowRepository{db: db}
 }
 
-func (r *FollowerRepository) CreateFollower(followerID, followingID int, status string) (int64, error) {
+func (r *FollowRepository) CreateFollow(followerID, followingID int, status string) (int64, error) {
 	result, err := r.db.Exec(`
-		INSERT INTO followers (
+		INSERT INTO follows (
 			follower_id,
 			following_id,
 			status
@@ -34,8 +34,8 @@ func (r *FollowerRepository) CreateFollower(followerID, followingID int, status 
 	return result.LastInsertId()
 }
 
-func (r *FollowerRepository) GetFollowerByID(followerID int) (*domain.Follower, error) {
-	var follower domain.Follower
+func (r *FollowRepository) GetFollowByID(followerID int) (*domain.Follow, error) {
+	var follow domain.Follow
 	err := r.db.QueryRow(`
 		SELECT 
 			id,
@@ -43,27 +43,27 @@ func (r *FollowerRepository) GetFollowerByID(followerID int) (*domain.Follower, 
 			following_id,
 			status,
 			created_at
-		FROM followers 
+		FROM follows 
 		WHERE id = ?`, followerID,
 	).Scan(
-		&follower.ID,
-		&follower.FollowerID,
-		&follower.FollowingID,
-		&follower.Status,
-		&follower.CreatedAt,
+		&follow.ID,
+		&follow.FollowerID,
+		&follow.FollowingID,
+		&follow.Status,
+		&follow.CreatedAt,
 	)
 
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("follower not found")
+		return nil, fmt.Errorf("follow not found")
 	}
 	if err != nil {
-		return nil, fmt.Errorf("failed to get follower: %w", err)
+		return nil, fmt.Errorf("failed to get follow: %w", err)
 	}
 
-	return &follower, nil
+	return &follow, nil
 }
 
-func (r *FollowerRepository) GetFollowersByUserID(userID int, limit, offset int) ([]domain.Follower, error) {
+func (r *FollowRepository) GetFollowersByUserID(userID int, limit, offset int) ([]domain.Follow, error) {
 	rows, err := r.db.Query(`
 		SELECT 
 			id,
@@ -71,7 +71,7 @@ func (r *FollowerRepository) GetFollowersByUserID(userID int, limit, offset int)
 			following_id,
 			status,
 			created_at
-		FROM followers 
+		FROM follows 
 		WHERE following_id = ?
 		ORDER BY created_at DESC
 		LIMIT ? OFFSET ?`, userID, limit, offset)
@@ -81,9 +81,9 @@ func (r *FollowerRepository) GetFollowersByUserID(userID int, limit, offset int)
 	}
 	defer rows.Close()
 
-	var followers []domain.Follower
+	var followers []domain.Follow
 	for rows.Next() {
-		var follower domain.Follower
+		var follower domain.Follow
 		err := rows.Scan(
 			&follower.ID,
 			&follower.FollowerID,
@@ -104,7 +104,7 @@ func (r *FollowerRepository) GetFollowersByUserID(userID int, limit, offset int)
 	return followers, nil
 }
 
-func (r *FollowerRepository) GetFollowingByUserID(userID int, limit, offset int) ([]domain.Follower, error) {
+func (r *FollowRepository) GetFollowingByUserID(userID int, limit, offset int) ([]domain.Follow, error) {
 	rows, err := r.db.Query(`
 		SELECT 
 			id,
@@ -112,7 +112,7 @@ func (r *FollowerRepository) GetFollowingByUserID(userID int, limit, offset int)
 			following_id,
 			status,
 			created_at
-		FROM followers 
+		FROM follows 
 		WHERE follower_id = ?
 		ORDER BY created_at DESC
 		LIMIT ? OFFSET ?`, userID, limit, offset)
@@ -122,9 +122,9 @@ func (r *FollowerRepository) GetFollowingByUserID(userID int, limit, offset int)
 	}
 	defer rows.Close()
 
-	var following []domain.Follower
+	var following []domain.Follow
 	for rows.Next() {
-		var follower domain.Follower
+		var follower domain.Follow
 		err := rows.Scan(
 			&follower.ID,
 			&follower.FollowerID,
@@ -145,14 +145,14 @@ func (r *FollowerRepository) GetFollowingByUserID(userID int, limit, offset int)
 	return following, nil
 }
 
-func (r *FollowerRepository) UpdateFollowerStatus(followerID int, status string) error {
+func (r *FollowRepository) UpdateFollowStatus(followerID int, status string) error {
 	result, err := r.db.Exec(`
-		UPDATE followers
+		UPDATE follows
 		SET status = ?
 		WHERE id = ?`, status, followerID)
 
 	if err != nil {
-		return fmt.Errorf("failed to update follower status: %w", err)
+		return fmt.Errorf("failed to update follow status: %w", err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
@@ -161,19 +161,19 @@ func (r *FollowerRepository) UpdateFollowerStatus(followerID int, status string)
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf("follower not found")
+		return fmt.Errorf("follow not found")
 	}
 
 	return nil
 }
 
-func (r *FollowerRepository) DeleteFollower(followerID int) error {
+func (r *FollowRepository) DeleteFollow(followerID int) error {
 	result, err := r.db.Exec(`
-		DELETE FROM followers
+		DELETE FROM follows
 		WHERE id = ?`, followerID)
 
 	if err != nil {
-		return fmt.Errorf("failed to delete follower: %w", err)
+		return fmt.Errorf("failed to delete follow: %w", err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
@@ -182,16 +182,16 @@ func (r *FollowerRepository) DeleteFollower(followerID int) error {
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf("follower not found")
+		return fmt.Errorf("follow not found")
 	}
 
 	return nil
 }
 
-func (r *FollowerRepository) FollowExists(followerID, followingID int) (bool, error) {
+func (r *FollowRepository) FollowExists(followerID, followingID int) (bool, error) {
 	var id int
 	err := r.db.QueryRow(`
-		SELECT id FROM followers 
+		SELECT id FROM follows 
 		WHERE follower_id = ? AND following_id = ?`,
 		followerID, followingID,
 	).Scan(&id)
@@ -206,13 +206,15 @@ func (r *FollowerRepository) FollowExists(followerID, followingID int) (bool, er
 	return true, nil
 }
 
-func (r *FollowerRepository) GetFollowStatus(followerID, followingID int) (string, error) {
+func (r *FollowRepository) GetFollowStatusByFollowID(followID int) (string, error) {
 	var status string
 	err := r.db.QueryRow(`
-		SELECT status FROM followers 
-		WHERE follower_id = ? AND following_id = ?`,
-		followerID, followingID,
-	).Scan(&status)
+		SELECT status FROM follows 
+		WHERE id = ?`, followID).Scan(&status)
+
+	if err == sql.ErrNoRows {
+
+	}
 
 	if err == sql.ErrNoRows {
 		return "", fmt.Errorf("follow relationship not found")
@@ -222,4 +224,21 @@ func (r *FollowerRepository) GetFollowStatus(followerID, followingID int) (strin
 	}
 
 	return status, nil
+}
+
+func (r *FollowRepository) EitherUserFollows(userID1, userID2 int) (bool, error) {
+	var count int
+	err := r.db.QueryRow(`
+		SELECT COUNT(*) 
+		FROM follows 
+		WHERE (follower_id = ? AND following_id = ?) 
+		   OR (follower_id = ? AND following_id = ?)`,
+		userID1, userID2, userID2, userID1,
+	).Scan(&count)
+
+	if err != nil {
+		return false, fmt.Errorf("failed to check follow relationship: %w", err)
+	}
+
+	return count > 0, nil
 }

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"social-network/internal/domain"
+	"time"
 )
 
 type UserRepository struct {
@@ -14,7 +15,7 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 	return &UserRepository{db: db}
 }
 
-func (r *UserRepository) CreateUser(email, passwordHash, firstName, lastName string, dateOfBirth int, nickname, gender, avatar_path, aboutMe string, isPublic bool) (int64, error) {
+func (r *UserRepository) CreateUser(email, passwordHash, firstName, lastName string, dateOfBirth time.Time, nickname, gender, avatar_path, aboutMe string, isPublic bool) (int64, error) {
 	result, err := r.db.Exec(`
 		INSERT INTO users (
 			email,
@@ -154,4 +155,16 @@ func (r *UserRepository) GetUserByIdentifier(identifier string) (*domain.User, s
 func (r *UserRepository) UpdateLastSeen(userID int) error {
 	_, err := r.db.Exec("UPDATE users SET last_seen = CURRENT_TIMESTAMP WHERE id = ?", userID)
 	return err
+}
+
+func (r *UserRepository) GetUserPrivacyByUserID(userID int) (bool, error) {
+	var isPublic bool
+	err := r.db.QueryRow("SELECT is_public FROM users WHERE id = ?", userID).Scan(&isPublic)
+	if err == sql.ErrNoRows {
+		return false, fmt.Errorf("user not found")
+	}
+	if err != nil {
+		return false, fmt.Errorf("failed to get user privacy: %w", err)
+	}
+	return isPublic, nil
 }

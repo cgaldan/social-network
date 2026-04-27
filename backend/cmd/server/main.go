@@ -9,24 +9,34 @@ import (
 	"syscall"
 	"time"
 
+<<<<<<< HEAD
 	"social-network/internal/config"
 	"social-network/internal/database"
+=======
+	"social-network/internal/api/router"
+	"social-network/internal/config"
+	"social-network/internal/database"
+	"social-network/internal/repository"
+	"social-network/internal/service"
+	"social-network/internal/websocket"
+>>>>>>> feature/notifications
 	"social-network/packages/logger"
 )
 
 func main() {
 	appLogger := logger.NewLogger(os.Stdout, logger.InfoLevel)
+	appLogger.Info("Starting Social Network Application...")
 
 	config, err := config.LoadConfig()
 	if err != nil {
-		appLogger.Fatal("Failed to load config", "error", err)
+		appLogger.Fatal("Failed to load configuration", "error", err)
 	}
 
 	if err := config.Validate(); err != nil {
 		appLogger.Fatal("Invalid configuration", "error", err)
 	}
 
-	appLogger.Info("Configuration loaded succesfully", "environment", config.Environment)
+	appLogger.Info("Configuration loaded successfully", "environment", config.Environment)
 
 	db, err := database.NewDatabase(config.Database.Path)
 	if err != nil {
@@ -37,13 +47,25 @@ func main() {
 	appLogger.Info("Database initialized", "path", config.Database.Path)
 
 	if err := database.RunMigrations(db); err != nil {
-		appLogger.Fatal("Failed to run migrations", "error", err)
+		appLogger.Fatal("Failed to run database migrations", "error", err)
 	}
 
-	appLogger.Info("Migrations applied successfully")
+	appLogger.Info("Database migrations completed successfully")
+
+	repos := repository.NewRepositories(db)
+
+	hub := websocket.NewHub(appLogger, repos.User)
+	go hub.Run()
+
+	appLogger.Info("WebSocket hub initialized")
+
+	services := service.NewServices(repos, appLogger, hub)
+
+	router := router.NewRouter(services, config, hub, appLogger)
 
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%s", config.Server.Port),
+		Handler:      router,
 		ReadTimeout:  config.Server.ReadTimeout,
 		WriteTimeout: config.Server.WriteTimeout,
 		IdleTimeout:  config.Server.IdleTimeout,

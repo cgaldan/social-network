@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -9,9 +10,18 @@ type Config struct {
 	Server      ServerConfig
 	Database    DatabaseConfig
 	Session     SessionConfig
+	RateLimit   RateLimitConfig
+	CORS        CORSConfig
+	Websocket   WebSocketConfig
+	Frontend    FrontendConfig
 }
 
 func LoadConfig() (*Config, error) {
+	err := loadEnvFile(".env")
+	if err != nil {
+		return nil, fmt.Errorf("failed to load environment variables: %w", err)
+	}
+
 	cfg := &Config{
 		Environment: getEnv("ENVIRONMENT", "development"),
 		Server: ServerConfig{
@@ -25,6 +35,25 @@ func LoadConfig() (*Config, error) {
 		},
 		Session: SessionConfig{
 			Duration: getEnvDuration("SESSION_DURATION", 24*time.Hour),
+		},
+		RateLimit: RateLimitConfig{
+			RequestsPerMinute: getIntEnv("RATE_LIMIT_RPM", 100),
+			Enabled:           getBoolEnv("RATE_LIMIT_ENABLED", true),
+		},
+		CORS: CORSConfig{
+			AllowedOrigins: []string{getEnv("CORS_ALLOWED_ORIGINS", "*")},
+			AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+			AllowedHeaders: []string{"Content-Type", "Authorization"},
+		},
+		Websocket: WebSocketConfig{
+			ReadBufferSize:  getIntEnv("WS_READ_BUFFER_SIZE", 1024),
+			WriteBufferSize: getIntEnv("WS_WRITE_BUFFER_SIZE", 1024),
+			PingPeriod:      getEnvDuration("WS_PING_PERIOD", 54*time.Second),
+			PongWait:        getEnvDuration("WS_PONG_WAIT", 60*time.Second),
+			WriteWait:       getEnvDuration("WS_WRITE_WAIT", 10*time.Second),
+		},
+		Frontend: FrontendConfig{
+			Path: getEnv("FRONTEND_PATH", "./frontend"),
 		},
 	}
 
