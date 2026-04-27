@@ -4,6 +4,7 @@ import (
 	"io"
 	"social-network/internal/database"
 	"social-network/internal/domain"
+	"social-network/internal/event"
 	"social-network/internal/repository"
 	"social-network/packages/logger"
 	"testing"
@@ -41,11 +42,17 @@ func SetupTestServicesWithNotificationPusher(t *testing.T, pusher NotificationPu
 
 	repos := repository.NewRepositories(db)
 	testLogger := logger.NewLogger(io.Discard, logger.InfoLevel)
+	eventBus := event.NewInMemoryBus(testLogger)
 
-	return NewServices(repos, testLogger, pusher)
+	return NewServices(repos, eventBus, testLogger, pusher)
 }
 
 func SetupTestServices(t *testing.T) *Services {
+	services, _ := SetupTestServicesWithEventBus(t)
+	return services
+}
+
+func SetupTestServicesWithEventBus(t *testing.T) (*Services, event.EventBus) {
 	t.Helper()
 
 	db, err := database.NewDatabase(":memory:")
@@ -62,14 +69,10 @@ func SetupTestServices(t *testing.T) *Services {
 	})
 
 	repos := repository.NewRepositories(db)
-
 	testLogger := logger.NewLogger(io.Discard, logger.InfoLevel)
+	eventBus := event.NewInMemoryBus(testLogger)
 
-	// hub := websocket.NewHub(testLogger, repos.User)
-
-	services := NewServices(repos, testLogger)
-
-	return services
+	return NewServices(repos, eventBus, testLogger), eventBus
 }
 
 func CreateTestUser(t *testing.T, services *Services, req domain.RegisterRequest) int {

@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"social-network/internal/domain"
+	"social-network/internal/event"
 	"social-network/internal/repository"
 	"social-network/packages/logger"
 )
@@ -10,13 +11,15 @@ import (
 type FollowService struct {
 	followRepo repository.FollowRepositoryInterface
 	userRepo   repository.UserRepositoryInterface
+	eventBus   event.EventBus
 	logger     *logger.Logger
 }
 
-func NewFollowService(followRepo repository.FollowRepositoryInterface, userRepo repository.UserRepositoryInterface, logger *logger.Logger) *FollowService {
+func NewFollowService(followRepo repository.FollowRepositoryInterface, userRepo repository.UserRepositoryInterface, eventBus event.EventBus, logger *logger.Logger) *FollowService {
 	return &FollowService{
 		followRepo: followRepo,
 		userRepo:   userRepo,
+		eventBus:   eventBus,
 		logger:     logger,
 	}
 }
@@ -62,19 +65,48 @@ func (s *FollowService) FollowUser(followData domain.FollowRequest) (status stri
 				s.logger.Error("Failed to re-open declined follow relationship", "error", err, "followID", existingFollow.ID, "followerID", followData.FollowerID, "followingID", followData.FolloweeID)
 				return "", err
 			}
+			s.publishFollowRequestedIfPending(followData, existingFollow.ID)
 			return followData.Status, nil
 		default:
 			return "", errors.New("follow relationship is in an unknown state")
 		}
 	}
 
-	_, err = s.followRepo.CreateFollow(followData.FollowerID, followData.FolloweeID, followData.Status)
+	followID, err := s.followRepo.CreateFollow(followData.FollowerID, followData.FolloweeID, followData.Status)
 	if err != nil {
 		s.logger.Error("Failed to create follow relationship", "error", err, "followerID", followData.FollowerID, "followingID", followData.FolloweeID)
 		return "", err
 	}
 
+	s.publishFollowRequestedIfPending(followData, int(followID))
+
 	return followData.Status, nil
+}
+
+func (s *FollowService) publishFollowRequestedIfPending(followData domain.FollowRequest, followID int) {
+	if followData.Status != FollowStatusPending {
+		return
+	}
+	if s.eventBus == nil {
+		return
+	}
+
+	actorName := ""
+	actor, err := s.userRepo.GetUserByID(followData.FollowerID)
+	if err != nil {
+		s.logger.Error("Failed to get actor for follow requested event", "error", err, "followerID", followData.FollowerID)
+	} else if actor != nil {
+		actorName = displayUserName(actor)
+	}
+
+	if err := s.eventBus.Publish(event.NewFollowRequestedEvent(
+		followData.FollowerID,
+		followData.FolloweeID,
+		followID,
+		actorName,
+	)); err != nil {
+		s.logger.Error("Failed to publish follow requested event", "error", err, "followID", followID)
+	}
 }
 
 func (s *FollowService) AcceptFollowRequest(userID int, followRequest *domain.Follow) (err error) {

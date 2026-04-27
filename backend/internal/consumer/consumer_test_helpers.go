@@ -43,7 +43,7 @@ func setupNotificationConsumerTest(t *testing.T) (*service.Services, event.Event
 	eventBus := event.NewInMemoryBus(testLogger)
 	pusher := &fakeNotificationPusher{}
 	repos := repository.NewRepositories(db)
-	services := service.NewServices(repos, testLogger, pusher)
+	services := service.NewServices(repos, eventBus, testLogger, pusher)
 	consumers := NewConsumers(services.Notification, eventBus, testLogger)
 	if err := consumers.RegisterHandlers(); err != nil {
 		t.Fatalf("Failed to register notification handlers: %v", err)
@@ -54,6 +54,16 @@ func setupNotificationConsumerTest(t *testing.T) (*service.Services, event.Event
 
 func createNotificationConsumerUser(t *testing.T, services *service.Services, email, nickname string) int {
 	t.Helper()
+	return registerNotificationConsumerUser(t, services, email, nickname, true)
+}
+
+func createPrivateNotificationConsumerUser(t *testing.T, services *service.Services, email, nickname string) int {
+	t.Helper()
+	return registerNotificationConsumerUser(t, services, email, nickname, false)
+}
+
+func registerNotificationConsumerUser(t *testing.T, services *service.Services, email, nickname string, isPublic bool) int {
+	t.Helper()
 
 	user, _, err := services.Auth.Register(domain.RegisterRequest{
 		Email:       email,
@@ -63,7 +73,7 @@ func createNotificationConsumerUser(t *testing.T, services *service.Services, em
 		DateOfBirth: time.Now().AddDate(-25, 0, 0),
 		Nickname:    nickname,
 		Gender:      "other",
-		IsPublic:    true,
+		IsPublic:    isPublic,
 	})
 	if err != nil {
 		t.Fatalf("Failed to create user: %v", err)
