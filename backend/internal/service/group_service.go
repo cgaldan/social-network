@@ -475,7 +475,33 @@ func (s *GroupService) CreateGroupEvent(userID, groupID int, eventData domain.Cr
 		return nil, fmt.Errorf("failed to get group event by ID")
 	}
 
+	s.publishGroupEventCreated(groupID, int(eventID), userID, eventData.Title)
+
 	return event, nil
+}
+
+func (s *GroupService) publishGroupEventCreated(groupID, eventID, creatorID int, eventTitle string) {
+	if s.eventBus == nil {
+		return
+	}
+
+	members, err := s.groupRepo.GetMembersByGroupID(groupID)
+	if err != nil {
+		s.logger.Error("Failed to get group members for group event created event", "error", err, "groupID", groupID)
+		return
+	}
+
+	groupTitle := s.lookupGroupTitle(groupID)
+	actorName := s.lookupActorName(creatorID)
+
+	for _, member := range members {
+		if member.UserID == creatorID {
+			continue
+		}
+		if err := s.eventBus.Publish(event.NewGroupEventCreatedEvent(groupID, eventID, creatorID, member.UserID, groupTitle, eventTitle, actorName)); err != nil {
+			s.logger.Error("Failed to publish group event created event", "error", err, "eventID", eventID)
+		}
+	}
 }
 
 func (s *GroupService) ListGroupEvents(userID, groupID, limit, offset int) ([]domain.GroupEvent, error) {

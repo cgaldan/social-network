@@ -3,6 +3,7 @@ package consumer
 import (
 	"social-network/internal/domain"
 	"testing"
+	"time"
 )
 
 func TestSourceFlows_FollowRequestCreatesNotification(t *testing.T) {
@@ -189,5 +190,78 @@ func TestSourceFlows_GroupJoinRequestCreatesNotificationsForAllAdmins(t *testing
 	}
 	if !pushedRecipients[creatorID] || !pushedRecipients[coAdminID] {
 		t.Errorf("Expected pushes for creator (%d) and co-admin (%d), got %v", creatorID, coAdminID, pushedRecipients)
+	}
+}
+
+func TestSourceFlows_GroupEventCreatedCreatesNotificationForAllMembers(t *testing.T) {
+	services, _, pusher := setupNotificationConsumerTest(t)
+
+	creatorID := createNotificationConsumerUser(t, services, "event-creator@example.com", "eventcreator")
+	memberID := createNotificationConsumerUser(t, services, "event-member@example.com", "eventmember")
+	memberID2 := createNotificationConsumerUser(t, services, "event-member2@example.com", "eventmember2")
+	memberID3 := createNotificationConsumerUser(t, services, "event-member3@example.com", "eventmember3")
+
+	group, err := services.Group.CreateGroup(&domain.Group{
+		CreatorID:   creatorID,
+		Title:       "Open Group",
+		Description: "Anyone can request to join.",
+	})
+	if err != nil {
+		t.Fatalf("Failed to create group: %v", err)
+	}
+
+	if err := services.Group.AddMember(group.ConversationID, group.ID, memberID, "member"); err != nil {
+		t.Fatalf("Failed to add member: %v", err)
+	}
+	if err := services.Group.AddMember(group.ConversationID, group.ID, memberID2, "member"); err != nil {
+		t.Fatalf("Failed to add admin: %v", err)
+	}
+	if err := services.Group.AddMember(group.ConversationID, group.ID, memberID3, "member"); err != nil {
+		t.Fatalf("Failed to add member: %v", err)
+	}
+
+	event, err := services.Group.CreateGroupEvent(group.ID, creatorID, domain.CreateGroupEventRequest{
+		Title:       "Open Group Event",
+		Description: "Anyone can join this event.",
+		StartsAt:    time.Now().Add(24 * time.Hour),
+	})
+	if err != nil {
+		t.Fatalf("Failed to create group event: %v", err)
+	}
+
+	notifications, err := services.Notification.ListNotifications(memberID, 10, 0)
+	if err != nil {
+		t.Fatalf("Failed to list notifications: %v", err)
+	}
+	if len(notifications) != 1 {
+		t.Fatalf("Expected 1 notification, got %d", len(notifications))
+	}
+	notification := notifications[0]
+	if notification.Type != "group.event.created" {
+		t.Errorf("Expected notification type group.event.created, got %s", notification.Type)
+	}
+	if notification.RecipientID != memberID {
+		t.Errorf("Expected recipient ID %d, got %d", memberID, notification.RecipientID)
+	}
+	if notification.ActorID == nil || *notification.ActorID != creatorID {
+		t.Errorf("Expected actor ID %d, got %v", creatorID, notification.ActorID)
+	}
+	if notification.EntityType == nil || *notification.EntityType != "group_event" {
+		t.Errorf("Expected entity type group_event, got %v", notification.EntityType)
+	}
+	if notification.EntityID == nil || *notification.EntityID != event.ID {
+		t.Errorf("Expected entity ID %d, got %v", event.ID, notification.EntityID)
+	}
+	if len(pusher.calls) != 3 {
+		t.Fatalf("Expected 3 pusher calls, got %d", len(pusher.calls))
+	}
+	if pusher.calls[0].userID != memberID {
+		t.Errorf("Expected push user ID %d, got %d", memberID, pusher.calls[0].userID)
+	}
+	if pusher.calls[1].userID != memberID2 {
+		t.Errorf("Expected push user ID %d, got %d", memberID2, pusher.calls[1].userID)
+	}
+	if pusher.calls[2].userID != memberID3 {
+		t.Errorf("Expected push user ID %d, got %d", memberID3, pusher.calls[2].userID)
 	}
 }
