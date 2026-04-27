@@ -62,6 +62,39 @@ func (r *GroupRepository) GetGroupByID(groupID int) (*domain.Group, error) {
 	return group, nil
 }
 
+func (r *GroupRepository) ListGroups(limit, offset int) ([]domain.Group, error) {
+	rows, err := r.db.Query(`
+		SELECT id, creator_id, title, description, conversation_id, created_at
+		FROM groups
+		ORDER BY created_at DESC
+		LIMIT ? OFFSET ?`,
+		limit,
+		offset,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list groups: %w", err)
+	}
+	defer rows.Close()
+
+	groups := []domain.Group{}
+	for rows.Next() {
+		var group domain.Group
+		err := rows.Scan(
+			&group.ID,
+			&group.CreatorID,
+			&group.Title,
+			&group.Description,
+			&group.ConversationID,
+			&group.CreatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan group: %w", err)
+		}
+		groups = append(groups, group)
+	}
+	return groups, nil
+}
+
 func (r *GroupRepository) AddMember(groupID, userID int, role string) error {
 	_, err := r.db.Exec(`
 		INSERT INTO group_members (

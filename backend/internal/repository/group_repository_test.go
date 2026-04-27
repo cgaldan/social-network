@@ -233,6 +233,67 @@ func TestGroupRepository_CreateGroupInvitation(t *testing.T) {
 	}
 }
 
+func TestGroupRepository_ListGroups(t *testing.T) {
+	repos := SetupTestDB(t)
+	userRepo := repos.User
+	groupRepo := repos.Group
+	convRepo := repos.Conversation
+
+	userID, err := userRepo.CreateUser("test@example.com", "hashedpass", "John", "Doe", time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC), "testuser", "male", "", "", false)
+	if err != nil {
+		t.Fatalf("Failed to create user: %v", err)
+	}
+
+	titles := []string{"Group 1", "Group 2", "Group 3", "Group 4", "Group 5"}
+	for _, title := range titles {
+		conversation, err := convRepo.CreateGroupConversation(title, int(userID))
+		if err != nil {
+			t.Fatalf("Failed to create conversation: %v", err)
+		}
+		_, err = groupRepo.CreateGroup(&domain.Group{
+			CreatorID:      int(userID),
+			Title:          title,
+			Description:    "Test description",
+			ConversationID: conversation.ID,
+		})
+		if err != nil {
+			t.Fatalf("Failed to create group: %v", err)
+		}
+	}
+
+	groups, err := groupRepo.ListGroups(10, 0)
+	if err != nil {
+		t.Fatalf("Failed to list groups: %v", err)
+	}
+	if len(groups) != 5 {
+		t.Errorf("Expected 5 groups, got %d", len(groups))
+	}
+
+	groups, err = groupRepo.ListGroups(2, 0)
+	if err != nil {
+		t.Fatalf("Failed to list groups with limit: %v", err)
+	}
+	if len(groups) != 2 {
+		t.Errorf("Expected 2 groups with limit 2, got %d", len(groups))
+	}
+
+	groups, err = groupRepo.ListGroups(2, 2)
+	if err != nil {
+		t.Fatalf("Failed to list groups with offset: %v", err)
+	}
+	if len(groups) != 2 {
+		t.Errorf("Expected 2 groups with limit 2 offset 2, got %d", len(groups))
+	}
+
+	groups, err = groupRepo.ListGroups(10, 5)
+	if err != nil {
+		t.Fatalf("Failed to list groups with offset past end: %v", err)
+	}
+	if len(groups) != 0 {
+		t.Errorf("Expected 0 groups with offset 5, got %d", len(groups))
+	}
+}
+
 func TestGroupRepository_CreateGroupJoinRequest(t *testing.T) {
 	repos := SetupTestDB(t)
 	userRepo := repos.User

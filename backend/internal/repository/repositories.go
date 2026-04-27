@@ -90,6 +90,7 @@ type MessageRepositoryInterface interface {
 type GroupRepositoryInterface interface {
 	CreateGroup(group *domain.Group) (int64, error)
 	GetGroupByID(groupID int) (*domain.Group, error)
+	ListGroups(limit, offset int) ([]domain.Group, error)
 
 	AddMember(groupID, userID int, role string) error
 	RemoveMember(groupID, userID int) error

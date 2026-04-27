@@ -50,6 +50,28 @@ func (s *GroupService) CreateGroup(group *domain.Group) (*domain.Group, error) {
 	return group, nil
 }
 
+func (s *GroupService) ListGroups(limit, offset int) ([]domain.Group, error) {
+	limit, offset = s.validateLimitAndOffset(limit, offset)
+
+	groups, err := s.groupRepo.ListGroups(limit, offset)
+	if err != nil {
+		s.logger.Error("Failed to list groups", "error", err, "limit", limit, "offset", offset)
+		return nil, fmt.Errorf("failed to list groups")
+	}
+
+	return groups, nil
+}
+
+func (s *GroupService) validateLimitAndOffset(limit, offset int) (int, int) {
+	if limit <= 0 || limit > 100 {
+		limit = 20
+	}
+	if offset < 0 {
+		offset = 0
+	}
+	return limit, offset
+}
+
 func (s *GroupService) GetMembersByGroupID(groupID int) ([]domain.GroupMember, error) {
 	return s.groupRepo.GetMembersByGroupID(groupID)
 }

@@ -49,6 +49,7 @@ func NewRouter(services *service.Services, config *config.Config, hub *websocket
 	api.HandleFunc("/messages", messageHandler.SendMessage).Methods("POST")
 
 	// Group routes
+	api.HandleFunc("/groups", groupHandler.ListGroups).Methods("GET")
 	api.HandleFunc("/groups", groupHandler.CreateGroup).Methods("POST")
 	api.HandleFunc("/groups/join", groupHandler.JoinGroup).Methods("POST")
 	api.HandleFunc("/groups/join/{id}/accept", groupHandler.AcceptGroupJoinRequest).Methods("POST")

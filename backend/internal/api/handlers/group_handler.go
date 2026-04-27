@@ -70,6 +70,52 @@ func (h *GroupHandler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h *GroupHandler) ListGroups(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	token := r.Header.Get("Authorization")
+	if _, err := h.authService.ValidateSession(token); err != nil {
+		json.NewEncoder(w).Encode(domain.GroupsResponse{
+			Success: false,
+			Message: "Unauthorized",
+		})
+		return
+	}
+
+	limitStr := r.URL.Query().Get("limit")
+	offsetStr := r.URL.Query().Get("offset")
+
+	limit := 20
+	if limitStr != "" {
+		if limitNum, err := strconv.Atoi(limitStr); err == nil && limitNum > 0 && limitNum <= 100 {
+			limit = limitNum
+		}
+	}
+
+	offset := 0
+	if offsetStr != "" {
+		if offsetNum, err := strconv.Atoi(offsetStr); err == nil && offsetNum >= 0 {
+			offset = offsetNum
+		}
+	}
+
+	groups, err := h.groupService.ListGroups(limit, offset)
+	if err != nil {
+		h.logger.Error("Failed to list groups", "error", err)
+		json.NewEncoder(w).Encode(domain.GroupsResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	json.NewEncoder(w).Encode(domain.GroupsResponse{
+		Success: true,
+		Message: "Groups retrieved successfully",
+		Groups:  groups,
+	})
+}
+
 func (h *GroupHandler) InviteToGroup(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 

@@ -79,6 +79,7 @@ type ConversationServiceInterface interface {
 
 type GroupServiceInterface interface {
 	CreateGroup(group *domain.Group) (*domain.Group, error)
+	ListGroups(limit, offset int) ([]domain.Group, error)
 	GetMembersByGroupID(groupID int) ([]domain.GroupMember, error)
 	AddMember(convID, groupID, userID int, role string) error
 	RemoveMember(convID, groupID, userID int) error

@@ -110,6 +110,73 @@ func TestGroupService_CreateGroup(t *testing.T) {
 	}
 }
 
+func TestGroupService_ListGroups(t *testing.T) {
+	services := SetupTestServices(t)
+
+	userID := CreateTestUser(t, services, domain.RegisterRequest{
+		Email:       "test@example.com",
+		Password:    "password123",
+		FirstName:   "John",
+		LastName:    "Doe",
+		DateOfBirth: time.Now().AddDate(-25, 0, 0),
+		Nickname:    "testuser",
+		Gender:      "male",
+		IsPublic:    true,
+	})
+
+	titles := []string{"Group 1", "Group 2", "Group 3", "Group 4", "Group 5"}
+	for _, title := range titles {
+		_, err := services.Group.CreateGroup(&domain.Group{
+			CreatorID:   userID,
+			Title:       title,
+			Description: "Test description",
+		})
+		if err != nil {
+			t.Fatalf("Failed to create group: %v", err)
+		}
+	}
+
+	t.Run("list all groups", func(t *testing.T) {
+		groups, err := services.Group.ListGroups(10, 0)
+		if err != nil {
+			t.Fatalf("Failed to list groups: %v", err)
+		}
+		if len(groups) != 5 {
+			t.Errorf("Expected 5 groups, got %d", len(groups))
+		}
+	})
+
+	t.Run("list groups with limit", func(t *testing.T) {
+		groups, err := services.Group.ListGroups(2, 0)
+		if err != nil {
+			t.Fatalf("Failed to list groups with limit: %v", err)
+		}
+		if len(groups) != 2 {
+			t.Errorf("Expected 2 groups with limit 2, got %d", len(groups))
+		}
+	})
+
+	t.Run("list groups with offset", func(t *testing.T) {
+		groups, err := services.Group.ListGroups(2, 2)
+		if err != nil {
+			t.Fatalf("Failed to list groups with offset: %v", err)
+		}
+		if len(groups) != 2 {
+			t.Errorf("Expected 2 groups with limit 2 offset 2, got %d", len(groups))
+		}
+	})
+
+	t.Run("list groups with invalid limit defaults", func(t *testing.T) {
+		groups, err := services.Group.ListGroups(0, -1)
+		if err != nil {
+			t.Fatalf("Failed to list groups with invalid pagination: %v", err)
+		}
+		if len(groups) != 5 {
+			t.Errorf("Expected 5 groups with defaulted pagination, got %d", len(groups))
+		}
+	})
+}
+
 func TestGroupService_CreateGroupInvitation(t *testing.T) {
 	services := SetupTestServices(t)
 
