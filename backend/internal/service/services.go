@@ -100,4 +100,5 @@ type GroupServiceInterface interface {
 
 	CreateGroupEvent(userID, groupID int, eventData domain.CreateGroupEventRequest) (*domain.GroupEvent, error)
 	ListGroupEvents(userID, groupID, limit, offset int) ([]domain.GroupEvent, error)
+	SetGroupEventRSVP(userID, groupID, eventID int, response string) (*domain.GroupEventRSVP, error)
 }

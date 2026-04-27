@@ -417,7 +417,7 @@ func TestGroupService_CreateGroupJoinRequest(t *testing.T) {
 	}
 }
 
-func TestGroupService_CreateGroupEvent(t *testing.T) {
+func TestGroupService_CreateGroupEventAndRSVP(t *testing.T) {
 	services := SetupTestServices(t)
 
 	creatorID := CreateTestUser(t, services, domain.RegisterRequest{
@@ -483,6 +483,38 @@ func TestGroupService_CreateGroupEvent(t *testing.T) {
 		})
 		if err == nil {
 			t.Error("Expected error when non-member creates group event")
+		}
+	})
+
+	t.Run("member sets and changes rsvp", func(t *testing.T) {
+		rsvp, err := services.Group.SetGroupEventRSVP(creatorID, group.ID, event.ID, "going")
+		if err != nil {
+			t.Fatalf("Failed to set group event rsvp: %v", err)
+		}
+		if rsvp.Response != "going" {
+			t.Errorf("Expected response going, got %q", rsvp.Response)
+		}
+
+		rsvp, err = services.Group.SetGroupEventRSVP(creatorID, group.ID, event.ID, "not_going")
+		if err != nil {
+			t.Fatalf("Failed to update group event rsvp: %v", err)
+		}
+		if rsvp.Response != "not_going" {
+			t.Errorf("Expected response not_going, got %q", rsvp.Response)
+		}
+	})
+
+	t.Run("non-member cannot rsvp", func(t *testing.T) {
+		_, err := services.Group.SetGroupEventRSVP(outsiderID, group.ID, event.ID, "going")
+		if err == nil {
+			t.Error("Expected error when non-member responds to group event")
+		}
+	})
+
+	t.Run("invalid rsvp response fails", func(t *testing.T) {
+		_, err := services.Group.SetGroupEventRSVP(creatorID, group.ID, event.ID, "maybe")
+		if err == nil {
+			t.Error("Expected error for invalid rsvp response")
 		}
 	})
 }
