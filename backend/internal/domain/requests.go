@@ -39,6 +39,16 @@ type FollowRequest struct {
 	Status     string `json:"status"`
 }
 
+type UnfollowRequest struct {
+	FollowerID int `json:"follower_id"`
+	FolloweeID int `json:"followee_id"`
+}
+
+type RemoveFollowerRequest struct {
+	FolloweeID int `json:"followee_id"`
+	FollowerID int `json:"follower_id"`
+}
+
 type DirectConversationRequest struct {
 	SenderID   int `json:"sender_id"`
 	ReceiverID int `json:"receiver_id"`
