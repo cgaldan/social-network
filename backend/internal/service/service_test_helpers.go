@@ -11,6 +11,40 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type fakeNotificationPusher struct {
+	called       bool
+	userID       int
+	notification *domain.Notification
+}
+
+func (p *fakeNotificationPusher) PushNotification(userID int, notification *domain.Notification) {
+	p.called = true
+	p.userID = userID
+	p.notification = notification
+}
+
+func SetupTestServicesWithNotificationPusher(t *testing.T, pusher NotificationPusher) *Services {
+	t.Helper()
+
+	db, err := database.NewDatabase(":memory:")
+	if err != nil {
+		t.Fatalf("Failed to connect to test database: %v", err)
+	}
+
+	if err := database.RunMigrations(db); err != nil {
+		t.Fatalf("Failed to run migrations: %v", err)
+	}
+
+	t.Cleanup(func() {
+		db.Close()
+	})
+
+	repos := repository.NewRepositories(db)
+	testLogger := logger.NewLogger(io.Discard, logger.InfoLevel)
+
+	return NewServices(repos, testLogger, pusher)
+}
+
 func SetupTestServices(t *testing.T) *Services {
 	t.Helper()
 

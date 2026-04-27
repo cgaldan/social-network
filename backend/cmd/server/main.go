@@ -54,7 +54,7 @@ func main() {
 
 	appLogger.Info("WebSocket hub initialized")
 
-	services := service.NewServices(repos, appLogger)
+	services := service.NewServices(repos, appLogger, hub)
 
 	router := router.NewRouter(services, config, hub, appLogger)
 

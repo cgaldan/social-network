@@ -9,12 +9,18 @@ import (
 
 type NotificationService struct {
 	notificationRepo repository.NotificationRepositoryInterface
+	pusher           NotificationPusher
 	logger           *logger.Logger
 }
 
-func NewNotificationService(notificationRepo repository.NotificationRepositoryInterface, logger *logger.Logger) *NotificationService {
+type NotificationPusher interface {
+	PushNotification(userID int, notification *domain.Notification)
+}
+
+func NewNotificationService(notificationRepo repository.NotificationRepositoryInterface, logger *logger.Logger, pusher NotificationPusher) *NotificationService {
 	return &NotificationService{
 		notificationRepo: notificationRepo,
+		pusher:           pusher,
 		logger:           logger,
 	}
 }
@@ -34,6 +40,10 @@ func (s *NotificationService) CreateNotification(input domain.CreateNotification
 	if err != nil {
 		s.logger.Error("Failed to create notification", "error", err, "recipientID", input.RecipientID)
 		return nil, fmt.Errorf("failed to create notification")
+	}
+
+	if s.pusher != nil {
+		s.pusher.PushNotification(notification.RecipientID, notification)
 	}
 
 	return notification, nil

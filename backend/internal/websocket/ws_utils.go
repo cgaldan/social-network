@@ -9,6 +9,39 @@ func (hub *Hub) RegisterClientToHub(client *Client) {
 	hub.register <- client
 }
 
+func (hub *Hub) PushNotification(userID int, notification *domain.Notification) {
+	message := WsMessage{
+		Type: "notification.created",
+		Payload: map[string]any{
+			"notification": notification,
+		},
+	}
+
+	data, err := json.Marshal(message)
+	if err != nil {
+		hub.logger.Error("Failed to marshal notification message", "error", err, "userID", userID)
+		return
+	}
+
+	hub.mu.RLock()
+	client, ok := hub.clients[userID]
+	hub.mu.RUnlock()
+	if !ok {
+		return
+	}
+
+	select {
+	case client.Send <- data:
+	default:
+		hub.mu.Lock()
+		if current, ok := hub.clients[userID]; ok && current == client {
+			close(client.Send)
+			delete(hub.clients, userID)
+		}
+		hub.mu.Unlock()
+	}
+}
+
 func (hub *Hub) broadcastUserStatus(userID int, online bool) {
 	user, err := hub.userRepo.GetUserByID(userID)
 	if err != nil {
