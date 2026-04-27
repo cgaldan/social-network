@@ -11,6 +11,13 @@
 # Test binary, built with `go test -c`
 *.test
 
+# Next.js build output
+.next/
+out/
+
+# Logs
+*.log
+
 # Code coverage profiles and other test artifacts
 *.out
 coverage.*
@@ -26,6 +33,7 @@ go.work.sum
 
 # env file
 .env
+.env.local
 
 # Modules
 node_modules/
