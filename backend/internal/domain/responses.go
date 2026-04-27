@@ -78,3 +78,15 @@ type GroupJoinRequestResponse struct {
 	Message string            `json:"message,omitempty"`
 	Request *GroupJoinRequest `json:"request,omitempty"`
 }
+
+type GroupEventResponse struct {
+	Success bool        `json:"success"`
+	Message string      `json:"message,omitempty"`
+	Event   *GroupEvent `json:"event,omitempty"`
+}
+
+type GroupEventsResponse struct {
+	Success bool         `json:"success"`
+	Message string       `json:"message,omitempty"`
+	Events  []GroupEvent `json:"events,omitempty"`
+}
