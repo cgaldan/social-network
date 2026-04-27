@@ -24,7 +24,7 @@ func NewFollowService(followRepo repository.FollowRepositoryInterface, userRepo 
 const (
 	FollowStatusPending  = "pending"
 	FollowStatusAccepted = "accepted"
-	FollowStatusRejected = "rejected"
+	FollowStatusRejected = "declined"
 )
 
 func (s *FollowService) FollowUser(followData domain.FollowRequest) (status string, err error) {
@@ -104,4 +104,8 @@ func (s *FollowService) DeclineFollowRequest(userID int, followRequest *domain.F
 		return err
 	}
 	return nil
+}
+
+func (s *FollowService) GetFollowByID(followID int) (*domain.Follow, error) {
+	return s.followRepo.GetFollowByID(followID)
 }
