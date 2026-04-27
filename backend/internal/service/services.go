@@ -19,9 +19,9 @@ type Services struct {
 
 func NewServices(repos *repository.Repositories, logger *logger.Logger) *Services {
 	authService := NewAuthService(repos.User, repos.Session, logger)
-	contentService := NewContentService(repos.Post, logger)
-	postService := NewPostService(repos.Post, logger)
-	commentService := NewCommentService(repos.Comment, repos.Post, logger)
+	contentService := NewContentService(repos.Post, repos.Group, logger)
+	postService := NewPostService(repos.Post, repos.Group, logger)
+	commentService := NewCommentService(repos.Comment, repos.Post, repos.Group, logger)
 	followService := NewFollowService(repos.Follow, repos.User, logger)
 	messageService := NewMessageService(repos.Message, repos.User, repos.Conversation, logger)
 	conversationService := NewConversationService(repos.Conversation, repos.Follow, logger)
@@ -48,17 +48,19 @@ type AuthServiceInterface interface {
 
 type ContentServiceInterface interface {
 	CreatePost(userID int, postData domain.CreatePostRequest) (*domain.Post, error)
+	CreateGroupPost(userID, groupID int, postData domain.CreatePostRequest) (*domain.Post, error)
 }
 
 type PostServiceInterface interface {
-	GetPostByID(postID int) (*domain.Post, error)
+	GetPostByID(userID, postID int) (*domain.Post, error)
 	ListPosts(category string, limit, offset int) ([]domain.Post, error)
+	ListPostsByGroupID(userID, groupID, limit, offset int) ([]domain.Post, error)
 	GetPostsByUserID(userID int, limit, offset int) ([]domain.Post, error)
 }
 
 type CommentServiceInterface interface {
 	CreateComment(userID int, postID int, commentData domain.CreateCommentRequest) (*domain.Comment, error)
-	GetCommentsByPostID(postID int) ([]domain.Comment, error)
+	GetCommentsByPostID(userID, postID int) ([]domain.Comment, error)
 	GetCommentsByUserID(userID, limit, offset int) ([]domain.Comment, error)
 }
 

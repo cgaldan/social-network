@@ -9,21 +9,41 @@ import (
 )
 
 type ContentService struct {
-	postRepo repository.PostRepositoryInterface
-	logger   *logger.Logger
+	postRepo  repository.PostRepositoryInterface
+	groupRepo repository.GroupRepositoryInterface
+	logger    *logger.Logger
 }
 
 func NewContentService(
 	postRepo repository.PostRepositoryInterface,
+	groupRepo repository.GroupRepositoryInterface,
 	logger *logger.Logger,
 ) *ContentService {
 	return &ContentService{
-		postRepo: postRepo,
-		logger:   logger,
+		postRepo:  postRepo,
+		groupRepo: groupRepo,
+		logger:    logger,
 	}
 }
 
 func (s *ContentService) CreatePost(userID int, postData domain.CreatePostRequest) (*domain.Post, error) {
+	return s.createPost(userID, 0, postData)
+}
+
+func (s *ContentService) CreateGroupPost(userID, groupID int, postData domain.CreatePostRequest) (*domain.Post, error) {
+	isMember, err := s.groupRepo.IsUserInGroup(groupID, userID)
+	if err != nil {
+		s.logger.Error("Failed to check group membership", "error", err, "groupID", groupID, "userID", userID)
+		return nil, fmt.Errorf("failed to create post")
+	}
+	if !isMember {
+		return nil, fmt.Errorf("user is not a member of this group")
+	}
+
+	return s.createPost(userID, groupID, postData)
+}
+
+func (s *ContentService) createPost(userID, groupID int, postData domain.CreatePostRequest) (*domain.Post, error) {
 	if postData.PrivacyLevel == "" {
 		postData.PrivacyLevel = "public"
 	}
@@ -32,7 +52,7 @@ func (s *ContentService) CreatePost(userID int, postData domain.CreatePostReques
 		return nil, err
 	}
 
-	postID, err := s.postRepo.CreatePost(userID, postData.Title, postData.Content, postData.Category, postData.PrivacyLevel, postData.MediaURL)
+	postID, err := s.postRepo.CreatePost(userID, postData.Title, postData.Content, postData.Category, postData.PrivacyLevel, postData.MediaURL, groupID)
 	if err != nil {
 		s.logger.Error("Failed to create post", "error", err)
 		return nil, fmt.Errorf("failed to create post")
@@ -44,7 +64,7 @@ func (s *ContentService) CreatePost(userID int, postData domain.CreatePostReques
 		return nil, fmt.Errorf("failed to retrieve created post")
 	}
 
-	s.logger.Info("Post created successfully", "postID", postID, "userID", userID)
+	s.logger.Info("Post created successfully", "postID", postID, "userID", userID, "groupID", groupID)
 	return post, nil
 }
 
