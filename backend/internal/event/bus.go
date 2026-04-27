@@ -1,6 +1,7 @@
 package event
 
 import (
+	"fmt"
 	"sync"
 
 	"social-network/packages/logger"
@@ -11,7 +12,6 @@ type EventHandler func(Event) error
 type EventBus interface {
 	Publish(event Event) error
 	Subscribe(eventType EventType, handler EventHandler) error
-	Unsubscribe(eventType EventType, handler EventHandler) error
 }
 
 type InMemoryBus struct {
@@ -30,6 +30,7 @@ func NewInMemoryBus(logger *logger.Logger) *InMemoryBus {
 func (bus *InMemoryBus) Publish(event Event) error {
 	bus.mu.RLock()
 	handlers, exists := bus.handlers[event.Type()]
+	handlers = append([]EventHandler(nil), handlers...)
 	bus.mu.RUnlock()
 
 	if !exists {
@@ -38,11 +39,10 @@ func (bus *InMemoryBus) Publish(event Event) error {
 	}
 
 	for _, handler := range handlers {
-		go func(h EventHandler, e Event) {
-			if err := h(e); err != nil {
-				bus.logger.Error("Error handling event", "eventType", e.Type(), "error", err)
-			}
-		}(handler, event)
+		if err := handler(event); err != nil {
+			bus.logger.Error("Error handling event", "eventType", event.Type(), "error", err)
+			return fmt.Errorf("failed to handle event %s: %w", event.Type(), err)
+		}
 	}
 
 	return nil
