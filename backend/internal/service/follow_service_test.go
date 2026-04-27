@@ -83,3 +83,77 @@ func TestFollowService_FollowUser_Success_PrivateUser(t *testing.T) {
 		t.Errorf("Expected status 'pending' for private user, got: %s", status)
 	}
 }
+
+func TestFollowService_FollowUser_ReopensDeclinedRequest(t *testing.T) {
+	services := SetupTestServices(t)
+
+	followService := services.Follow.(*FollowService)
+
+	user1ID := CreateTestUser(t, services, domain.RegisterRequest{
+		Email:       "follower3@example.com",
+		Password:    "password123",
+		FirstName:   "John",
+		LastName:    "Follower",
+		DateOfBirth: time.Now().AddDate(-25, 0, 0),
+		Nickname:    "follower_user3",
+		Gender:      "male",
+		IsPublic:    true,
+	})
+
+	user2ID := CreateTestUser(t, services, domain.RegisterRequest{
+		Email:       "private2@example.com",
+		Password:    "password123",
+		FirstName:   "Jane",
+		LastName:    "Private",
+		DateOfBirth: time.Now().AddDate(-30, 0, 0),
+		Nickname:    "private_user2",
+		Gender:      "female",
+		IsPublic:    false,
+	})
+
+	_, err := services.Follow.FollowUser(domain.FollowRequest{
+		FollowerID: user1ID,
+		FolloweeID: user2ID,
+	})
+	if err != nil {
+		t.Fatalf("Expected initial follow request to succeed, got: %v", err)
+	}
+
+	existingFollow, err := followService.followRepo.GetFollowByUsers(user1ID, user2ID)
+	if err != nil {
+		t.Fatalf("Failed to get follow relationship after initial request: %v", err)
+	}
+	if existingFollow == nil {
+		t.Fatal("Expected follow relationship to exist after initial request")
+	}
+
+	err = followService.followRepo.UpdateFollowStatus(existingFollow.ID, FollowStatusRejected)
+	if err != nil {
+		t.Fatalf("Failed to decline follow relationship for setup: %v", err)
+	}
+
+	status, err := services.Follow.FollowUser(domain.FollowRequest{
+		FollowerID: user1ID,
+		FolloweeID: user2ID,
+	})
+	if err != nil {
+		t.Fatalf("Expected re-follow after declined request to succeed, got: %v", err)
+	}
+	if status != FollowStatusPending {
+		t.Fatalf("Expected re-follow status to be pending, got: %s", status)
+	}
+
+	updatedFollow, err := followService.followRepo.GetFollowByUsers(user1ID, user2ID)
+	if err != nil {
+		t.Fatalf("Failed to get follow relationship after re-follow: %v", err)
+	}
+	if updatedFollow == nil {
+		t.Fatal("Expected follow relationship to exist after re-follow")
+	}
+	if updatedFollow.ID != existingFollow.ID {
+		t.Fatalf("Expected same follow row to be reused, old=%d new=%d", existingFollow.ID, updatedFollow.ID)
+	}
+	if updatedFollow.Status != FollowStatusPending {
+		t.Fatalf("Expected reused follow row status to be pending, got: %s", updatedFollow.Status)
+	}
+}

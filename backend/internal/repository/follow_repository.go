@@ -28,7 +28,7 @@ func (r *FollowRepository) CreateFollow(followerID, followingID int, status stri
 	)
 
 	if err != nil {
-		return 0, fmt.Errorf("failed to create follower: %w", err)
+		return 0, fmt.Errorf("failed to create follow: %w", err)
 	}
 
 	return result.LastInsertId()
@@ -58,6 +58,36 @@ func (r *FollowRepository) GetFollowByID(followID int) (*domain.Follow, error) {
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get follow: %w", err)
+	}
+
+	return &follow, nil
+}
+
+func (r *FollowRepository) GetFollowByUsers(followerID, followingID int) (*domain.Follow, error) {
+	var follow domain.Follow
+	err := r.db.QueryRow(`
+		SELECT
+			id,
+			follower_id,
+			following_id,
+			status,
+			created_at
+		FROM follows
+		WHERE follower_id = ? AND following_id = ?`,
+		followerID,
+		followingID,
+	).Scan(
+		&follow.ID,
+		&follow.FollowerID,
+		&follow.FollowingID,
+		&follow.Status,
+		&follow.CreatedAt,
+	)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get follow by users: %w", err)
 	}
 
 	return &follow, nil
@@ -186,47 +216,6 @@ func (r *FollowRepository) DeleteFollow(followID int) error {
 	}
 
 	return nil
-}
-
-func (r *FollowRepository) PendingFollowRequestExists(followerID, followingID int) (bool, error) {
-	var id int
-	err := r.db.QueryRow(`
-		SELECT id FROM follows 
-		WHERE follower_id = ? 
-		AND following_id = ? 
-		AND status = 'pending'`,
-		followerID, followingID,
-	).Scan(&id)
-
-	if err == sql.ErrNoRows {
-		return false, nil
-	}
-	if err != nil {
-		return false, fmt.Errorf("failed to check if pending follow request exists: %w", err)
-	}
-
-	return true, nil
-}
-
-func (r *FollowRepository) AcceptedFollowRequestExists(followerID, followingID int) (bool, error) {
-
-	var id int
-	err := r.db.QueryRow(`
-		SELECT id FROM follows 
-		WHERE follower_id = ? 
-		AND following_id = ? 
-		AND status = 'accepted'`,
-		followerID, followingID,
-	).Scan(&id)
-
-	if err == sql.ErrNoRows {
-		return false, nil
-	}
-	if err != nil {
-		return false, fmt.Errorf("failed to check if accepted follow request exists: %w", err)
-	}
-
-	return true, nil
 }
 
 func (r *FollowRepository) GetFollowStatusByFollowID(followID int) (string, error) {

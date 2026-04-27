@@ -32,15 +32,6 @@ func (s *FollowService) FollowUser(followData domain.FollowRequest) (status stri
 		return "", errors.New("invalid follower or followee ID")
 	}
 
-	exists, err := s.followRepo.AcceptedFollowRequestExists(followData.FollowerID, followData.FolloweeID)
-	if err != nil {
-		s.logger.Error("Failed to check if accepted follow request exists", "error", err, "followerID", followData.FollowerID, "followingID", followData.FolloweeID)
-		return "", err
-	}
-	if exists {
-		return "", errors.New("you are already following this user")
-	}
-
 	isPublic, err := s.userRepo.GetUserPrivacyByUserID(followData.FolloweeID)
 	if err != nil {
 		s.logger.Error("Failed to get user privacy settings", "error", err, "userID", followData.FolloweeID)
@@ -50,15 +41,30 @@ func (s *FollowService) FollowUser(followData domain.FollowRequest) (status stri
 	if isPublic {
 		followData.Status = FollowStatusAccepted
 	} else {
-		exists, err = s.followRepo.PendingFollowRequestExists(followData.FollowerID, followData.FolloweeID)
-		if err != nil {
-			s.logger.Error("Failed to check if follow request exists", "error", err, "followerID", followData.FollowerID, "followingID", followData.FolloweeID)
-			return "", err
-		}
-		if !exists {
-			followData.Status = FollowStatusPending
-		} else {
+		followData.Status = FollowStatusPending
+	}
+
+	existingFollow, err := s.followRepo.GetFollowByUsers(followData.FollowerID, followData.FolloweeID)
+	if err != nil {
+		s.logger.Error("Failed to get existing follow relationship", "error", err, "followerID", followData.FollowerID, "followingID", followData.FolloweeID)
+		return "", err
+	}
+
+	if existingFollow != nil {
+		switch existingFollow.Status {
+		case FollowStatusAccepted:
+			return "", errors.New("you are already following this user")
+		case FollowStatusPending:
 			return "", errors.New("there is already a pending follow request for this user")
+		case FollowStatusRejected:
+			err = s.followRepo.UpdateFollowStatus(existingFollow.ID, followData.Status)
+			if err != nil {
+				s.logger.Error("Failed to re-open declined follow relationship", "error", err, "followID", existingFollow.ID, "followerID", followData.FollowerID, "followingID", followData.FolloweeID)
+				return "", err
+			}
+			return followData.Status, nil
+		default:
+			return "", errors.New("follow relationship is in an unknown state")
 		}
 	}
 
