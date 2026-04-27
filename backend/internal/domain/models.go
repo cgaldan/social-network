@@ -147,3 +147,12 @@ type GroupEvent struct {
 	StartsAt    time.Time `json:"starts_at"`
 	CreatedAt   time.Time `json:"created_at"`
 }
+
+type GroupEventRSVP struct {
+	ID        int       `json:"id"`
+	EventID   int       `json:"event_id"`
+	UserID    int       `json:"user_id"`
+	Response  string    `json:"response"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}

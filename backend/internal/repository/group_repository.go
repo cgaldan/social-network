@@ -437,3 +437,52 @@ func (r *GroupRepository) ListGroupEvents(groupID, limit, offset int) ([]domain.
 
 	return events, nil
 }
+
+func (r *GroupRepository) SetGroupEventRSVP(eventID, userID int, response string) error {
+	_, err := r.db.Exec(`
+		INSERT INTO group_event_rsvps (
+			event_id,
+			user_id,
+			response
+		)
+		VALUES (?, ?, ?)
+		ON CONFLICT(event_id, user_id) DO UPDATE SET
+			response = excluded.response,
+			updated_at = CURRENT_TIMESTAMP`,
+		eventID,
+		userID,
+		response,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to set group event rsvp: %w", err)
+	}
+
+	return nil
+}
+
+func (r *GroupRepository) GetGroupEventRSVP(eventID, userID int) (*domain.GroupEventRSVP, error) {
+	rsvp := &domain.GroupEventRSVP{}
+	err := r.db.QueryRow(`
+		SELECT id, event_id, user_id, response, created_at, updated_at
+		FROM group_event_rsvps
+		WHERE event_id = ? AND user_id = ?`,
+		eventID,
+		userID,
+	).Scan(
+		&rsvp.ID,
+		&rsvp.EventID,
+		&rsvp.UserID,
+		&rsvp.Response,
+		&rsvp.CreatedAt,
+		&rsvp.UpdatedAt,
+	)
+
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("group event rsvp not found")
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get group event rsvp: %w", err)
+	}
+
+	return rsvp, nil
+}

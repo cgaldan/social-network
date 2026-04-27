@@ -376,7 +376,7 @@ func TestGroupRepository_CreateGroupJoinRequest(t *testing.T) {
 	}
 }
 
-func TestGroupRepository_CreateGroupEvent(t *testing.T) {
+func TestGroupRepository_CreateGroupEventAndRSVP(t *testing.T) {
 	repos := SetupTestDB(t)
 	userRepo := repos.User
 	groupRepo := repos.Group
@@ -427,5 +427,31 @@ func TestGroupRepository_CreateGroupEvent(t *testing.T) {
 	}
 	if len(events) != 1 {
 		t.Errorf("Expected 1 group event, got %d", len(events))
+	}
+
+	err = groupRepo.SetGroupEventRSVP(int(eventID), int(userID), "going")
+	if err != nil {
+		t.Fatalf("Failed to set group event rsvp: %v", err)
+	}
+
+	rsvp, err := groupRepo.GetGroupEventRSVP(int(eventID), int(userID))
+	if err != nil {
+		t.Fatalf("Failed to get group event rsvp: %v", err)
+	}
+	if rsvp.Response != "going" {
+		t.Errorf("Expected rsvp response going, got %q", rsvp.Response)
+	}
+
+	err = groupRepo.SetGroupEventRSVP(int(eventID), int(userID), "not_going")
+	if err != nil {
+		t.Fatalf("Failed to update group event rsvp: %v", err)
+	}
+
+	rsvp, err = groupRepo.GetGroupEventRSVP(int(eventID), int(userID))
+	if err != nil {
+		t.Fatalf("Failed to get updated group event rsvp: %v", err)
+	}
+	if rsvp.Response != "not_going" {
+		t.Errorf("Expected rsvp response not_going, got %q", rsvp.Response)
 	}
 }
