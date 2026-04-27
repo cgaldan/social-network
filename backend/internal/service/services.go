@@ -32,7 +32,7 @@ func NewServices(repos *repository.Repositories, eventBus event.EventBus, logger
 	followService := NewFollowService(repos.Follow, repos.User, eventBus, logger)
 	messageService := NewMessageService(repos.Message, repos.User, repos.Conversation, logger)
 	conversationService := NewConversationService(repos.Conversation, repos.Follow, logger)
-	groupService := NewGroupService(repos.Group, repos.User, conversationService, logger)
+	groupService := NewGroupService(repos.Group, repos.User, conversationService, eventBus, logger)
 	notificationService := NewNotificationService(repos.Notification, logger, notificationPusher)
 
 	return &Services{

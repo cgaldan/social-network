@@ -149,8 +149,8 @@ func (r *GroupRepository) GetMembersByGroupID(groupID int) ([]domain.GroupMember
 	return members, nil
 }
 
-func (r *GroupRepository) CreateGroupInvitation(groupID, inviterID, inviteeID int) error {
-	_, err := r.db.Exec(`
+func (r *GroupRepository) CreateGroupInvitation(groupID, inviterID, inviteeID int) (int64, error) {
+	result, err := r.db.Exec(`
 		INSERT INTO group_invitations (
 			group_id,
 			inviter_id,
@@ -163,13 +163,14 @@ func (r *GroupRepository) CreateGroupInvitation(groupID, inviterID, inviteeID in
 	)
 
 	if err != nil {
-		return fmt.Errorf("failed to create group invitation: %w", err)
+		return 0, fmt.Errorf("failed to create group invitation: %w", err)
 	}
-	return nil
+
+	return result.LastInsertId()
 }
 
-func (r *GroupRepository) CreateGroupJoinRequest(groupID, userID int) error {
-	_, err := r.db.Exec(`
+func (r *GroupRepository) CreateGroupJoinRequest(groupID, userID int) (int64, error) {
+	result, err := r.db.Exec(`
 		INSERT INTO group_join_requests (
 			group_id,
 			user_id
@@ -179,9 +180,10 @@ func (r *GroupRepository) CreateGroupJoinRequest(groupID, userID int) error {
 		userID,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to create group join request: %w", err)
+		return 0, fmt.Errorf("failed to create group join request: %w", err)
 	}
-	return nil
+
+	return result.LastInsertId()
 }
 
 func (r *GroupRepository) GetGroupInvitationByID(invitationID int) (*domain.GroupInvitation, error) {
