@@ -69,7 +69,8 @@ type FollowRepositoryInterface interface {
 	GetFollowRequestsByFollowerID(followerID int, limit, offset int) ([]domain.Follow, error)
 	UpdateFollowStatus(followerID int, status string) error
 	DeleteFollow(followerID int) error
-	FollowExists(followerID, followingID int) (bool, error)
+	PendingFollowRequestExists(followerID, followingID int) (bool, error)
+	AcceptedFollowRequestExists(followerID, followingID int) (bool, error)
 	GetFollowStatusByFollowID(followID int) (string, error)
 	EitherUserFollows(userID1, userID2 int) (bool, error)
 }

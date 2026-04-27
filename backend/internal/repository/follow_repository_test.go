@@ -170,18 +170,23 @@ func TestFollowerRepository_FollowExists(t *testing.T) {
 
 	followRepo.CreateFollow(int(userID1), int(userID2), "pending")
 
-	exists, err := followRepo.FollowExists(int(userID1), int(userID2))
+	exists, err := followRepo.PendingFollowRequestExists(int(userID1), int(userID2))
 	if err != nil {
-		t.Fatalf("Failed to check if follow exists: %v", err)
+		t.Fatalf("Failed to check if pending follow request exists: %v", err)
 	}
 
 	if !exists {
-		t.Error("Expected follow relationship to exist")
+		t.Error("Expected pending follow request to exist")
 	}
 
-	exists, _ = followRepo.FollowExists(int(userID2), int(userID1))
+	exists, _ = followRepo.PendingFollowRequestExists(int(userID2), int(userID1))
 	if exists {
-		t.Error("Expected follow relationship to not exist")
+		t.Error("Expected pending follow request to not exist")
+	}
+
+	exists, _ = followRepo.AcceptedFollowRequestExists(int(userID1), int(userID2))
+	if exists {
+		t.Error("Expected accepted follow request to not exist")
 	}
 }
 

@@ -188,11 +188,13 @@ func (r *FollowRepository) DeleteFollow(followerID int) error {
 	return nil
 }
 
-func (r *FollowRepository) FollowExists(followerID, followingID int) (bool, error) {
+func (r *FollowRepository) PendingFollowRequestExists(followerID, followingID int) (bool, error) {
 	var id int
 	err := r.db.QueryRow(`
 		SELECT id FROM follows 
-		WHERE follower_id = ? AND following_id = ?`,
+		WHERE follower_id = ? 
+		AND following_id = ? 
+		AND status = 'pending'`,
 		followerID, followingID,
 	).Scan(&id)
 
@@ -200,7 +202,28 @@ func (r *FollowRepository) FollowExists(followerID, followingID int) (bool, erro
 		return false, nil
 	}
 	if err != nil {
-		return false, fmt.Errorf("failed to check if follow exists: %w", err)
+		return false, fmt.Errorf("failed to check if pending follow request exists: %w", err)
+	}
+
+	return true, nil
+}
+
+func (r *FollowRepository) AcceptedFollowRequestExists(followerID, followingID int) (bool, error) {
+
+	var id int
+	err := r.db.QueryRow(`
+		SELECT id FROM follows 
+		WHERE follower_id = ? 
+		AND following_id = ? 
+		AND status = 'accepted'`,
+		followerID, followingID,
+	).Scan(&id)
+
+	if err == sql.ErrNoRows {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("failed to check if accepted follow request exists: %w", err)
 	}
 
 	return true, nil
@@ -231,8 +254,9 @@ func (r *FollowRepository) EitherUserFollows(userID1, userID2 int) (bool, error)
 	err := r.db.QueryRow(`
 		SELECT COUNT(*) 
 		FROM follows 
-		WHERE (follower_id = ? AND following_id = ?) 
-		   OR (follower_id = ? AND following_id = ?)`,
+		WHERE (follower_id = ? AND following_id = ?)
+		OR (follower_id = ? AND following_id = ?)
+		AND status = 'accepted'`,
 		userID1, userID2, userID2, userID1,
 	).Scan(&count)
 

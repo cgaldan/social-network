@@ -32,13 +32,13 @@ func (s *FollowService) FollowUser(followData domain.FollowRequest) (status stri
 		return "", errors.New("invalid follower or followee ID")
 	}
 
-	exists, err := s.followRepo.FollowExists(followData.FollowerID, followData.FolloweeID)
+	exists, err := s.followRepo.AcceptedFollowRequestExists(followData.FollowerID, followData.FolloweeID)
 	if err != nil {
-		s.logger.Error("Failed to check if follow relationship exists", "error", err, "followerID", followData.FollowerID, "followingID", followData.FolloweeID)
+		s.logger.Error("Failed to check if accepted follow request exists", "error", err, "followerID", followData.FollowerID, "followingID", followData.FolloweeID)
 		return "", err
 	}
 	if exists {
-		return "", errors.New("follow relationship already exists")
+		return "", errors.New("you are already following this user")
 	}
 
 	isPublic, err := s.userRepo.GetUserPrivacyByUserID(followData.FolloweeID)
@@ -50,7 +50,16 @@ func (s *FollowService) FollowUser(followData domain.FollowRequest) (status stri
 	if isPublic {
 		followData.Status = FollowStatusAccepted
 	} else {
-		followData.Status = FollowStatusPending
+		exists, err = s.followRepo.PendingFollowRequestExists(followData.FollowerID, followData.FolloweeID)
+		if err != nil {
+			s.logger.Error("Failed to check if follow request exists", "error", err, "followerID", followData.FollowerID, "followingID", followData.FolloweeID)
+			return "", err
+		}
+		if !exists {
+			followData.Status = FollowStatusPending
+		} else {
+			return "", errors.New("there is already a pending follow request for this user")
+		}
 	}
 
 	_, err = s.followRepo.CreateFollow(followData.FollowerID, followData.FolloweeID, followData.Status)
