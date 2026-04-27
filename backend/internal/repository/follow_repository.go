@@ -28,13 +28,13 @@ func (r *FollowRepository) CreateFollow(followerID, followingID int, status stri
 	)
 
 	if err != nil {
-		return 0, fmt.Errorf("failed to create follower: %w", err)
+		return 0, fmt.Errorf("failed to create follow: %w", err)
 	}
 
 	return result.LastInsertId()
 }
 
-func (r *FollowRepository) GetFollowByID(followerID int) (*domain.Follow, error) {
+func (r *FollowRepository) GetFollowByID(followID int) (*domain.Follow, error) {
 	var follow domain.Follow
 	err := r.db.QueryRow(`
 		SELECT 
@@ -44,7 +44,7 @@ func (r *FollowRepository) GetFollowByID(followerID int) (*domain.Follow, error)
 			status,
 			created_at
 		FROM follows 
-		WHERE id = ?`, followerID,
+		WHERE id = ?`, followID,
 	).Scan(
 		&follow.ID,
 		&follow.FollowerID,
@@ -63,7 +63,37 @@ func (r *FollowRepository) GetFollowByID(followerID int) (*domain.Follow, error)
 	return &follow, nil
 }
 
-func (r *FollowRepository) GetFollowersByUserID(userID int, limit, offset int) ([]domain.Follow, error) {
+func (r *FollowRepository) GetFollowByUsers(followerID, followingID int) (*domain.Follow, error) {
+	var follow domain.Follow
+	err := r.db.QueryRow(`
+		SELECT
+			id,
+			follower_id,
+			following_id,
+			status,
+			created_at
+		FROM follows
+		WHERE follower_id = ? AND following_id = ?`,
+		followerID,
+		followingID,
+	).Scan(
+		&follow.ID,
+		&follow.FollowerID,
+		&follow.FollowingID,
+		&follow.Status,
+		&follow.CreatedAt,
+	)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get follow by users: %w", err)
+	}
+
+	return &follow, nil
+}
+
+func (r *FollowRepository) GetFollowRequestsByFollowingID(followingID int, limit, offset int) ([]domain.Follow, error) {
 	rows, err := r.db.Query(`
 		SELECT 
 			id,
@@ -74,37 +104,37 @@ func (r *FollowRepository) GetFollowersByUserID(userID int, limit, offset int) (
 		FROM follows 
 		WHERE following_id = ?
 		ORDER BY created_at DESC
-		LIMIT ? OFFSET ?`, userID, limit, offset)
+		LIMIT ? OFFSET ?`, followingID, limit, offset)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to get followers: %w", err)
+		return nil, fmt.Errorf("failed to get follow requests: %w", err)
 	}
 	defer rows.Close()
 
-	var followers []domain.Follow
+	var followRequests []domain.Follow
 	for rows.Next() {
-		var follower domain.Follow
+		var followRequest domain.Follow
 		err := rows.Scan(
-			&follower.ID,
-			&follower.FollowerID,
-			&follower.FollowingID,
-			&follower.Status,
-			&follower.CreatedAt,
+			&followRequest.ID,
+			&followRequest.FollowerID,
+			&followRequest.FollowingID,
+			&followRequest.Status,
+			&followRequest.CreatedAt,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("failed to scan follower: %w", err)
+			return nil, fmt.Errorf("failed to scan follow request: %w", err)
 		}
-		followers = append(followers, follower)
+		followRequests = append(followRequests, followRequest)
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating followers: %w", err)
+		return nil, fmt.Errorf("error iterating follow requests: %w", err)
 	}
 
-	return followers, nil
+	return followRequests, nil
 }
 
-func (r *FollowRepository) GetFollowingByUserID(userID int, limit, offset int) ([]domain.Follow, error) {
+func (r *FollowRepository) GetFollowRequestsByFollowerID(followerID int, limit, offset int) ([]domain.Follow, error) {
 	rows, err := r.db.Query(`
 		SELECT 
 			id,
@@ -115,41 +145,41 @@ func (r *FollowRepository) GetFollowingByUserID(userID int, limit, offset int) (
 		FROM follows 
 		WHERE follower_id = ?
 		ORDER BY created_at DESC
-		LIMIT ? OFFSET ?`, userID, limit, offset)
+		LIMIT ? OFFSET ?`, followerID, limit, offset)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to get following: %w", err)
+		return nil, fmt.Errorf("failed to get follow requests by follower ID: %w", err)
 	}
 	defer rows.Close()
 
-	var following []domain.Follow
+	var followRequests []domain.Follow
 	for rows.Next() {
-		var follower domain.Follow
+		var followRequest domain.Follow
 		err := rows.Scan(
-			&follower.ID,
-			&follower.FollowerID,
-			&follower.FollowingID,
-			&follower.Status,
-			&follower.CreatedAt,
+			&followRequest.ID,
+			&followRequest.FollowerID,
+			&followRequest.FollowingID,
+			&followRequest.Status,
+			&followRequest.CreatedAt,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("failed to scan following: %w", err)
+			return nil, fmt.Errorf("failed to scan follow request: %w", err)
 		}
-		following = append(following, follower)
+		followRequests = append(followRequests, followRequest)
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating following: %w", err)
+		return nil, fmt.Errorf("error iterating follow requests: %w", err)
 	}
 
-	return following, nil
+	return followRequests, nil
 }
 
-func (r *FollowRepository) UpdateFollowStatus(followerID int, status string) error {
+func (r *FollowRepository) UpdateFollowStatus(followID int, status string) error {
 	result, err := r.db.Exec(`
 		UPDATE follows
 		SET status = ?
-		WHERE id = ?`, status, followerID)
+		WHERE id = ?`, status, followID)
 
 	if err != nil {
 		return fmt.Errorf("failed to update follow status: %w", err)
@@ -167,10 +197,10 @@ func (r *FollowRepository) UpdateFollowStatus(followerID int, status string) err
 	return nil
 }
 
-func (r *FollowRepository) DeleteFollow(followerID int) error {
+func (r *FollowRepository) DeleteFollow(followID int) error {
 	result, err := r.db.Exec(`
 		DELETE FROM follows
-		WHERE id = ?`, followerID)
+		WHERE id = ?`, followID)
 
 	if err != nil {
 		return fmt.Errorf("failed to delete follow: %w", err)
@@ -186,24 +216,6 @@ func (r *FollowRepository) DeleteFollow(followerID int) error {
 	}
 
 	return nil
-}
-
-func (r *FollowRepository) FollowExists(followerID, followingID int) (bool, error) {
-	var id int
-	err := r.db.QueryRow(`
-		SELECT id FROM follows 
-		WHERE follower_id = ? AND following_id = ?`,
-		followerID, followingID,
-	).Scan(&id)
-
-	if err == sql.ErrNoRows {
-		return false, nil
-	}
-	if err != nil {
-		return false, fmt.Errorf("failed to check if follow exists: %w", err)
-	}
-
-	return true, nil
 }
 
 func (r *FollowRepository) GetFollowStatusByFollowID(followID int) (string, error) {
@@ -231,8 +243,9 @@ func (r *FollowRepository) EitherUserFollows(userID1, userID2 int) (bool, error)
 	err := r.db.QueryRow(`
 		SELECT COUNT(*) 
 		FROM follows 
-		WHERE (follower_id = ? AND following_id = ?) 
-		   OR (follower_id = ? AND following_id = ?)`,
+		WHERE (follower_id = ? AND following_id = ?)
+		OR (follower_id = ? AND following_id = ?)
+		AND status = 'accepted'`,
 		userID1, userID2, userID2, userID1,
 	).Scan(&count)
 

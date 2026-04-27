@@ -56,26 +56,10 @@ func (h *FollowHandler) FollowUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var followRequest domain.FollowRequest
-	err = json.NewDecoder(r.Body).Decode(&followRequest)
-	if err != nil {
-		json.NewEncoder(w).Encode(domain.FollowResponse{
-			Success: false,
-			Message: "Invalid request body",
-		})
-		return
+	followRequest := domain.FollowRequest{
+		FollowerID: user.ID,
+		FolloweeID: followeeID,
 	}
-
-	if followRequest.FollowerID != user.ID && followRequest.FollowerID != 0 {
-		json.NewEncoder(w).Encode(domain.FollowResponse{
-			Success: false,
-			Message: "Unauthorized",
-		})
-		return
-	}
-
-	followRequest.FollowerID = user.ID
-	followRequest.FolloweeID = followeeID
 
 	status, err := h.followService.FollowUser(followRequest)
 	if err != nil {
@@ -90,5 +74,204 @@ func (h *FollowHandler) FollowUser(w http.ResponseWriter, r *http.Request) {
 		Success: true,
 		Message: "Follow request processed",
 		Status:  status,
+	})
+}
+
+func (h *FollowHandler) AcceptFollowRequest(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	token := r.Header.Get("Authorization")
+	user, err := h.authService.ValidateSession(token)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.FollowResponse{
+			Success: false,
+			Message: "Unauthorized",
+		})
+		return
+	}
+
+	vars := mux.Vars(r)
+	followID, err := strconv.Atoi(vars["id"])
+
+	if err != nil || followID <= 0 {
+		json.NewEncoder(w).Encode(domain.FollowResponse{
+			Success: false,
+			Message: "Invalid follow ID",
+		})
+		return
+	}
+
+	followRequest, err := h.followService.GetFollowByID(followID)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.FollowResponse{
+			Success: false,
+			Message: "Follow request not found",
+		})
+		return
+	}
+
+	err = h.followService.AcceptFollowRequest(user.ID, followRequest)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.FollowResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	followRequest, err = h.followService.GetFollowByID(followID)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.FollowResponse{
+			Success: false,
+			Message: "Follow request not found",
+		})
+		return
+	}
+
+	json.NewEncoder(w).Encode(domain.FollowResponse{
+		Success: true,
+		Message: "Follow request accepted successfully",
+		Status:  "accepted",
+	})
+}
+
+func (h *FollowHandler) DeclineFollowRequest(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	token := r.Header.Get("Authorization")
+	user, err := h.authService.ValidateSession(token)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.FollowResponse{
+			Success: false,
+			Message: "Unauthorized",
+		})
+		return
+	}
+
+	vars := mux.Vars(r)
+	followID, err := strconv.Atoi(vars["id"])
+	if err != nil || followID <= 0 {
+		json.NewEncoder(w).Encode(domain.FollowResponse{
+			Success: false,
+			Message: "Invalid follow ID",
+		})
+		return
+	}
+
+	followRequest, err := h.followService.GetFollowByID(followID)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.FollowResponse{
+			Success: false,
+			Message: "Follow request not found",
+		})
+		return
+	}
+
+	err = h.followService.DeclineFollowRequest(user.ID, followRequest)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.FollowResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	followRequest, err = h.followService.GetFollowByID(followID)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.FollowResponse{
+			Success: false,
+			Message: "Follow request not found",
+		})
+		return
+	}
+
+	json.NewEncoder(w).Encode(domain.FollowResponse{
+		Success: true,
+		Message: "Follow request declined successfully",
+		Status:  "declined",
+	})
+}
+
+func (h *FollowHandler) UnfollowUser(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	token := r.Header.Get("Authorization")
+	user, err := h.authService.ValidateSession(token)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.FollowResponse{
+			Success: false,
+			Message: "Unauthorized",
+		})
+		return
+	}
+
+	vars := mux.Vars(r)
+	followeeID, err := strconv.Atoi(vars["id"])
+	if err != nil || followeeID <= 0 {
+		json.NewEncoder(w).Encode(domain.FollowResponse{
+			Success: false,
+			Message: "Invalid followee ID",
+		})
+		return
+	}
+
+	err = h.followService.UnfollowUser(domain.UnfollowRequest{
+		FollowerID: user.ID,
+		FolloweeID: followeeID,
+	})
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.FollowResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	json.NewEncoder(w).Encode(domain.FollowResponse{
+		Success: true,
+		Message: "Unfollow request processed",
+		Status:  "unfollowed",
+	})
+}
+
+func (h *FollowHandler) RemoveFollower(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	token := r.Header.Get("Authorization")
+	user, err := h.authService.ValidateSession(token)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.FollowResponse{
+			Success: false,
+			Message: "Unauthorized",
+		})
+		return
+	}
+
+	vars := mux.Vars(r)
+	followerID, err := strconv.Atoi(vars["id"])
+	if err != nil || followerID <= 0 {
+		json.NewEncoder(w).Encode(domain.FollowResponse{
+			Success: false,
+			Message: "Invalid followee ID",
+		})
+		return
+	}
+
+	err = h.followService.RemoveFollower(domain.RemoveFollowerRequest{
+		FolloweeID: user.ID,
+		FollowerID: followerID,
+	})
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.FollowResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	json.NewEncoder(w).Encode(domain.FollowResponse{
+		Success: true,
+		Message: "Follower removed successfully",
+		Status:  "removed",
 	})
 }

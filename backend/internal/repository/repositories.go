@@ -64,12 +64,12 @@ type CommentRepositoryInterface interface {
 
 type FollowRepositoryInterface interface {
 	CreateFollow(followerID, followingID int, status string) (int64, error)
-	GetFollowByID(followerID int) (*domain.Follow, error)
-	GetFollowersByUserID(userID int, limit, offset int) ([]domain.Follow, error)
-	GetFollowingByUserID(userID int, limit, offset int) ([]domain.Follow, error)
-	UpdateFollowStatus(followerID int, status string) error
-	DeleteFollow(followerID int) error
-	FollowExists(followerID, followingID int) (bool, error)
+	GetFollowByID(followID int) (*domain.Follow, error)
+	GetFollowByUsers(followerID, followingID int) (*domain.Follow, error)
+	GetFollowRequestsByFollowingID(followingID int, limit, offset int) ([]domain.Follow, error)
+	GetFollowRequestsByFollowerID(followerID int, limit, offset int) ([]domain.Follow, error)
+	UpdateFollowStatus(followID int, status string) error
+	DeleteFollow(followID int) error
 	GetFollowStatusByFollowID(followID int) (string, error)
 	EitherUserFollows(userID1, userID2 int) (bool, error)
 }

@@ -56,7 +56,7 @@ func TestFollowerRepository_GetFollowerByID(t *testing.T) {
 	}
 }
 
-func TestFollowerRepository_GetFollowersByUserID(t *testing.T) {
+func TestFollowerRepository_GetFollowRequestsByFollowingID(t *testing.T) {
 	repos := SetupTestDB(t)
 	userRepo := repos.User
 	followRepo := repos.Follow
@@ -68,17 +68,35 @@ func TestFollowerRepository_GetFollowersByUserID(t *testing.T) {
 	followRepo.CreateFollow(int(userID1), int(userID3), "accepted")
 	followRepo.CreateFollow(int(userID2), int(userID3), "pending")
 
-	followers, err := followRepo.GetFollowersByUserID(int(userID3), 10, 0)
+	followRequests, err := followRepo.GetFollowRequestsByFollowingID(int(userID3), 10, 0)
 	if err != nil {
-		t.Fatalf("Failed to get followers: %v", err)
+		t.Fatalf("Failed to get follow requests: %v", err)
 	}
 
-	if len(followers) != 2 {
-		t.Errorf("Expected 2 followers, got %d", len(followers))
+	if len(followRequests) != 2 {
+		t.Errorf("Expected 2 follow requests, got %d", len(followRequests))
+	}
+	if followRequests[0].FollowerID != int(userID1) {
+		t.Errorf("Expected follower ID %d, got %d", userID1, followRequests[0].FollowerID)
+	}
+	if followRequests[0].FollowingID != int(userID3) {
+		t.Errorf("Expected following ID %d, got %d", userID3, followRequests[0].FollowingID)
+	}
+	if followRequests[0].Status != "pending" {
+		t.Errorf("Expected status 'pending', got '%s'", followRequests[0].Status)
+	}
+	if followRequests[1].FollowerID != int(userID2) {
+		t.Errorf("Expected follower ID %d, got %d", userID2, followRequests[1].FollowerID)
+	}
+	if followRequests[1].FollowingID != int(userID3) {
+		t.Errorf("Expected following ID %d, got %d", userID3, followRequests[1].FollowingID)
+	}
+	if followRequests[1].Status != "pending" {
+		t.Errorf("Expected status 'pending', got '%s'", followRequests[1].Status)
 	}
 }
 
-func TestFollowerRepository_GetFollowingByUserID(t *testing.T) {
+func TestFollowerRepository_GetFollowRequestsByFollowerID(t *testing.T) {
 	repos := SetupTestDB(t)
 	userRepo := repos.User
 	followRepo := repos.Follow
@@ -90,13 +108,13 @@ func TestFollowerRepository_GetFollowingByUserID(t *testing.T) {
 	followRepo.CreateFollow(int(userID1), int(userID2), "accepted")
 	followRepo.CreateFollow(int(userID1), int(userID3), "pending")
 
-	following, err := followRepo.GetFollowingByUserID(int(userID1), 10, 0)
+	followRequests, err := followRepo.GetFollowRequestsByFollowerID(int(userID1), 10, 0)
 	if err != nil {
-		t.Fatalf("Failed to get following: %v", err)
+		t.Fatalf("Failed to get follow requests: %v", err)
 	}
 
-	if len(following) != 2 {
-		t.Errorf("Expected 2 following, got %d", len(following))
+	if len(followRequests) != 2 {
+		t.Errorf("Expected 2 follow requests, got %d", len(followRequests))
 	}
 }
 
@@ -152,18 +170,18 @@ func TestFollowerRepository_FollowExists(t *testing.T) {
 
 	followRepo.CreateFollow(int(userID1), int(userID2), "pending")
 
-	exists, err := followRepo.FollowExists(int(userID1), int(userID2))
+	exists, err := followRepo.GetFollowByUsers(int(userID1), int(userID2))
 	if err != nil {
-		t.Fatalf("Failed to check if follow exists: %v", err)
+		t.Fatalf("Failed to check if  follow request exists: %v", err)
 	}
 
-	if !exists {
-		t.Error("Expected follow relationship to exist")
+	if exists == nil {
+		t.Error("Expected follow request to exist")
 	}
 
-	exists, _ = followRepo.FollowExists(int(userID2), int(userID1))
-	if exists {
-		t.Error("Expected follow relationship to not exist")
+	exists, _ = followRepo.GetFollowByUsers(int(userID2), int(userID1))
+	if exists != nil {
+		t.Error("Expected follow request to not exist")
 	}
 }
 
