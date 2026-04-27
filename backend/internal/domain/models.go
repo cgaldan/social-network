@@ -156,3 +156,18 @@ type GroupEventRSVP struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
+
+type Notification struct {
+	ID          int        `json:"id"`
+	RecipientID int        `json:"recipient_id"`
+	ActorID     *int       `json:"actor_id,omitempty"`
+	Type        string     `json:"type"`
+	Title       string     `json:"title"`
+	Body        string     `json:"body"`
+	EntityType  *string    `json:"entity_type,omitempty"`
+	EntityID    *int       `json:"entity_id,omitempty"`
+	ActionURL   *string    `json:"action_url,omitempty"`
+	Metadata    *string    `json:"metadata,omitempty"`
+	ReadAt      *time.Time `json:"read_at,omitempty"`
+	CreatedAt   time.Time  `json:"created_at"`
+}
