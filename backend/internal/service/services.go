@@ -97,4 +97,7 @@ type GroupServiceInterface interface {
 	GetGroupJoinRequestByID(requestID int) (*domain.GroupJoinRequest, error)
 	GetGroupInvitationsByGroupID(groupID int) ([]domain.GroupInvitation, error)
 	GetGroupJoinRequestsByGroupID(groupID int) ([]domain.GroupJoinRequest, error)
+
+	CreateGroupEvent(userID, groupID int, eventData domain.CreateGroupEventRequest) (*domain.GroupEvent, error)
+	ListGroupEvents(userID, groupID, limit, offset int) ([]domain.GroupEvent, error)
 }

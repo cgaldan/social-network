@@ -416,3 +416,73 @@ func TestGroupService_CreateGroupJoinRequest(t *testing.T) {
 		t.Errorf("Expected 2 join request, got %d", len(requests))
 	}
 }
+
+func TestGroupService_CreateGroupEvent(t *testing.T) {
+	services := SetupTestServices(t)
+
+	creatorID := CreateTestUser(t, services, domain.RegisterRequest{
+		Email:       "creator@example.com",
+		Password:    "password123",
+		FirstName:   "Creator",
+		LastName:    "User",
+		DateOfBirth: time.Now().AddDate(-25, 0, 0),
+		Nickname:    "creator",
+		Gender:      "male",
+		IsPublic:    true,
+	})
+	outsiderID := CreateTestUser(t, services, domain.RegisterRequest{
+		Email:       "outsider@example.com",
+		Password:    "password123",
+		FirstName:   "Outsider",
+		LastName:    "User",
+		DateOfBirth: time.Now().AddDate(-30, 0, 0),
+		Nickname:    "outsider",
+		Gender:      "female",
+		IsPublic:    true,
+	})
+
+	group, err := services.Group.CreateGroup(&domain.Group{
+		CreatorID:   creatorID,
+		Title:       "Event Group",
+		Description: "This is an event group.",
+	})
+	if err != nil {
+		t.Fatalf("Failed to create group: %v", err)
+	}
+
+	event, err := services.Group.CreateGroupEvent(creatorID, group.ID, domain.CreateGroupEventRequest{
+		Title:       "Group Meetup",
+		Description: "Planning the next group meetup.",
+		StartsAt:    time.Now().Add(24 * time.Hour),
+	})
+	if err != nil {
+		t.Fatalf("Failed to create group event: %v", err)
+	}
+	if event.GroupID != group.ID {
+		t.Errorf("Expected group ID %d, got %d", group.ID, event.GroupID)
+	}
+	if event.CreatorID != creatorID {
+		t.Errorf("Expected creator ID %d, got %d", creatorID, event.CreatorID)
+	}
+
+	t.Run("member lists group events", func(t *testing.T) {
+		events, err := services.Group.ListGroupEvents(creatorID, group.ID, 10, 0)
+		if err != nil {
+			t.Fatalf("Failed to list group events: %v", err)
+		}
+		if len(events) != 1 {
+			t.Errorf("Expected 1 group event, got %d", len(events))
+		}
+	})
+
+	t.Run("non-member cannot create group event", func(t *testing.T) {
+		_, err := services.Group.CreateGroupEvent(outsiderID, group.ID, domain.CreateGroupEventRequest{
+			Title:       "Outsider Event",
+			Description: "This should not be created.",
+			StartsAt:    time.Now().Add(24 * time.Hour),
+		})
+		if err == nil {
+			t.Error("Expected error when non-member creates group event")
+		}
+	})
+}
