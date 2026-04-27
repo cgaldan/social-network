@@ -76,3 +76,15 @@ type CreateGroupEventRequest struct {
 type GroupEventRSVPRequest struct {
 	Response string `json:"response"`
 }
+
+type CreateNotificationRequest struct {
+	RecipientID int     `json:"recipient_id"`
+	ActorID     *int    `json:"actor_id,omitempty"`
+	Type        string  `json:"type"`
+	Title       string  `json:"title"`
+	Body        string  `json:"body"`
+	EntityType  *string `json:"entity_type,omitempty"`
+	EntityID    *int    `json:"entity_id,omitempty"`
+	ActionURL   *string `json:"action_url,omitempty"`
+	Metadata    *string `json:"metadata,omitempty"`
+}

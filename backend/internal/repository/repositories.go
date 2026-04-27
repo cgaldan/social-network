@@ -15,6 +15,7 @@ type Repositories struct {
 	Message      MessageRepositoryInterface
 	Conversation ConversationRepositoryInterface
 	Group        GroupRepositoryInterface
+	Notification NotificationRepositoryInterface
 }
 
 func NewRepositories(db *sql.DB) *Repositories {
@@ -27,6 +28,7 @@ func NewRepositories(db *sql.DB) *Repositories {
 		Message:      NewMessageRepository(db),
 		Conversation: NewConversationRepository(db),
 		Group:        NewGroupRepository(db),
+		Notification: NewNotificationRepository(db),
 	}
 }
 
@@ -120,4 +122,13 @@ type GroupRepositoryInterface interface {
 	ListGroupEvents(groupID, limit, offset int) ([]domain.GroupEvent, error)
 	SetGroupEventRSVP(eventID, userID int, response string) error
 	GetGroupEventRSVP(eventID, userID int) (*domain.GroupEventRSVP, error)
+}
+
+type NotificationRepositoryInterface interface {
+	CreateNotification(notification *domain.Notification) (*domain.Notification, error)
+	ListNotifications(recipientID, limit, offset int) ([]domain.Notification, error)
+	CountUnreadNotifications(recipientID int) (int, error)
+	MarkNotificationRead(notificationID, recipientID int) error
+	MarkAllNotificationsRead(recipientID int) error
+	GetNotificationByID(notificationID, recipientID int) (*domain.Notification, error)
 }

@@ -23,6 +23,7 @@ func NewRouter(services *service.Services, config *config.Config, hub *websocket
 	conversationHandler := handlers.NewConversationHandler(services.Conversation, services.Auth, logger)
 	messageHandler := handlers.NewMessageHandler(services.Message, services.Auth, logger)
 	groupHandler := handlers.NewGroupHandler(services.Group, services.Auth, logger)
+	notificationHandler := handlers.NewNotificationHandler(services.Notification, services.Auth, logger)
 	healthHandler := handlers.NewHealthHandler("1.0.0")
 
 	r.HandleFunc("/health", healthHandler.Health).Methods("GET")
@@ -62,6 +63,12 @@ func NewRouter(services *service.Services, config *config.Config, hub *websocket
 	api.HandleFunc("/groups/{id}/events", groupHandler.ListGroupEvents).Methods("GET")
 	api.HandleFunc("/groups/{id}/events", groupHandler.CreateGroupEvent).Methods("POST")
 	api.HandleFunc("/groups/{id}/events/{eventId}/rsvp", groupHandler.SetGroupEventRSVP).Methods("POST")
+
+	// Notification routes
+	api.HandleFunc("/notifications", notificationHandler.ListNotifications).Methods("GET")
+	api.HandleFunc("/notifications/unread-count", notificationHandler.GetUnreadCount).Methods("GET")
+	api.HandleFunc("/notifications/{id}/read", notificationHandler.MarkRead).Methods("POST")
+	api.HandleFunc("/notifications/read-all", notificationHandler.MarkAllRead).Methods("POST")
 
 	// Websocket routes
 	r.HandleFunc("/ws", websocketHandler.HandleWebSocket)

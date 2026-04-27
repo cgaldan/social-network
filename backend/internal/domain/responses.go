@@ -96,3 +96,21 @@ type GroupEventRSVPResponse struct {
 	Message string          `json:"message,omitempty"`
 	RSVP    *GroupEventRSVP `json:"rsvp,omitempty"`
 }
+
+type NotificationsResponse struct {
+	Success       bool           `json:"success"`
+	Message       string         `json:"message,omitempty"`
+	Notifications []Notification `json:"notifications,omitempty"`
+}
+
+type NotificationResponse struct {
+	Success      bool          `json:"success"`
+	Message      string        `json:"message,omitempty"`
+	Notification *Notification `json:"notification,omitempty"`
+}
+
+type NotificationUnreadCountResponse struct {
+	Success     bool   `json:"success"`
+	Message     string `json:"message,omitempty"`
+	UnreadCount int    `json:"unread_count"`
+}

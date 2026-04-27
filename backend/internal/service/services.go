@@ -15,6 +15,7 @@ type Services struct {
 	Message      MessageServiceInterface
 	Conversation ConversationServiceInterface
 	Group        GroupServiceInterface
+	Notification NotificationServiceInterface
 }
 
 func NewServices(repos *repository.Repositories, logger *logger.Logger) *Services {
@@ -26,6 +27,7 @@ func NewServices(repos *repository.Repositories, logger *logger.Logger) *Service
 	messageService := NewMessageService(repos.Message, repos.User, repos.Conversation, logger)
 	conversationService := NewConversationService(repos.Conversation, repos.Follow, logger)
 	groupService := NewGroupService(repos.Group, conversationService, logger)
+	notificationService := NewNotificationService(repos.Notification, logger)
 
 	return &Services{
 		Auth:         authService,
@@ -36,6 +38,7 @@ func NewServices(repos *repository.Repositories, logger *logger.Logger) *Service
 		Message:      messageService,
 		Conversation: conversationService,
 		Group:        groupService,
+		Notification: notificationService,
 	}
 }
 
@@ -101,4 +104,12 @@ type GroupServiceInterface interface {
 	CreateGroupEvent(userID, groupID int, eventData domain.CreateGroupEventRequest) (*domain.GroupEvent, error)
 	ListGroupEvents(userID, groupID, limit, offset int) ([]domain.GroupEvent, error)
 	SetGroupEventRSVP(userID, groupID, eventID int, response string) (*domain.GroupEventRSVP, error)
+}
+
+type NotificationServiceInterface interface {
+	CreateNotification(input domain.CreateNotificationRequest) (*domain.Notification, error)
+	ListNotifications(userID, limit, offset int) ([]domain.Notification, error)
+	CountUnread(userID int) (int, error)
+	MarkRead(userID, notificationID int) error
+	MarkAllRead(userID int) error
 }
