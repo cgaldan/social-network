@@ -6,21 +6,17 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"syscall"
-	"time"
-
-<<<<<<< HEAD
-	"social-network/internal/config"
-	"social-network/internal/database"
-=======
 	"social-network/internal/api/router"
 	"social-network/internal/config"
+	"social-network/internal/consumer"
 	"social-network/internal/database"
+	"social-network/internal/event"
 	"social-network/internal/repository"
 	"social-network/internal/service"
 	"social-network/internal/websocket"
->>>>>>> feature/notifications
 	"social-network/packages/logger"
+	"syscall"
+	"time"
 )
 
 func main() {
@@ -59,7 +55,13 @@ func main() {
 
 	appLogger.Info("WebSocket hub initialized")
 
+	eventBus := event.NewInMemoryBus(appLogger)
 	services := service.NewServices(repos, appLogger, hub)
+
+	consumers := consumer.NewConsumers(services.Notification, eventBus, appLogger)
+	if err := consumers.RegisterHandlers(); err != nil {
+		appLogger.Fatal("Failed to register consumers", "error", err)
+	}
 
 	router := router.NewRouter(services, config, hub, appLogger)
 
