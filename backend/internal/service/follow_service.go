@@ -142,9 +142,9 @@ func (s *FollowService) endFollowRelationship(followerID, followingID int, actio
 		return nil
 	case FollowStatusRejected:
 		if action == endFollowUnfollow {
-			return errors.New("you are not following this user")
+			return errors.New("this user has not accepted your follow request")
 		}
-		return errors.New("this user has rejected your follow request")
+		return errors.New("you have rejected this user's follow request")
 	default:
 		return errors.New("follow relationship is in an unknown state")
 	}
