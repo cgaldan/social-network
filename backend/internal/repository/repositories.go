@@ -114,4 +114,10 @@ type GroupRepositoryInterface interface {
 
 	IsUserInGroup(groupID, userID int) (bool, error)
 	IsUserAdmin(groupID, userID int) (bool, error)
+
+	CreateGroupEvent(event *domain.GroupEvent) (int64, error)
+	GetGroupEventByID(eventID int) (*domain.GroupEvent, error)
+	ListGroupEvents(groupID, limit, offset int) ([]domain.GroupEvent, error)
+	SetGroupEventRSVP(eventID, userID int, response string) error
+	GetGroupEventRSVP(eventID, userID int) (*domain.GroupEventRSVP, error)
 }

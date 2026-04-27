@@ -5,6 +5,7 @@ import (
 	"social-network/internal/domain"
 	"social-network/internal/repository"
 	"social-network/packages/logger"
+	"time"
 )
 
 type GroupService struct {
@@ -373,4 +374,114 @@ func (s *GroupService) GetGroupInvitationsByGroupID(groupID int) ([]domain.Group
 
 func (s *GroupService) GetGroupJoinRequestsByGroupID(groupID int) ([]domain.GroupJoinRequest, error) {
 	return s.groupRepo.GetGroupJoinRequestsByGroupID(groupID)
+}
+
+func (s *GroupService) CreateGroupEvent(userID, groupID int, eventData domain.CreateGroupEventRequest) (*domain.GroupEvent, error) {
+	isMember, err := s.groupRepo.IsUserInGroup(groupID, userID)
+	if err != nil {
+		s.logger.Error("Failed to check group membership", "error", err, "groupID", groupID, "userID", userID)
+		return nil, fmt.Errorf("failed to create group event")
+	}
+	if !isMember {
+		return nil, fmt.Errorf("user is not a member of this group")
+	}
+
+	if err := s.validateGroupEvent(eventData); err != nil {
+		return nil, err
+	}
+
+	eventID, err := s.groupRepo.CreateGroupEvent(&domain.GroupEvent{
+		GroupID:     groupID,
+		CreatorID:   userID,
+		Title:       eventData.Title,
+		Description: eventData.Description,
+		StartsAt:    eventData.StartsAt,
+	})
+	if err != nil {
+		s.logger.Error("Failed to create group event", "error", err, "groupID", groupID, "userID", userID)
+		return nil, fmt.Errorf("failed to create group event")
+	}
+
+	event, err := s.groupRepo.GetGroupEventByID(int(eventID))
+	if err != nil {
+		s.logger.Error("Failed to get group event by ID", "error", err, "eventID", eventID)
+		return nil, fmt.Errorf("failed to get group event by ID")
+	}
+
+	return event, nil
+}
+
+func (s *GroupService) ListGroupEvents(userID, groupID, limit, offset int) ([]domain.GroupEvent, error) {
+	isMember, err := s.groupRepo.IsUserInGroup(groupID, userID)
+	if err != nil {
+		s.logger.Error("Failed to check group membership", "error", err, "groupID", groupID, "userID", userID)
+		return nil, fmt.Errorf("failed to list group events")
+	}
+	if !isMember {
+		return nil, fmt.Errorf("user is not a member of this group")
+	}
+
+	limit, offset = s.validateLimitAndOffset(limit, offset)
+
+	events, err := s.groupRepo.ListGroupEvents(groupID, limit, offset)
+	if err != nil {
+		s.logger.Error("Failed to list group events", "error", err, "groupID", groupID, "limit", limit, "offset", offset)
+		return nil, fmt.Errorf("failed to list group events")
+	}
+
+	return events, nil
+}
+
+func (s *GroupService) SetGroupEventRSVP(userID, groupID, eventID int, response string) (*domain.GroupEventRSVP, error) {
+	isMember, err := s.groupRepo.IsUserInGroup(groupID, userID)
+	if err != nil {
+		s.logger.Error("Failed to check group membership", "error", err, "groupID", groupID, "userID", userID)
+		return nil, fmt.Errorf("failed to set group event rsvp")
+	}
+	if !isMember {
+		return nil, fmt.Errorf("user is not a member of this group")
+	}
+
+	event, err := s.groupRepo.GetGroupEventByID(eventID)
+	if err != nil {
+		s.logger.Error("Failed to get group event by ID", "error", err, "eventID", eventID)
+		return nil, fmt.Errorf("failed to get group event")
+	}
+	if event.GroupID != groupID {
+		return nil, fmt.Errorf("event does not belong to this group")
+	}
+
+	if response != "going" && response != "not_going" {
+		return nil, fmt.Errorf("invalid rsvp response")
+	}
+
+	err = s.groupRepo.SetGroupEventRSVP(eventID, userID, response)
+	if err != nil {
+		s.logger.Error("Failed to set group event rsvp", "error", err, "eventID", eventID, "userID", userID)
+		return nil, fmt.Errorf("failed to set group event rsvp")
+	}
+
+	rsvp, err := s.groupRepo.GetGroupEventRSVP(eventID, userID)
+	if err != nil {
+		s.logger.Error("Failed to get group event rsvp", "error", err, "eventID", eventID, "userID", userID)
+		return nil, fmt.Errorf("failed to get group event rsvp")
+	}
+
+	return rsvp, nil
+}
+
+func (s *GroupService) validateGroupEvent(eventData domain.CreateGroupEventRequest) error {
+	if eventData.Title == "" || len(eventData.Title) < 3 {
+		return fmt.Errorf("title must be at least 3 characters")
+	}
+	if eventData.Description == "" {
+		return fmt.Errorf("description is required")
+	}
+	if eventData.StartsAt.IsZero() {
+		return fmt.Errorf("starts_at is required")
+	}
+	if eventData.StartsAt.Before(time.Now()) {
+		return fmt.Errorf("starts_at must be in the future")
+	}
+	return nil
 }

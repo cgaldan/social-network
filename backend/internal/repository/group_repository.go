@@ -350,3 +350,139 @@ func (r *GroupRepository) IsUserAdmin(groupID, userID int) (bool, error) {
 
 	return count > 0, nil
 }
+
+func (r *GroupRepository) CreateGroupEvent(event *domain.GroupEvent) (int64, error) {
+	result, err := r.db.Exec(`
+		INSERT INTO group_events (
+			group_id,
+			creator_id,
+			title,
+			description,
+			starts_at
+		)
+		VALUES (?, ?, ?, ?, ?)`,
+		event.GroupID,
+		event.CreatorID,
+		event.Title,
+		event.Description,
+		event.StartsAt,
+	)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create group event: %w", err)
+	}
+
+	return result.LastInsertId()
+}
+
+func (r *GroupRepository) GetGroupEventByID(eventID int) (*domain.GroupEvent, error) {
+	event := &domain.GroupEvent{}
+	err := r.db.QueryRow(`
+		SELECT id, group_id, creator_id, title, description, starts_at, created_at
+		FROM group_events
+		WHERE id = ?`,
+		eventID,
+	).Scan(
+		&event.ID,
+		&event.GroupID,
+		&event.CreatorID,
+		&event.Title,
+		&event.Description,
+		&event.StartsAt,
+		&event.CreatedAt,
+	)
+
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("group event not found")
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get group event: %w", err)
+	}
+
+	return event, nil
+}
+
+func (r *GroupRepository) ListGroupEvents(groupID, limit, offset int) ([]domain.GroupEvent, error) {
+	rows, err := r.db.Query(`
+		SELECT id, group_id, creator_id, title, description, starts_at, created_at
+		FROM group_events
+		WHERE group_id = ?
+		ORDER BY starts_at ASC
+		LIMIT ? OFFSET ?`,
+		groupID,
+		limit,
+		offset,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list group events: %w", err)
+	}
+	defer rows.Close()
+
+	events := []domain.GroupEvent{}
+	for rows.Next() {
+		var event domain.GroupEvent
+		err := rows.Scan(
+			&event.ID,
+			&event.GroupID,
+			&event.CreatorID,
+			&event.Title,
+			&event.Description,
+			&event.StartsAt,
+			&event.CreatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan group event: %w", err)
+		}
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (r *GroupRepository) SetGroupEventRSVP(eventID, userID int, response string) error {
+	_, err := r.db.Exec(`
+		INSERT INTO group_event_rsvps (
+			event_id,
+			user_id,
+			response
+		)
+		VALUES (?, ?, ?)
+		ON CONFLICT(event_id, user_id) DO UPDATE SET
+			response = excluded.response,
+			updated_at = CURRENT_TIMESTAMP`,
+		eventID,
+		userID,
+		response,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to set group event rsvp: %w", err)
+	}
+
+	return nil
+}
+
+func (r *GroupRepository) GetGroupEventRSVP(eventID, userID int) (*domain.GroupEventRSVP, error) {
+	rsvp := &domain.GroupEventRSVP{}
+	err := r.db.QueryRow(`
+		SELECT id, event_id, user_id, response, created_at, updated_at
+		FROM group_event_rsvps
+		WHERE event_id = ? AND user_id = ?`,
+		eventID,
+		userID,
+	).Scan(
+		&rsvp.ID,
+		&rsvp.EventID,
+		&rsvp.UserID,
+		&rsvp.Response,
+		&rsvp.CreatedAt,
+		&rsvp.UpdatedAt,
+	)
+
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("group event rsvp not found")
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get group event rsvp: %w", err)
+	}
+
+	return rsvp, nil
+}

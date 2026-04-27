@@ -66,3 +66,13 @@ type JoinGroupRequest struct {
 	GroupID int `json:"group_id"`
 	UserID  int `json:"user_id"`
 }
+
+type CreateGroupEventRequest struct {
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	StartsAt    time.Time `json:"starts_at"`
+}
+
+type GroupEventRSVPRequest struct {
+	Response string `json:"response"`
+}
