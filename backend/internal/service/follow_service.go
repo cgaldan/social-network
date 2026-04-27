@@ -70,3 +70,38 @@ func (s *FollowService) FollowUser(followData domain.FollowRequest) (status stri
 
 	return followData.Status, nil
 }
+
+func (s *FollowService) AcceptFollowRequest(userID int, followRequest *domain.Follow) (err error) {
+	if followRequest.FollowingID != userID {
+		return errors.New("user is not the following")
+	}
+
+	if followRequest.Status != FollowStatusPending {
+		return errors.New("follow request is not pending")
+	}
+
+	err = s.followRepo.UpdateFollowStatus(followRequest.ID, FollowStatusAccepted)
+	if err != nil {
+		s.logger.Error("Failed to update follow status", "error", err, "followID", followRequest.ID)
+		return err
+	}
+
+	return nil
+}
+
+func (s *FollowService) DeclineFollowRequest(userID int, followRequest *domain.Follow) (err error) {
+	if followRequest.FollowingID != userID {
+		return errors.New("user is not the following")
+	}
+
+	if followRequest.Status != FollowStatusPending {
+		return errors.New("follow request is not pending")
+	}
+
+	err = s.followRepo.UpdateFollowStatus(followRequest.ID, FollowStatusRejected)
+	if err != nil {
+		s.logger.Error("Failed to update follow status", "error", err, "followID", followRequest.ID)
+		return err
+	}
+	return nil
+}

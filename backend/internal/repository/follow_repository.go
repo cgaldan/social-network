@@ -145,11 +145,11 @@ func (r *FollowRepository) GetFollowRequestsByFollowerID(followerID int, limit, 
 	return followRequests, nil
 }
 
-func (r *FollowRepository) UpdateFollowStatus(followerID int, status string) error {
+func (r *FollowRepository) UpdateFollowStatus(followID int, status string) error {
 	result, err := r.db.Exec(`
 		UPDATE follows
 		SET status = ?
-		WHERE id = ?`, status, followerID)
+		WHERE id = ?`, status, followID)
 
 	if err != nil {
 		return fmt.Errorf("failed to update follow status: %w", err)
@@ -167,10 +167,10 @@ func (r *FollowRepository) UpdateFollowStatus(followerID int, status string) err
 	return nil
 }
 
-func (r *FollowRepository) DeleteFollow(followerID int) error {
+func (r *FollowRepository) DeleteFollow(followID int) error {
 	result, err := r.db.Exec(`
 		DELETE FROM follows
-		WHERE id = ?`, followerID)
+		WHERE id = ?`, followID)
 
 	if err != nil {
 		return fmt.Errorf("failed to delete follow: %w", err)
