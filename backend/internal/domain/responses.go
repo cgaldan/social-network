@@ -55,8 +55,26 @@ type GroupResponse struct {
 	Group   *Group `json:"group,omitempty"`
 }
 
+type GroupsResponse struct {
+	Success bool    `json:"success"`
+	Message string  `json:"message,omitempty"`
+	Groups  []Group `json:"groups,omitempty"`
+}
+
 type HealthResponse struct {
 	Status    string `json:"status"`
 	Timestamp string `json:"timestamp"`
 	Version   string `json:"version"`
+}
+
+type GroupInvitationResponse struct {
+	Success    bool             `json:"success"`
+	Message    string           `json:"message,omitempty"`
+	Invitation *GroupInvitation `json:"invitation,omitempty"`
+}
+
+type GroupJoinRequestResponse struct {
+	Success bool              `json:"success"`
+	Message string            `json:"message,omitempty"`
+	Request *GroupJoinRequest `json:"request,omitempty"`
 }

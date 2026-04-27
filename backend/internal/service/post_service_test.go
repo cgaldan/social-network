@@ -27,7 +27,7 @@ func TestPostService_GetPostByID(t *testing.T) {
 	})
 
 	t.Run("get existing post", func(t *testing.T) {
-		retrievedPost, err := services.Post.GetPostByID(post.ID)
+		retrievedPost, err := services.Post.GetPostByID(userID, post.ID)
 		if err != nil {
 			t.Fatalf("Failed to get post: %v", err)
 		}
@@ -46,7 +46,7 @@ func TestPostService_GetPostByID(t *testing.T) {
 	})
 
 	t.Run("get non-existent post", func(t *testing.T) {
-		_, err := services.Post.GetPostByID(99999)
+		_, err := services.Post.GetPostByID(userID, 99999)
 		if err == nil {
 			t.Error("Expected error for non-existent post")
 		}

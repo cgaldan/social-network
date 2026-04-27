@@ -55,3 +55,14 @@ type CreateGroupRequest struct {
 	Description    string `json:"description"`
 	ConversationID int    `json:"conversation_id"`
 }
+
+type InviteToGroupRequest struct {
+	GroupID   int `json:"group_id"`
+	InviterID int `json:"inviter_id"`
+	InviteeID int `json:"invitee_id"`
+}
+
+type JoinGroupRequest struct {
+	GroupID int `json:"group_id"`
+	UserID  int `json:"user_id"`
+}

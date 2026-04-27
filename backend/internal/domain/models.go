@@ -23,6 +23,7 @@ type User struct {
 type Post struct {
 	ID           int       `json:"id"`
 	UserID       int       `json:"user_id"`
+	GroupID      int       `json:"group_id,omitempty"`
 	Title        string    `json:"title"`
 	Content      string    `json:"content"`
 	Category     string    `json:"category"`
@@ -118,4 +119,21 @@ type GroupMember struct {
 	UserID   int       `json:"user_id"`
 	Role     string    `json:"role"`
 	JoinedAt time.Time `json:"joined_at"`
+}
+
+type GroupInvitation struct {
+	ID        int       `json:"id"`
+	GroupID   int       `json:"group_id"`
+	InviterID int       `json:"inviter_id"`
+	InviteeID int       `json:"invitee_id"`
+	Status    string    `json:"status"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type GroupJoinRequest struct {
+	ID        int       `json:"id"`
+	GroupID   int       `json:"group_id"`
+	UserID    int       `json:"user_id"`
+	Status    string    `json:"status"`
+	CreatedAt time.Time `json:"created_at"`
 }

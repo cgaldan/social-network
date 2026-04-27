@@ -78,7 +78,7 @@ func TestCommentService_CreateComment(t *testing.T) {
 				t.Errorf("Expected post ID %d, got %d", post.ID, comment.PostID)
 			}
 
-			retrievedComments, err := services.Comment.GetCommentsByPostID(post.ID)
+			retrievedComments, err := services.Comment.GetCommentsByPostID(userID, post.ID)
 			if err != nil {
 				t.Fatalf("Failed to get comments by post ID: %v", err)
 			}
@@ -123,7 +123,7 @@ func TestCommentService_GetCommentsByPostID(t *testing.T) {
 	}
 
 	t.Run("get comments by post ID", func(t *testing.T) {
-		retrievedComments, err := services.Comment.GetCommentsByPostID(post.ID)
+		retrievedComments, err := services.Comment.GetCommentsByPostID(userID, post.ID)
 		if err != nil {
 			t.Fatalf("Failed to get comments by post ID: %v", err)
 		}
@@ -144,7 +144,7 @@ func TestCommentService_GetCommentsByPostID(t *testing.T) {
 	})
 
 	t.Run("get comments for non-existent post", func(t *testing.T) {
-		comments, err := services.Comment.GetCommentsByPostID(99999)
+		comments, err := services.Comment.GetCommentsByPostID(userID, 99999)
 		if err != nil {
 			t.Fatalf("Unexpected error: %v", err)
 		}

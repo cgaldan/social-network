@@ -45,9 +45,10 @@ type SessionRepositoryInterface interface {
 }
 
 type PostRepositoryInterface interface {
-	CreatePost(userID int, title, content, category, privacyLevel, mediaURL string) (int64, error)
+	CreatePost(userID int, title, content, category, privacyLevel, mediaURL string, groupID int) (int64, error)
 	GetPostByID(postID int) (*domain.Post, error)
 	ListPosts(category string, limit, offset int) ([]domain.Post, error)
+	ListPostsByGroupID(groupID, limit, offset int) ([]domain.Post, error)
 	GetPostsByUserID(userID int, limit, offset int) ([]domain.Post, error)
 	PostExists(postID int) (bool, error)
 }
@@ -90,8 +91,27 @@ type MessageRepositoryInterface interface {
 type GroupRepositoryInterface interface {
 	CreateGroup(group *domain.Group) (int64, error)
 	GetGroupByID(groupID int) (*domain.Group, error)
+	ListGroups(limit, offset int) ([]domain.Group, error)
 
 	AddMember(groupID, userID int, role string) error
 	RemoveMember(groupID, userID int) error
 	GetMembersByGroupID(groupID int) ([]domain.GroupMember, error)
+
+	CreateGroupInvitation(groupID, inviterID, inviteeID int) error
+	CreateGroupJoinRequest(groupID, userID int) error
+
+	GetGroupInvitationByID(invitationID int) (*domain.GroupInvitation, error)
+	GetGroupJoinRequestByID(requestID int) (*domain.GroupJoinRequest, error)
+
+	GetGroupInvitationsByGroupID(groupID int) ([]domain.GroupInvitation, error)
+	GetGroupJoinRequestsByGroupID(groupID int) ([]domain.GroupJoinRequest, error)
+
+	UpdateGroupInvitationStatus(invitationID int, status string) error
+	UpdateGroupJoinRequestStatus(requestID int, status string) error
+
+	DeleteGroupInvitation(invitationID int) error
+	DeleteGroupJoinRequest(requestID int) error
+
+	IsUserInGroup(groupID, userID int) (bool, error)
+	IsUserAdmin(groupID, userID int) (bool, error)
 }
