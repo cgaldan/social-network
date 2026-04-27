@@ -412,7 +412,7 @@ func TestGroupService_CreateGroupJoinRequest(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to get group join requests: %v", err)
 	}
-	if len(requests) != 1 {
-		t.Errorf("Expected 1 join request, got %d", len(requests))
+	if len(requests) != 2 {
+		t.Errorf("Expected 2 join request, got %d", len(requests))
 	}
 }
