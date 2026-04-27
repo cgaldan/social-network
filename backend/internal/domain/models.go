@@ -137,3 +137,13 @@ type GroupJoinRequest struct {
 	Status    string    `json:"status"`
 	CreatedAt time.Time `json:"created_at"`
 }
+
+type GroupEvent struct {
+	ID          int       `json:"id"`
+	GroupID     int       `json:"group_id"`
+	CreatorID   int       `json:"creator_id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	StartsAt    time.Time `json:"starts_at"`
+	CreatedAt   time.Time `json:"created_at"`
+}

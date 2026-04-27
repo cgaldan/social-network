@@ -350,3 +350,90 @@ func (r *GroupRepository) IsUserAdmin(groupID, userID int) (bool, error) {
 
 	return count > 0, nil
 }
+
+func (r *GroupRepository) CreateGroupEvent(event *domain.GroupEvent) (int64, error) {
+	result, err := r.db.Exec(`
+		INSERT INTO group_events (
+			group_id,
+			creator_id,
+			title,
+			description,
+			starts_at
+		)
+		VALUES (?, ?, ?, ?, ?)`,
+		event.GroupID,
+		event.CreatorID,
+		event.Title,
+		event.Description,
+		event.StartsAt,
+	)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create group event: %w", err)
+	}
+
+	return result.LastInsertId()
+}
+
+func (r *GroupRepository) GetGroupEventByID(eventID int) (*domain.GroupEvent, error) {
+	event := &domain.GroupEvent{}
+	err := r.db.QueryRow(`
+		SELECT id, group_id, creator_id, title, description, starts_at, created_at
+		FROM group_events
+		WHERE id = ?`,
+		eventID,
+	).Scan(
+		&event.ID,
+		&event.GroupID,
+		&event.CreatorID,
+		&event.Title,
+		&event.Description,
+		&event.StartsAt,
+		&event.CreatedAt,
+	)
+
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("group event not found")
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get group event: %w", err)
+	}
+
+	return event, nil
+}
+
+func (r *GroupRepository) ListGroupEvents(groupID, limit, offset int) ([]domain.GroupEvent, error) {
+	rows, err := r.db.Query(`
+		SELECT id, group_id, creator_id, title, description, starts_at, created_at
+		FROM group_events
+		WHERE group_id = ?
+		ORDER BY starts_at ASC
+		LIMIT ? OFFSET ?`,
+		groupID,
+		limit,
+		offset,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list group events: %w", err)
+	}
+	defer rows.Close()
+
+	events := []domain.GroupEvent{}
+	for rows.Next() {
+		var event domain.GroupEvent
+		err := rows.Scan(
+			&event.ID,
+			&event.GroupID,
+			&event.CreatorID,
+			&event.Title,
+			&event.Description,
+			&event.StartsAt,
+			&event.CreatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan group event: %w", err)
+		}
+		events = append(events, event)
+	}
+
+	return events, nil
+}

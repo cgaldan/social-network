@@ -375,3 +375,57 @@ func TestGroupRepository_CreateGroupJoinRequest(t *testing.T) {
 		t.Errorf("Expected 0 join requests, got %d", len(requests))
 	}
 }
+
+func TestGroupRepository_CreateGroupEvent(t *testing.T) {
+	repos := SetupTestDB(t)
+	userRepo := repos.User
+	groupRepo := repos.Group
+	convRepo := repos.Conversation
+
+	userID, err := userRepo.CreateUser("event@example.com", "hashedpass", "Event", "Creator", time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC), "eventcreator", "male", "", "", false)
+	if err != nil {
+		t.Fatalf("Failed to create user: %v", err)
+	}
+
+	conversation, err := convRepo.CreateGroupConversation("Event Group", int(userID))
+	if err != nil {
+		t.Fatalf("Failed to create conversation: %v", err)
+	}
+
+	groupID, err := groupRepo.CreateGroup(&domain.Group{
+		CreatorID:      int(userID),
+		Title:          "Event Group",
+		Description:    "This is an event group.",
+		ConversationID: conversation.ID,
+	})
+	if err != nil {
+		t.Fatalf("Failed to create group: %v", err)
+	}
+
+	eventID, err := groupRepo.CreateGroupEvent(&domain.GroupEvent{
+		GroupID:     int(groupID),
+		CreatorID:   int(userID),
+		Title:       "Group Meetup",
+		Description: "Planning the next group meetup.",
+		StartsAt:    time.Now().Add(24 * time.Hour),
+	})
+	if err != nil {
+		t.Fatalf("Failed to create group event: %v", err)
+	}
+
+	event, err := groupRepo.GetGroupEventByID(int(eventID))
+	if err != nil {
+		t.Fatalf("Failed to get group event: %v", err)
+	}
+	if event.GroupID != int(groupID) {
+		t.Errorf("Expected group ID %d, got %d", groupID, event.GroupID)
+	}
+
+	events, err := groupRepo.ListGroupEvents(int(groupID), 10, 0)
+	if err != nil {
+		t.Fatalf("Failed to list group events: %v", err)
+	}
+	if len(events) != 1 {
+		t.Errorf("Expected 1 group event, got %d", len(events))
+	}
+}
