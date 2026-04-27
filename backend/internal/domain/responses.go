@@ -90,3 +90,9 @@ type GroupEventsResponse struct {
 	Message string       `json:"message,omitempty"`
 	Events  []GroupEvent `json:"events,omitempty"`
 }
+
+type GroupEventRSVPResponse struct {
+	Success bool            `json:"success"`
+	Message string          `json:"message,omitempty"`
+	RSVP    *GroupEventRSVP `json:"rsvp,omitempty"`
+}

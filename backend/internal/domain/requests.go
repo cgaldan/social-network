@@ -72,3 +72,7 @@ type CreateGroupEventRequest struct {
 	Description string    `json:"description"`
 	StartsAt    time.Time `json:"starts_at"`
 }
+
+type GroupEventRSVPRequest struct {
+	Response string `json:"response"`
+}

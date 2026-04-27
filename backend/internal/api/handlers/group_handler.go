@@ -527,3 +527,61 @@ func (h *GroupHandler) ListGroupEvents(w http.ResponseWriter, r *http.Request) {
 		Events:  events,
 	})
 }
+
+func (h *GroupHandler) SetGroupEventRSVP(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	token := r.Header.Get("Authorization")
+	user, err := h.authService.ValidateSession(token)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.GroupEventRSVPResponse{
+			Success: false,
+			Message: "Unauthorized",
+		})
+		return
+	}
+
+	vars := mux.Vars(r)
+	groupID, err := strconv.Atoi(vars["id"])
+	if err != nil || groupID <= 0 {
+		json.NewEncoder(w).Encode(domain.GroupEventRSVPResponse{
+			Success: false,
+			Message: "Invalid group ID",
+		})
+		return
+	}
+
+	eventID, err := strconv.Atoi(vars["eventId"])
+	if err != nil || eventID <= 0 {
+		json.NewEncoder(w).Encode(domain.GroupEventRSVPResponse{
+			Success: false,
+			Message: "Invalid event ID",
+		})
+		return
+	}
+
+	var req domain.GroupEventRSVPRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		json.NewEncoder(w).Encode(domain.GroupEventRSVPResponse{
+			Success: false,
+			Message: "Invalid JSON",
+		})
+		return
+	}
+
+	rsvp, err := h.groupService.SetGroupEventRSVP(user.ID, groupID, eventID, req.Response)
+	if err != nil {
+		h.logger.Error("Failed to set group event rsvp", "error", err, "userID", user.ID, "groupID", groupID, "eventID", eventID)
+		json.NewEncoder(w).Encode(domain.GroupEventRSVPResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	json.NewEncoder(w).Encode(domain.GroupEventRSVPResponse{
+		Success: true,
+		Message: "RSVP updated successfully",
+		RSVP:    rsvp,
+	})
+}
