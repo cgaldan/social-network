@@ -38,6 +38,8 @@ type UserRepositoryInterface interface {
 	GetUserByIdentifier(identifier string) (*domain.User, string, error)
 	UpdateLastSeen(userID int) error
 	GetUserPrivacyByUserID(userID int) (bool, error)
+	UpdateUser(userID int, email, firstName, lastName string, dateOfBirth time.Time, nickname, gender, avatarPath, aboutMe string, isPublic bool) error
+	DeleteUser(userID int) error
 }
 
 type SessionRepositoryInterface interface {

@@ -168,3 +168,60 @@ func (r *UserRepository) GetUserPrivacyByUserID(userID int) (bool, error) {
 	}
 	return isPublic, nil
 }
+
+func (r *UserRepository) UpdateUser(userID int, email, firstName, lastName string, dateOfBirth time.Time, nickname, gender, avatarPath, aboutMe string, isPublic bool) error {
+	result, err := r.db.Exec(`
+		UPDATE users
+		SET 
+		email = ?,
+		first_name = ?, 
+		last_name = ?, 
+		date_of_birth = ?, 
+		nickname = ?, 
+		gender = ?, 
+		avatar_path = ?, 
+		about_me = ?, 
+		is_public = ?
+		WHERE id = ?`,
+		email,
+		firstName,
+		lastName,
+		dateOfBirth,
+		nickname,
+		gender,
+		avatarPath,
+		aboutMe,
+		isPublic,
+		userID,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to update user: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to update user: %w", err)
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf("user not found")
+	}
+
+	return nil
+}
+
+func (r *UserRepository) DeleteUser(userID int) error {
+	result, err := r.db.Exec(`DELETE FROM users WHERE id = ?`, userID)
+	if err != nil {
+		return fmt.Errorf("failed to delete user: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to delete user: %w", err)
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf("user not found")
+	}
+
+	return nil
+}
