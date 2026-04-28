@@ -4,6 +4,7 @@ import (
 	"io"
 	"social-network/internal/database"
 	"social-network/internal/domain"
+	"social-network/internal/event"
 	"social-network/internal/repository"
 	"social-network/packages/logger"
 	"testing"
@@ -24,6 +25,7 @@ func (p *fakeNotificationPusher) PushNotification(userID int, notification *doma
 }
 
 func SetupTestServicesWithNotificationPusher(t *testing.T, pusher NotificationPusher) *Services {
+<<<<<<< HEAD
 	t.Helper()
 
 	db, err := database.NewDatabase(":memory:")
@@ -46,6 +48,8 @@ func SetupTestServicesWithNotificationPusher(t *testing.T, pusher NotificationPu
 }
 
 func SetupTestServices(t *testing.T) *Services {
+=======
+>>>>>>> 90961407b8677c42b59308552949cdd5ea0e0506
 	t.Helper()
 
 	db, err := database.NewDatabase(":memory:")
@@ -62,14 +66,38 @@ func SetupTestServices(t *testing.T) *Services {
 	})
 
 	repos := repository.NewRepositories(db)
-
 	testLogger := logger.NewLogger(io.Discard, logger.InfoLevel)
+	eventBus := event.NewInMemoryBus(testLogger)
 
-	// hub := websocket.NewHub(testLogger, repos.User)
+	return NewServices(repos, eventBus, testLogger, pusher)
+}
 
-	services := NewServices(repos, testLogger)
-
+func SetupTestServices(t *testing.T) *Services {
+	services, _ := SetupTestServicesWithEventBus(t)
 	return services
+}
+
+func SetupTestServicesWithEventBus(t *testing.T) (*Services, event.EventBus) {
+	t.Helper()
+
+	db, err := database.NewDatabase(":memory:")
+	if err != nil {
+		t.Fatalf("Failed to connect to test database: %v", err)
+	}
+
+	if err := database.RunMigrations(db); err != nil {
+		t.Fatalf("Failed to run migrations: %v", err)
+	}
+
+	t.Cleanup(func() {
+		db.Close()
+	})
+
+	repos := repository.NewRepositories(db)
+	testLogger := logger.NewLogger(io.Discard, logger.InfoLevel)
+	eventBus := event.NewInMemoryBus(testLogger)
+
+	return NewServices(repos, eventBus, testLogger), eventBus
 }
 
 func CreateTestUser(t *testing.T, services *Services, req domain.RegisterRequest) int {

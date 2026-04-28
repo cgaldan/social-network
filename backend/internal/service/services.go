@@ -2,6 +2,7 @@ package service
 
 import (
 	"social-network/internal/domain"
+	"social-network/internal/event"
 	"social-network/internal/repository"
 	"social-network/packages/logger"
 )
@@ -18,7 +19,7 @@ type Services struct {
 	Notification NotificationServiceInterface
 }
 
-func NewServices(repos *repository.Repositories, logger *logger.Logger, notificationPushers ...NotificationPusher) *Services {
+func NewServices(repos *repository.Repositories, eventBus event.EventBus, logger *logger.Logger, notificationPushers ...NotificationPusher) *Services {
 	var notificationPusher NotificationPusher
 	if len(notificationPushers) > 0 {
 		notificationPusher = notificationPushers[0]
@@ -28,10 +29,10 @@ func NewServices(repos *repository.Repositories, logger *logger.Logger, notifica
 	contentService := NewContentService(repos.Post, repos.Group, logger)
 	postService := NewPostService(repos.Post, repos.Group, logger)
 	commentService := NewCommentService(repos.Comment, repos.Post, repos.Group, logger)
-	followService := NewFollowService(repos.Follow, repos.User, logger)
+	followService := NewFollowService(repos.Follow, repos.User, eventBus, logger)
 	messageService := NewMessageService(repos.Message, repos.User, repos.Conversation, logger)
 	conversationService := NewConversationService(repos.Conversation, repos.Follow, logger)
-	groupService := NewGroupService(repos.Group, conversationService, logger)
+	groupService := NewGroupService(repos.Group, repos.User, conversationService, eventBus, logger)
 	notificationService := NewNotificationService(repos.Notification, logger, notificationPusher)
 
 	return &Services{
@@ -74,6 +75,11 @@ type CommentServiceInterface interface {
 
 type FollowServiceInterface interface {
 	FollowUser(followData domain.FollowRequest) (status string, err error)
+	AcceptFollowRequest(userID int, followRequest *domain.Follow) error
+	DeclineFollowRequest(userID int, followRequest *domain.Follow) error
+	UnfollowUser(unfollowData domain.UnfollowRequest) error
+	RemoveFollower(removeData domain.RemoveFollowerRequest) error
+	GetFollowByID(followID int) (*domain.Follow, error)
 }
 
 type MessageServiceInterface interface {

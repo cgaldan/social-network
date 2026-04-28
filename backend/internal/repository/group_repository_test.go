@@ -181,7 +181,7 @@ func TestGroupRepository_CreateGroupInvitation(t *testing.T) {
 		t.Fatalf("Failed to create group: %v", err)
 	}
 
-	err = groupRepo.CreateGroupInvitation(int(groupID), int(userID2), int(userID1))
+	_, err = groupRepo.CreateGroupInvitation(int(groupID), int(userID2), int(userID1))
 	if err != nil {
 		t.Fatalf("Failed to create group invitation: %v", err)
 	}
@@ -327,7 +327,7 @@ func TestGroupRepository_CreateGroupJoinRequest(t *testing.T) {
 		t.Fatalf("Failed to create group: %v", err)
 	}
 
-	err = groupRepo.CreateGroupJoinRequest(int(groupID), int(userID2))
+	_, err = groupRepo.CreateGroupJoinRequest(int(groupID), int(userID2))
 	if err != nil {
 		t.Fatalf("Failed to create group join request: %v", err)
 	}
