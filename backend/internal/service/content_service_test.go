@@ -109,3 +109,64 @@ func TestContentService_CreatePost(t *testing.T) {
 		})
 	}
 }
+
+func TestContentService_UpdateAndDeletePost(t *testing.T) {
+	services := SetupTestServices(t)
+
+	userID := CreateTestUser(t, services, domain.RegisterRequest{
+		Email:       "owner@example.com",
+		Password:    "password123",
+		FirstName:   "John",
+		LastName:    "Doe",
+		DateOfBirth: time.Now().AddDate(-25, 0, 0),
+		Nickname:    "owner",
+		Gender:      "male",
+		IsPublic:    true,
+	})
+
+	otherID := CreateTestUser(t, services, domain.RegisterRequest{
+		Email:       "other@example.com",
+		Password:    "password123",
+		FirstName:   "Jane",
+		LastName:    "Doe",
+		DateOfBirth: time.Now().AddDate(-30, 0, 0),
+		Nickname:    "other",
+		Gender:      "female",
+		IsPublic:    true,
+	})
+
+	post := CreateTestPost(t, services, userID, domain.CreatePostRequest{
+		Title:    "Original",
+		Content:  "Original body with more than ten characters for the validator.",
+		Category: "general",
+	})
+
+	updated, err := services.Content.UpdatePost(userID, post.ID, domain.UpdatePostRequest{
+		Title:    "Updated title here",
+		Content:  "Updated body with more than ten characters for the validator to pass checks.",
+		Category: "tech",
+	})
+	if err != nil {
+		t.Fatalf("UpdatePost: %v", err)
+	}
+	if updated.Title != "Updated title here" {
+		t.Errorf("title: %s", updated.Title)
+	}
+
+	_, err = services.Content.UpdatePost(otherID, post.ID, domain.UpdatePostRequest{
+		Title:    "Hacked title for sure long enough",
+		Content:  "Hacked body with more than ten characters for the validator to pass all checks now.",
+		Category: "general",
+	})
+	if err == nil {
+		t.Error("expected error updating another user's post")
+	}
+
+	if err := services.Content.DeletePost(userID, post.ID); err != nil {
+		t.Fatalf("DeletePost: %v", err)
+	}
+
+	if err := services.Content.DeletePost(userID, post.ID); err == nil {
+		t.Error("expected error deleting same post again")
+	}
+}

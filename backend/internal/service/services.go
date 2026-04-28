@@ -58,6 +58,8 @@ type AuthServiceInterface interface {
 type ContentServiceInterface interface {
 	CreatePost(userID int, postData domain.CreatePostRequest) (*domain.Post, error)
 	CreateGroupPost(userID, groupID int, postData domain.CreatePostRequest) (*domain.Post, error)
+	UpdatePost(userID, postID int, data domain.UpdatePostRequest) (*domain.Post, error)
+	DeletePost(userID, postID int) error
 }
 
 type PostServiceInterface interface {

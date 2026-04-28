@@ -68,6 +68,63 @@ func (s *ContentService) createPost(userID, groupID int, postData domain.CreateP
 	return post, nil
 }
 
+func (s *ContentService) UpdatePost(userID, postID int, data domain.UpdatePostRequest) (*domain.Post, error) {
+	post, err := s.postRepo.GetPostByID(postID)
+	if err != nil {
+		s.logger.Error("Failed to retrieve post", "error", err, "postID", postID)
+		return nil, fmt.Errorf("failed to retrieve post")
+	}
+	if post.UserID != userID {
+		return nil, fmt.Errorf("user is not the owner of this post")
+	}
+
+	if data.PrivacyLevel == "" {
+		data.PrivacyLevel = "public"
+	}
+
+	validateData := domain.CreatePostRequest{
+		Title:        data.Title,
+		Content:      data.Content,
+		Category:     data.Category,
+		PrivacyLevel: data.PrivacyLevel,
+		MediaURL:     data.MediaURL,
+	}
+	if err := s.validatePost(validateData); err != nil {
+		return nil, err
+	}
+
+	if err := s.postRepo.UpdatePost(userID, postID, data.Title, data.Content, data.Category, data.PrivacyLevel, data.MediaURL); err != nil {
+		s.logger.Error("Failed to update post", "error", err, "userID", userID, "postID", postID)
+		return nil, fmt.Errorf("failed to update post")
+	}
+
+	post, err = s.postRepo.GetPostByID(postID)
+	if err != nil {
+		s.logger.Error("Failed to retrieve updated post", "error", err, "postID", postID)
+		return nil, fmt.Errorf("failed to retrieve updated post")
+	}
+
+	return post, nil
+}
+
+func (s *ContentService) DeletePost(userID, postID int) error {
+	post, err := s.postRepo.GetPostByID(postID)
+	if err != nil {
+		s.logger.Error("Failed to retrieve post", "error", err, "postID", postID)
+		return fmt.Errorf("failed to retrieve post")
+	}
+
+	if post.UserID != userID {
+		return fmt.Errorf("user is not the owner of this post")
+	}
+
+	if err := s.postRepo.DeletePost(userID, postID); err != nil {
+		s.logger.Error("Failed to delete post", "error", err, "userID", userID, "postID", postID)
+		return fmt.Errorf("failed to delete post")
+	}
+	return nil
+}
+
 func (s *ContentService) validatePost(data domain.CreatePostRequest) error {
 	if data.Title == "" || len(data.Title) < 3 {
 		return fmt.Errorf("title must be at least 3 characters")
