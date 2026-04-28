@@ -8,7 +8,7 @@ import (
 
 func TestNotificationService_CreateNotificationPushesPersistedNotification(t *testing.T) {
 	pusher := &fakeNotificationPusher{}
-	services := SetupTestServicesWithNotificationPusher(t, pusher)
+	services, _ := SetupTestServicesWithEventBus(t, pusher)
 
 	userID := CreateTestUser(t, services, domain.RegisterRequest{
 		Email:       "push@example.com",

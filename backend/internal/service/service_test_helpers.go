@@ -24,60 +24,12 @@ func (p *fakeNotificationPusher) PushNotification(userID int, notification *doma
 	p.notification = notification
 }
 
-func SetupTestServicesWithNotificationPusher(t *testing.T, pusher NotificationPusher) *Services {
-<<<<<<< HEAD
-	t.Helper()
-
-	db, err := database.NewDatabase(":memory:")
-	if err != nil {
-		t.Fatalf("Failed to connect to test database: %v", err)
-	}
-
-	if err := database.RunMigrations(db); err != nil {
-		t.Fatalf("Failed to run migrations: %v", err)
-	}
-
-	t.Cleanup(func() {
-		db.Close()
-	})
-
-	repos := repository.NewRepositories(db)
-	testLogger := logger.NewLogger(io.Discard, logger.InfoLevel)
-
-	return NewServices(repos, testLogger, pusher)
-}
-
 func SetupTestServices(t *testing.T) *Services {
-=======
->>>>>>> 90961407b8677c42b59308552949cdd5ea0e0506
-	t.Helper()
-
-	db, err := database.NewDatabase(":memory:")
-	if err != nil {
-		t.Fatalf("Failed to connect to test database: %v", err)
-	}
-
-	if err := database.RunMigrations(db); err != nil {
-		t.Fatalf("Failed to run migrations: %v", err)
-	}
-
-	t.Cleanup(func() {
-		db.Close()
-	})
-
-	repos := repository.NewRepositories(db)
-	testLogger := logger.NewLogger(io.Discard, logger.InfoLevel)
-	eventBus := event.NewInMemoryBus(testLogger)
-
-	return NewServices(repos, eventBus, testLogger, pusher)
-}
-
-func SetupTestServices(t *testing.T) *Services {
-	services, _ := SetupTestServicesWithEventBus(t)
+	services, _ := SetupTestServicesWithEventBus(t, &fakeNotificationPusher{})
 	return services
 }
 
-func SetupTestServicesWithEventBus(t *testing.T) (*Services, event.EventBus) {
+func SetupTestServicesWithEventBus(t *testing.T, pusher NotificationPusher) (*Services, event.EventBus) {
 	t.Helper()
 
 	db, err := database.NewDatabase(":memory:")
@@ -97,7 +49,7 @@ func SetupTestServicesWithEventBus(t *testing.T) (*Services, event.EventBus) {
 	testLogger := logger.NewLogger(io.Discard, logger.InfoLevel)
 	eventBus := event.NewInMemoryBus(testLogger)
 
-	return NewServices(repos, eventBus, testLogger), eventBus
+	return NewServices(repos, eventBus, testLogger, pusher), eventBus
 }
 
 func CreateTestUser(t *testing.T, services *Services, req domain.RegisterRequest) int {
