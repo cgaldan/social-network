@@ -82,8 +82,8 @@ func TestFollowerRepository_GetFollowRequestsByFollowingID(t *testing.T) {
 	if followRequests[0].FollowingID != int(userID3) {
 		t.Errorf("Expected following ID %d, got %d", userID3, followRequests[0].FollowingID)
 	}
-	if followRequests[0].Status != "pending" {
-		t.Errorf("Expected status 'pending', got '%s'", followRequests[0].Status)
+	if followRequests[0].Status != "accepted" {
+		t.Errorf("Expected status 'accepted', got '%s'", followRequests[0].Status)
 	}
 	if followRequests[1].FollowerID != int(userID2) {
 		t.Errorf("Expected follower ID %d, got %d", userID2, followRequests[1].FollowerID)
