@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"social-network/internal/domain"
+	"social-network/internal/event"
 	"social-network/internal/repository"
 	"social-network/packages/logger"
 	"time"
@@ -10,14 +11,18 @@ import (
 
 type GroupService struct {
 	groupRepo   repository.GroupRepositoryInterface
+	userRepo    repository.UserRepositoryInterface
 	convService ConversationServiceInterface
+	eventBus    event.EventBus
 	logger      *logger.Logger
 }
 
-func NewGroupService(groupRepo repository.GroupRepositoryInterface, convService ConversationServiceInterface, logger *logger.Logger) *GroupService {
+func NewGroupService(groupRepo repository.GroupRepositoryInterface, userRepo repository.UserRepositoryInterface, convService ConversationServiceInterface, eventBus event.EventBus, logger *logger.Logger) *GroupService {
 	return &GroupService{
 		groupRepo:   groupRepo,
+		userRepo:    userRepo,
 		convService: convService,
+		eventBus:    eventBus,
 		logger:      logger,
 	}
 }
@@ -145,11 +150,27 @@ func (s *GroupService) CreateGroupInvitation(groupID, inviterID, inviteeID int) 
 		return fmt.Errorf("user is already in group")
 	}
 
-	err = s.groupRepo.CreateGroupInvitation(groupID, inviterID, inviteeID)
+	invitationID, err := s.groupRepo.CreateGroupInvitation(groupID, inviterID, inviteeID)
 	if err != nil {
 		return fmt.Errorf("failed to create group invitation: %w", err)
 	}
+
+	s.publishGroupInvitationCreated(groupID, int(invitationID), inviterID, inviteeID)
+
 	return nil
+}
+
+func (s *GroupService) publishGroupInvitationCreated(groupID, invitationID, inviterID, inviteeID int) {
+	if s.eventBus == nil {
+		return
+	}
+
+	groupTitle := s.lookupGroupTitle(groupID)
+	actorName := s.lookupActorName(inviterID)
+
+	if err := s.eventBus.Publish(event.NewGroupInvitationCreatedEvent(groupID, invitationID, inviterID, inviteeID, groupTitle, actorName)); err != nil {
+		s.logger.Error("Failed to publish group invitation created event", "error", err, "invitationID", invitationID)
+	}
 }
 
 func (s *GroupService) CreateGroupJoinRequest(groupID, userID int) error {
@@ -181,11 +202,57 @@ func (s *GroupService) CreateGroupJoinRequest(groupID, userID int) error {
 		return fmt.Errorf("user is already in group")
 	}
 
-	err = s.groupRepo.CreateGroupJoinRequest(groupID, userID)
+	requestID, err := s.groupRepo.CreateGroupJoinRequest(groupID, userID)
 	if err != nil {
 		return fmt.Errorf("failed to create group join request: %w", err)
 	}
+
+	s.publishGroupJoinRequested(groupID, int(requestID), userID)
+
 	return nil
+}
+
+func (s *GroupService) publishGroupJoinRequested(groupID, requestID, requesterID int) {
+	if s.eventBus == nil {
+		return
+	}
+
+	members, err := s.groupRepo.GetMembersByGroupID(groupID)
+	if err != nil {
+		s.logger.Error("Failed to get group members for join requested event", "error", err, "groupID", groupID)
+		return
+	}
+
+	groupTitle := s.lookupGroupTitle(groupID)
+	actorName := s.lookupActorName(requesterID)
+
+	for _, member := range members {
+		if member.Role != "admin" {
+			continue
+		}
+		if err := s.eventBus.Publish(event.NewGroupJoinRequestedEvent(groupID, requestID, requesterID, member.UserID, groupTitle, actorName)); err != nil {
+			s.logger.Error("Failed to publish group join requested event", "error", err, "requestID", requestID, "recipientID", member.UserID)
+		}
+	}
+}
+
+func (s *GroupService) lookupGroupTitle(groupID int) string {
+	group, err := s.groupRepo.GetGroupByID(groupID)
+	if err != nil || group == nil {
+		return ""
+	}
+	return group.Title
+}
+
+func (s *GroupService) lookupActorName(userID int) string {
+	if s.userRepo == nil {
+		return ""
+	}
+	user, err := s.userRepo.GetUserByID(userID)
+	if err != nil || user == nil {
+		return ""
+	}
+	return displayUserName(user)
 }
 
 func (s *GroupService) AcceptGroupInvitation(userID int, invitation *domain.GroupInvitation) error {
@@ -408,7 +475,33 @@ func (s *GroupService) CreateGroupEvent(userID, groupID int, eventData domain.Cr
 		return nil, fmt.Errorf("failed to get group event by ID")
 	}
 
+	s.publishGroupEventCreated(groupID, int(eventID), userID, eventData.Title)
+
 	return event, nil
+}
+
+func (s *GroupService) publishGroupEventCreated(groupID, eventID, creatorID int, eventTitle string) {
+	if s.eventBus == nil {
+		return
+	}
+
+	members, err := s.groupRepo.GetMembersByGroupID(groupID)
+	if err != nil {
+		s.logger.Error("Failed to get group members for group event created event", "error", err, "groupID", groupID)
+		return
+	}
+
+	groupTitle := s.lookupGroupTitle(groupID)
+	actorName := s.lookupActorName(creatorID)
+
+	for _, member := range members {
+		if member.UserID == creatorID {
+			continue
+		}
+		if err := s.eventBus.Publish(event.NewGroupEventCreatedEvent(groupID, eventID, creatorID, member.UserID, groupTitle, eventTitle, actorName)); err != nil {
+			s.logger.Error("Failed to publish group event created event", "error", err, "eventID", eventID)
+		}
+	}
 }
 
 func (s *GroupService) ListGroupEvents(userID, groupID, limit, offset int) ([]domain.GroupEvent, error) {
