@@ -106,6 +106,96 @@ func (s *CommentService) GetCommentsByUserID(userID, limit, offset int) ([]domai
 	return comments, nil
 }
 
+func (s *CommentService) UpdateComment(userID, postID, commentID int, data domain.UpdateCommentRequest) (*domain.Comment, error) {
+	comment, err := s.commentRepo.GetCommentByID(commentID)
+	if err != nil {
+		s.logger.Error("Failed to get comment for update", "error", err, "commentID", commentID)
+		return nil, err
+	}
+	if comment.UserID != userID {
+		return nil, fmt.Errorf("user is not the owner of this comment")
+	}
+
+	validateData := domain.CreateCommentRequest{Content: data.Content, MediaURL: data.MediaURL}
+	if err := s.validateComment(validateData); err != nil {
+		return nil, err
+	}
+
+	if comment.PostID != postID {
+		return nil, fmt.Errorf("comment is not associated with this post")
+	}
+
+	post, err := s.postRepo.GetPostByID(postID)
+	if err != nil {
+		s.logger.Error("Failed to get post for comment update", "error", err, "postID", postID)
+		return nil, err
+	}
+
+	if post.GroupID != 0 {
+		isMember, err := s.groupRepo.IsUserInGroup(post.GroupID, userID)
+		if err != nil {
+			s.logger.Error("Failed to check group membership", "error", err, "groupID", post.GroupID, "userID", userID)
+			return nil, err
+		}
+		if !isMember {
+			return nil, fmt.Errorf("user is not a member of this group")
+		}
+	}
+
+	if err := s.commentRepo.UpdateComment(userID, commentID, data.Content, data.MediaURL); err != nil {
+		s.logger.Error("Failed to update comment", "error", err, "userID", userID, "commentID", commentID)
+		return nil, err
+	}
+
+	updated, err := s.commentRepo.GetCommentByID(commentID)
+	if err != nil {
+		s.logger.Error("Failed to retrieve updated comment", "error", err, "commentID", commentID)
+		return nil, err
+	}
+
+	return updated, nil
+}
+
+func (s *CommentService) DeleteComment(userID, postID, commentID int) error {
+	comment, err := s.commentRepo.GetCommentByID(commentID)
+	if err != nil {
+		s.logger.Error("Failed to get comment for delete", "error", err, "commentID", commentID)
+		return err
+	}
+
+	if comment.UserID != userID {
+		return fmt.Errorf("user is not the owner of this comment")
+	}
+
+	if comment.PostID != postID {
+		return fmt.Errorf("comment is not associated with this post")
+	}
+
+	post, err := s.postRepo.GetPostByID(postID)
+	if err != nil {
+		s.logger.Error("Failed to get post for comment delete", "error", err, "postID", postID)
+		return err
+	}
+
+	if post.GroupID != 0 {
+		isMember, err := s.groupRepo.IsUserInGroup(post.GroupID, userID)
+		if err != nil {
+			s.logger.Error("Failed to check group membership", "error", err, "groupID", post.GroupID, "userID", userID)
+			return err
+		}
+		if !isMember {
+			return fmt.Errorf("user is not a member of this group")
+		}
+	}
+
+	if err := s.commentRepo.DeleteComment(userID, commentID); err != nil {
+		s.logger.Error("Failed to delete comment", "error", err, "userID", userID, "commentID", commentID)
+		return err
+	}
+
+	return nil
+}
+
 func (s *CommentService) validateComment(commentData domain.CreateCommentRequest) error {
 	if commentData.Content == "" || len(commentData.Content) < 1 {
 		return fmt.Errorf("comment cannot be empty")

@@ -73,6 +73,8 @@ type CommentServiceInterface interface {
 	CreateComment(userID int, postID int, commentData domain.CreateCommentRequest) (*domain.Comment, error)
 	GetCommentsByPostID(userID, postID int) ([]domain.Comment, error)
 	GetCommentsByUserID(userID, limit, offset int) ([]domain.Comment, error)
+	UpdateComment(userID, postID, commentID int, data domain.UpdateCommentRequest) (*domain.Comment, error)
+	DeleteComment(userID, postID, commentID int) error
 }
 
 type FollowServiceInterface interface {

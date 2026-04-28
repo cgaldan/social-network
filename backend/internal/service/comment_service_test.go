@@ -227,3 +227,70 @@ func TestCommentService_GetCommentsByUserID(t *testing.T) {
 		}
 	})
 }
+
+func TestCommentService_UpdateAndDeleteComment(t *testing.T) {
+	services := SetupTestServices(t)
+
+	userID := CreateTestUser(t, services, domain.RegisterRequest{
+		Email:       "author@example.com",
+		Password:    "password123",
+		FirstName:   "John",
+		LastName:    "Doe",
+		DateOfBirth: time.Now().AddDate(-25, 0, 0),
+		Nickname:    "author",
+		Gender:      "male",
+		IsPublic:    true,
+	})
+
+	otherID := CreateTestUser(t, services, domain.RegisterRequest{
+		Email:       "other@example.com",
+		Password:    "password123",
+		FirstName:   "Jane",
+		LastName:    "Doe",
+		DateOfBirth: time.Now().AddDate(-30, 0, 0),
+		Nickname:    "other",
+		Gender:      "female",
+		IsPublic:    true,
+	})
+
+	post := CreateTestPost(t, services, userID, domain.CreatePostRequest{
+		Title:    "Post",
+		Content:  "This is a test post content for comment update and delete",
+		Category: "general",
+	})
+
+	comment := CreateTestComment(t, services, userID, post.ID, domain.CreateCommentRequest{
+		Content: "original comment text here",
+	})
+
+	updated, err := services.Comment.UpdateComment(userID, post.ID, comment.ID, domain.UpdateCommentRequest{
+		Content: "replaced comment text for the test case validation",
+	})
+	if err != nil {
+		t.Fatalf("UpdateComment: %v", err)
+	}
+	if updated.Content != "replaced comment text for the test case validation" {
+		t.Errorf("content: %s", updated.Content)
+	}
+
+	_, err = services.Comment.UpdateComment(otherID, post.ID, comment.ID, domain.UpdateCommentRequest{
+		Content: "hijack attempt with enough characters in this field",
+	})
+	if err == nil {
+		t.Error("expected error updating another user's comment")
+	}
+
+	_, err = services.Comment.UpdateComment(userID, 99999, comment.ID, domain.UpdateCommentRequest{
+		Content: "wrong post id but enough characters in the body here",
+	})
+	if err == nil {
+		t.Error("expected error when post id does not match comment's post")
+	}
+
+	if err := services.Comment.DeleteComment(userID, post.ID, comment.ID); err != nil {
+		t.Fatalf("DeleteComment: %v", err)
+	}
+	if err := services.Comment.DeleteComment(userID, post.ID, comment.ID); err == nil {
+		t.Error("expected error deleting the same comment again")
+	}
+}
