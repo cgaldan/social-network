@@ -231,3 +231,45 @@ func TestPostRepository_PostExists(t *testing.T) {
 		t.Error("Expected post to exist")
 	}
 }
+
+func TestPostRepository_UpdatePost(t *testing.T) {
+	repos := SetupTestDB(t)
+	userRepo := repos.User
+	postRepo := repos.Post
+
+	userID, _ := userRepo.CreateUser("test@example.com", "hashedpass", "John", "Doe", time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC), "testuser", "male", "", "", false)
+	postID, _ := postRepo.CreatePost(int(userID), "Old Title", "This is a test post content for update.", "General", "public", "", 0)
+
+	err := postRepo.UpdatePost(int(userID), int(postID), "New Title", "This is a test post content for update new body text here.", "Tech", "private", "")
+	if err != nil {
+		t.Fatalf("UpdatePost: %v", err)
+	}
+
+	post, err := postRepo.GetPostByID(int(postID))
+	if err != nil {
+		t.Fatalf("GetPostByID: %v", err)
+	}
+	if post.Title != "New Title" {
+		t.Errorf("title: got %q", post.Title)
+	}
+	if post.PrivacyLevel != "private" {
+		t.Errorf("privacy: got %q", post.PrivacyLevel)
+	}
+}
+
+func TestPostRepository_DeletePost(t *testing.T) {
+	repos := SetupTestDB(t)
+	userRepo := repos.User
+	postRepo := repos.Post
+
+	userID, _ := userRepo.CreateUser("test@example.com", "hashedpass", "John", "Doe", time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC), "testuser", "male", "", "", false)
+	postID, _ := postRepo.CreatePost(int(userID), "To Delete", "This is a test post content for delete action.", "General", "public", "", 0)
+
+	if err := postRepo.DeletePost(int(userID), int(postID)); err != nil {
+		t.Fatalf("DeletePost: %v", err)
+	}
+	_, err := postRepo.GetPostByID(int(postID))
+	if err == nil {
+		t.Error("expected post to be gone")
+	}
+}

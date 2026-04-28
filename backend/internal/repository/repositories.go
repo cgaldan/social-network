@@ -53,6 +53,8 @@ type PostRepositoryInterface interface {
 	ListPostsByGroupID(groupID, limit, offset int) ([]domain.Post, error)
 	GetPostsByUserID(userID int, limit, offset int) ([]domain.Post, error)
 	PostExists(postID int) (bool, error)
+	UpdatePost(userID, postID int, title, content, category, privacyLevel, mediaURL string) error
+	DeletePost(userID, postID int) error
 }
 
 type CommentRepositoryInterface interface {

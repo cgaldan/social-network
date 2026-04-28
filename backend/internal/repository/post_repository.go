@@ -287,3 +287,51 @@ func (r *PostRepository) PostExists(postID int) (bool, error) {
 	err := r.db.QueryRow(`SELECT EXISTS(SELECT 1 FROM posts WHERE id = ?)`, postID).Scan(&exists)
 	return exists, err
 }
+
+func (r *PostRepository) UpdatePost(userID, postID int, title, content, category, privacyLevel, mediaURL string) error {
+	result, err := r.db.Exec(`
+		UPDATE posts
+			SET 
+			title = ?,
+			content = ?,
+			category = ?,
+			privacy_level = ?,
+			media_url = ?,
+			updated_at = CURRENT_TIMESTAMP
+			WHERE id = ? AND user_id = ?`,
+		title,
+		content,
+		category,
+		privacyLevel,
+		mediaURL,
+		postID,
+		userID,
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to update post: %w", err)
+	}
+	n, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to update post: %w", err)
+	}
+	if n == 0 {
+		return fmt.Errorf("post not found")
+	}
+	return nil
+}
+
+func (r *PostRepository) DeletePost(userID, postID int) error {
+	result, err := r.db.Exec(`DELETE FROM posts WHERE id = ? AND user_id = ?`, postID, userID)
+	if err != nil {
+		return fmt.Errorf("failed to delete post: %w", err)
+	}
+	n, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to delete post: %w", err)
+	}
+	if n == 0 {
+		return fmt.Errorf("post not found")
+	}
+	return nil
+}
