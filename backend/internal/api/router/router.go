@@ -35,6 +35,8 @@ func NewRouter(services *service.Services, config *config.Config, hub *websocket
 	api.HandleFunc("/auth/login", authHandler.Login).Methods("POST")
 	api.HandleFunc("/auth/logout", authHandler.Logout).Methods("POST")
 	api.HandleFunc("/auth/me", authHandler.GetCurrentUser).Methods("GET")
+	api.HandleFunc("/auth/me", authHandler.UpdateCurrentUser).Methods("PUT")
+	api.HandleFunc("/auth/me", authHandler.DeleteCurrentUser).Methods("DELETE")
 
 	// Post routes
 	api.HandleFunc("/posts", postHandler.GetPosts).Methods("GET")

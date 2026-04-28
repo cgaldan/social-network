@@ -131,3 +131,84 @@ func (h *AuthHandler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 		User:    user,
 	})
 }
+
+func (h *AuthHandler) UpdateCurrentUser(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	token := r.Header.Get("Authorization")
+	if token == "" {
+		json.NewEncoder(w).Encode(domain.AuthResponse{
+			Success: false,
+			Message: "Missing authorization token",
+		})
+		return
+	}
+
+	user, err := h.authService.ValidateSession(token)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.AuthResponse{
+			Success: false,
+			Message: "Unauthorized",
+		})
+		return
+	}
+
+	var updateRequest domain.UpdateUserRequest
+	if err := json.NewDecoder(r.Body).Decode(&updateRequest); err != nil {
+		json.NewEncoder(w).Encode(domain.AuthResponse{
+			Success: false,
+			Message: "Invalid request payload",
+		})
+		return
+	}
+
+	updatedUser, err := h.authService.UpdateUser(user.ID, updateRequest)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.AuthResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	json.NewEncoder(w).Encode(domain.AuthResponse{
+		Success: true,
+		Message: "User updated successfully",
+		User:    updatedUser,
+	})
+}
+
+func (h *AuthHandler) DeleteCurrentUser(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	token := r.Header.Get("Authorization")
+	if token == "" {
+		json.NewEncoder(w).Encode(domain.AuthResponse{
+			Success: false,
+			Message: "Missing authorization token",
+		})
+		return
+	}
+
+	user, err := h.authService.ValidateSession(token)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.AuthResponse{
+			Success: false,
+			Message: "Unauthorized",
+		})
+		return
+	}
+
+	if err := h.authService.DeleteUser(user.ID); err != nil {
+		json.NewEncoder(w).Encode(domain.AuthResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	json.NewEncoder(w).Encode(domain.AuthResponse{
+		Success: true,
+		Message: "User deleted successfully",
+	})
+}

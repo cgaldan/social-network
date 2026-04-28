@@ -20,6 +20,18 @@ type LoginRequest struct {
 	Password   string `json:"password"`
 }
 
+type UpdateUserRequest struct {
+	Email       string    `json:"email"`
+	FirstName   string    `json:"first_name"`
+	LastName    string    `json:"last_name"`
+	DateOfBirth time.Time `json:"date_of_birth"`
+	Nickname    string    `json:"nickname"`
+	Gender      string    `json:"gender"`
+	AvatarPath  string    `json:"avatar_path"`
+	AboutMe     string    `json:"about_me"`
+	IsPublic    bool      `json:"is_public"`
+}
+
 type CreatePostRequest struct {
 	Title        string `json:"title"`
 	Content      string `json:"content"`
