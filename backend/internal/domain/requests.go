@@ -41,6 +41,11 @@ type CreateCommentRequest struct {
 	MediaURL string `json:"media_url,omitempty"`
 }
 
+type UpdateCommentRequest struct {
+	Content  string `json:"content"`
+	MediaURL string `json:"media_url,omitempty"`
+}
+
 type FollowRequest struct {
 	FollowerID int    `json:"follower_id"`
 	FolloweeID int    `json:"followee_id"`
