@@ -312,3 +312,76 @@ func TestAuthService_Logout(t *testing.T) {
 		}
 	})
 }
+
+func TestAuthService_UpdateUser(t *testing.T) {
+	services := SetupTestServices(t)
+
+	userID := CreateTestUser(t, services, domain.RegisterRequest{
+		Email:       "before@example.com",
+		Password:    "password123",
+		FirstName:   "John",
+		LastName:    "Doe",
+		DateOfBirth: time.Now().AddDate(-25, 0, 0),
+		Nickname:    "beforeuser",
+		Gender:      "male",
+		IsPublic:    true,
+	})
+
+	updated, err := services.Auth.UpdateUser(userID, domain.UpdateUserRequest{
+		Email:       "after@example.com",
+		FirstName:   "Jane",
+		LastName:    "Smith",
+		DateOfBirth: time.Now().AddDate(-30, 0, 0),
+		Nickname:    "afteruser",
+		Gender:      "female",
+		AvatarPath:  "/avatar.png",
+		AboutMe:     "Updated bio",
+		IsPublic:    false,
+	})
+	if err != nil {
+		t.Fatalf("Expected update to succeed, got error: %v", err)
+	}
+
+	if updated.Email != "after@example.com" {
+		t.Errorf("Expected updated email, got %s", updated.Email)
+	}
+	if updated.Nickname != "afteruser" {
+		t.Errorf("Expected updated nickname, got %s", updated.Nickname)
+	}
+
+	_, err = services.Auth.UpdateUser(userID, domain.UpdateUserRequest{
+		Email:       "invalid-email",
+		FirstName:   "Jane",
+		LastName:    "Smith",
+		DateOfBirth: time.Now().AddDate(-30, 0, 0),
+		Nickname:    "afteruser",
+		Gender:      "female",
+		IsPublic:    true,
+	})
+	if err == nil {
+		t.Error("Expected validation error for invalid email")
+	}
+}
+
+func TestAuthService_DeleteUser(t *testing.T) {
+	services := SetupTestServices(t)
+
+	userID := CreateTestUser(t, services, domain.RegisterRequest{
+		Email:       "deleteuser@example.com",
+		Password:    "password123",
+		FirstName:   "John",
+		LastName:    "Doe",
+		DateOfBirth: time.Now().AddDate(-25, 0, 0),
+		Nickname:    "deleteuser",
+		Gender:      "male",
+		IsPublic:    true,
+	})
+
+	if err := services.Auth.DeleteUser(userID); err != nil {
+		t.Fatalf("Expected delete to succeed, got error: %v", err)
+	}
+
+	if err := services.Auth.DeleteUser(userID); err == nil {
+		t.Error("Expected error when deleting user second time")
+	}
+}

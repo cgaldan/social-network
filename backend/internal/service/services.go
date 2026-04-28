@@ -53,6 +53,8 @@ type AuthServiceInterface interface {
 	Login(loginData domain.LoginRequest) (*domain.User, string, error)
 	Logout(sessionID string) error
 	ValidateSession(sessionID string) (*domain.User, error)
+	UpdateUser(userID int, data domain.UpdateUserRequest) (*domain.User, error)
+	DeleteUser(userID int) error
 }
 
 type ContentServiceInterface interface {

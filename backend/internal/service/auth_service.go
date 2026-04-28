@@ -138,39 +138,104 @@ func (s *AuthService) ValidateSession(sessionID string) (*domain.User, error) {
 	return user, nil
 }
 
+func (s *AuthService) UpdateUser(userID int, data domain.UpdateUserRequest) (*domain.User, error) {
+	if err := s.validateUserUpdateData(data); err != nil {
+		return nil, err
+	}
+
+	if err := s.userRepo.UpdateUser(
+		userID,
+		data.Email,
+		data.FirstName,
+		data.LastName,
+		data.DateOfBirth,
+		data.Nickname,
+		data.Gender,
+		data.AvatarPath,
+		data.AboutMe,
+		data.IsPublic,
+	); err != nil {
+		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
+			return nil, fmt.Errorf("nickname or email already in use")
+		}
+		s.logger.Error("Failed to update user", "error", err, "userID", userID)
+		return nil, fmt.Errorf("failed to update user")
+	}
+
+	user, err := s.userRepo.GetUserByID(userID)
+	if err != nil {
+		s.logger.Error("Failed to retrieve updated user", "error", err, "userID", userID)
+		return nil, fmt.Errorf("failed to retrieve updated user")
+	}
+
+	return user, nil
+}
+
+func (s *AuthService) DeleteUser(userID int) error {
+	if err := s.userRepo.DeleteUser(userID); err != nil {
+		s.logger.Error("Failed to delete user", "error", err, "userID", userID)
+		return fmt.Errorf("failed to delete user")
+	}
+	return nil
+}
+
 // Helper functions
 
 func (s *AuthService) validateRegistrationData(data domain.RegisterRequest) error {
-	if data.Email == "" || !strings.Contains(data.Email, "@") {
-		return fmt.Errorf("valid email is required")
-	}
 	if data.Password == "" || len(data.Password) < 6 {
 		return fmt.Errorf("password must be at least 6 characters")
 	}
-	if data.FirstName == "" {
+	return s.validateCommonUserData(
+		data.Email,
+		data.FirstName,
+		data.LastName,
+		data.DateOfBirth,
+		data.Nickname,
+		data.Gender,
+		data.AboutMe,
+	)
+}
+
+func (s *AuthService) validateUserUpdateData(data domain.UpdateUserRequest) error {
+	return s.validateCommonUserData(
+		data.Email,
+		data.FirstName,
+		data.LastName,
+		data.DateOfBirth,
+		data.Nickname,
+		data.Gender,
+		data.AboutMe,
+	)
+}
+
+func (s *AuthService) validateCommonUserData(email, firstName, lastName string, dateOfBirth time.Time, nickname, gender, aboutMe string) error {
+	if email == "" || !strings.Contains(email, "@") {
+		return fmt.Errorf("valid email is required")
+	}
+	if firstName == "" {
 		return fmt.Errorf("first name is required")
 	}
-	if data.LastName == "" {
+	if lastName == "" {
 		return fmt.Errorf("last name is required")
 	}
-	if data.DateOfBirth.IsZero() {
+	if dateOfBirth.IsZero() {
 		return fmt.Errorf("date of birth is required")
 	}
 	now := time.Now()
-	age := now.Year() - data.DateOfBirth.Year()
-	if now.YearDay() < data.DateOfBirth.YearDay() {
+	age := now.Year() - dateOfBirth.Year()
+	if now.YearDay() < dateOfBirth.YearDay() {
 		age--
 	}
 	if age < 13 || age > 120 {
 		return fmt.Errorf("age must be between 13 and 120")
 	}
-	if data.Nickname == "" || len(data.Nickname) < 3 {
+	if nickname == "" || len(nickname) < 3 {
 		return fmt.Errorf("nickname must be at least 3 characters")
 	}
-	if data.Gender == "" {
+	if gender == "" {
 		return fmt.Errorf("gender is required")
 	}
-	if data.AboutMe != "" && len(data.AboutMe) > 500 {
+	if aboutMe != "" && len(aboutMe) > 500 {
 		return fmt.Errorf("about me must be less than 500 characters")
 	}
 	return nil
