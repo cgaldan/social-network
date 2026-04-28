@@ -4,6 +4,7 @@ import (
 	"io"
 	"social-network/internal/database"
 	"social-network/internal/domain"
+	"social-network/internal/event"
 	"social-network/internal/repository"
 	"social-network/packages/logger"
 	"testing"
@@ -11,7 +12,24 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type fakeNotificationPusher struct {
+	called       bool
+	userID       int
+	notification *domain.Notification
+}
+
+func (p *fakeNotificationPusher) PushNotification(userID int, notification *domain.Notification) {
+	p.called = true
+	p.userID = userID
+	p.notification = notification
+}
+
 func SetupTestServices(t *testing.T) *Services {
+	services, _ := SetupTestServicesWithEventBus(t, &fakeNotificationPusher{})
+	return services
+}
+
+func SetupTestServicesWithEventBus(t *testing.T, pusher NotificationPusher) (*Services, event.EventBus) {
 	t.Helper()
 
 	db, err := database.NewDatabase(":memory:")
@@ -28,14 +46,10 @@ func SetupTestServices(t *testing.T) *Services {
 	})
 
 	repos := repository.NewRepositories(db)
-
 	testLogger := logger.NewLogger(io.Discard, logger.InfoLevel)
+	eventBus := event.NewInMemoryBus(testLogger)
 
-	// hub := websocket.NewHub(testLogger, repos.User)
-
-	services := NewServices(repos, testLogger)
-
-	return services
+	return NewServices(repos, eventBus, testLogger, pusher), eventBus
 }
 
 func CreateTestUser(t *testing.T, services *Services, req domain.RegisterRequest) int {

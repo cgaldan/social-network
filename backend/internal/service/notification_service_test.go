@@ -6,6 +6,51 @@ import (
 	"time"
 )
 
+func TestNotificationService_CreateNotificationPushesPersistedNotification(t *testing.T) {
+	pusher := &fakeNotificationPusher{}
+	services, _ := SetupTestServicesWithEventBus(t, pusher)
+
+	userID := CreateTestUser(t, services, domain.RegisterRequest{
+		Email:       "push@example.com",
+		Password:    "password123",
+		FirstName:   "Jane",
+		LastName:    "Doe",
+		DateOfBirth: time.Now().AddDate(-25, 0, 0),
+		Nickname:    "push",
+		Gender:      "female",
+		IsPublic:    true,
+	})
+
+	notification, err := services.Notification.CreateNotification(domain.CreateNotificationRequest{
+		RecipientID: userID,
+		Type:        "follow.requested",
+		Title:       "Follow request",
+		Body:        "A user requested to follow you.",
+	})
+	if err != nil {
+		t.Fatalf("Failed to create notification: %v", err)
+	}
+
+	if notification.ID == 0 {
+		t.Fatal("Expected persisted notification ID")
+	}
+	if !pusher.called {
+		t.Fatal("Expected notification pusher to be called")
+	}
+	if pusher.userID != userID {
+		t.Errorf("Expected push user ID %d, got %d", userID, pusher.userID)
+	}
+	if pusher.notification == nil {
+		t.Fatal("Expected pushed notification")
+	}
+	if pusher.notification.ID != notification.ID {
+		t.Errorf("Expected pushed notification ID %d, got %d", notification.ID, pusher.notification.ID)
+	}
+	if pusher.notification.CreatedAt.IsZero() {
+		t.Error("Expected pushed notification to include created at timestamp")
+	}
+}
+
 func TestNotificationService_ListNotificationsPaginationDefaults(t *testing.T) {
 	services := SetupTestServices(t)
 
