@@ -65,21 +65,14 @@ func (s *FollowService) FollowUser(followData domain.FollowRequest) (status stri
 				s.logger.Error("Failed to re-open declined follow relationship", "error", err, "followID", existingFollow.ID, "followerID", followData.FollowerID, "followingID", followData.FolloweeID)
 				return "", err
 			}
-<<<<<<< HEAD
 			s.publishFollowRequestedIfPending(followData, existingFollow.ID)
-=======
->>>>>>> main
 			return followData.Status, nil
 		default:
 			return "", errors.New("follow relationship is in an unknown state")
 		}
 	}
 
-<<<<<<< HEAD
 	followID, err := s.followRepo.CreateFollow(followData.FollowerID, followData.FolloweeID, followData.Status)
-=======
-	_, err = s.followRepo.CreateFollow(followData.FollowerID, followData.FolloweeID, followData.Status)
->>>>>>> main
 	if err != nil {
 		s.logger.Error("Failed to create follow relationship", "error", err, "followerID", followData.FollowerID, "followingID", followData.FolloweeID)
 		return "", err
@@ -90,7 +83,6 @@ func (s *FollowService) FollowUser(followData domain.FollowRequest) (status stri
 	return followData.Status, nil
 }
 
-<<<<<<< HEAD
 func (s *FollowService) publishFollowRequestedIfPending(followData domain.FollowRequest, followID int) {
 	if followData.Status != FollowStatusPending {
 		return
@@ -117,8 +109,6 @@ func (s *FollowService) publishFollowRequestedIfPending(followData domain.Follow
 	}
 }
 
-=======
->>>>>>> main
 func (s *FollowService) AcceptFollowRequest(userID int, followRequest *domain.Follow) (err error) {
 	if followRequest.FollowingID != userID {
 		return errors.New("user is not the following")
