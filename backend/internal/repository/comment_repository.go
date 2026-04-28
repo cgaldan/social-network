@@ -153,3 +153,44 @@ func (r *CommentRepository) GetCommentsByUserID(userID int, limit, offset int) (
 
 	return comments, nil
 }
+
+func (r *CommentRepository) UpdateComment(userID, commentID int, content, mediaURL string) error {
+	result, err := r.db.Exec(`
+		UPDATE comments
+		SET 
+		content = ?, 
+		media_url = ?, 
+		updated_at = CURRENT_TIMESTAMP
+		WHERE id = ? AND user_id = ?`,
+		content,
+		mediaURL,
+		commentID,
+		userID,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to update comment: %w", err)
+	}
+	n, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to update comment: %w", err)
+	}
+	if n == 0 {
+		return fmt.Errorf("comment not found")
+	}
+	return nil
+}
+
+func (r *CommentRepository) DeleteComment(userID, commentID int) error {
+	result, err := r.db.Exec(`DELETE FROM comments WHERE id = ? AND user_id = ?`, commentID, userID)
+	if err != nil {
+		return fmt.Errorf("failed to delete comment: %w", err)
+	}
+	n, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to delete comment: %w", err)
+	}
+	if n == 0 {
+		return fmt.Errorf("comment not found")
+	}
+	return nil
+}

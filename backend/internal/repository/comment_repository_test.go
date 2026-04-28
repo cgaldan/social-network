@@ -91,3 +91,44 @@ func TestCommentRepository_GetCommentsByUserID(t *testing.T) {
 		t.Errorf("Expected 2 comments with limit/offset, got %d", len(comments))
 	}
 }
+
+func TestCommentRepository_UpdateComment(t *testing.T) {
+	repos := SetupTestDB(t)
+	commentRepo := repos.Comment
+	postRepo := repos.Post
+	userRepo := repos.User
+
+	userID, _ := userRepo.CreateUser("test@example.com", "hashedpass", "John", "Doe", time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC), "testuser", "male", "", "", false)
+	postID, _ := postRepo.CreatePost(int(userID), "Test Post", "This is a test post content.", "General", "public", "", 0)
+	commentID, _ := commentRepo.CreateComment(int(userID), int(postID), "Old text", "")
+
+	if err := commentRepo.UpdateComment(int(userID), int(commentID), "New text for the comment body", ""); err != nil {
+		t.Fatalf("UpdateComment: %v", err)
+	}
+	c, err := commentRepo.GetCommentByID(int(commentID))
+	if err != nil {
+		t.Fatalf("GetCommentByID: %v", err)
+	}
+	if c.Content != "New text for the comment body" {
+		t.Errorf("content: got %q", c.Content)
+	}
+}
+
+func TestCommentRepository_DeleteComment(t *testing.T) {
+	repos := SetupTestDB(t)
+	commentRepo := repos.Comment
+	postRepo := repos.Post
+	userRepo := repos.User
+
+	userID, _ := userRepo.CreateUser("test@example.com", "hashedpass", "John", "Doe", time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC), "testuser", "male", "", "", false)
+	postID, _ := postRepo.CreatePost(int(userID), "Test Post", "This is a test post content.", "General", "public", "", 0)
+	commentID, _ := commentRepo.CreateComment(int(userID), int(postID), "To remove", "")
+
+	if err := commentRepo.DeleteComment(int(userID), int(commentID)); err != nil {
+		t.Fatalf("DeleteComment: %v", err)
+	}
+	_, err := commentRepo.GetCommentByID(int(commentID))
+	if err == nil {
+		t.Error("expected comment to be gone")
+	}
+}

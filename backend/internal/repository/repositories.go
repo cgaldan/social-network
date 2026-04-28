@@ -62,6 +62,8 @@ type CommentRepositoryInterface interface {
 	GetCommentsByPostID(postID int) ([]domain.Comment, error)
 	GetCommentByID(commentID int) (*domain.Comment, error)
 	GetCommentsByUserID(userID int, limit, offset int) ([]domain.Comment, error)
+	UpdateComment(userID, commentID int, content, mediaURL string) error
+	DeleteComment(userID, commentID int) error
 }
 
 type FollowRepositoryInterface interface {
