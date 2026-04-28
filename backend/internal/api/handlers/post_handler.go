@@ -154,6 +154,109 @@ func (h *PostHandler) GetPostByID(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h *PostHandler) UpdatePost(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	token := r.Header.Get("Authorization")
+	if token == "" {
+		json.NewEncoder(w).Encode(domain.PostDetailResponse{
+			Success: false,
+			Message: "Missing authorization token",
+		})
+		return
+	}
+
+	user, err := h.authService.ValidateSession(token)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.PostDetailResponse{
+			Success: false,
+			Message: "Unauthorized",
+		})
+		return
+	}
+
+	vars := mux.Vars(r)
+	postID, err := strconv.Atoi(vars["id"])
+	if err != nil || postID <= 0 {
+		json.NewEncoder(w).Encode(domain.PostDetailResponse{
+			Success: false,
+			Message: "Invalid post ID",
+		})
+		return
+	}
+
+	var body domain.UpdatePostRequest
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		json.NewEncoder(w).Encode(domain.PostDetailResponse{
+			Success: false,
+			Message: "Invalid request payload",
+		})
+		return
+	}
+
+	post, err := h.contentService.UpdatePost(user.ID, postID, body)
+	if err != nil {
+		h.logger.Error("Failed to update post", "error", err, "userID", user.ID, "postID", postID)
+		json.NewEncoder(w).Encode(domain.PostDetailResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	json.NewEncoder(w).Encode(domain.PostDetailResponse{
+		Success: true,
+		Message: "Post updated successfully",
+		Post:    post,
+	})
+}
+
+func (h *PostHandler) DeletePost(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	token := r.Header.Get("Authorization")
+	if token == "" {
+		json.NewEncoder(w).Encode(domain.PostDetailResponse{
+			Success: false,
+			Message: "Missing authorization token",
+		})
+		return
+	}
+
+	user, err := h.authService.ValidateSession(token)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.PostDetailResponse{
+			Success: false,
+			Message: "Unauthorized",
+		})
+		return
+	}
+
+	vars := mux.Vars(r)
+	postID, err := strconv.Atoi(vars["id"])
+	if err != nil || postID <= 0 {
+		json.NewEncoder(w).Encode(domain.PostDetailResponse{
+			Success: false,
+			Message: "Invalid post ID",
+		})
+		return
+	}
+
+	if err := h.contentService.DeletePost(user.ID, postID); err != nil {
+		h.logger.Error("Failed to delete post", "error", err, "userID", user.ID, "postID", postID)
+		json.NewEncoder(w).Encode(domain.PostDetailResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	json.NewEncoder(w).Encode(domain.PostDetailResponse{
+		Success: true,
+		Message: "Post deleted successfully",
+	})
+}
+
 func (h *PostHandler) CreateGroupPost(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 

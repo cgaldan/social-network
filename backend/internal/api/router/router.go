@@ -40,6 +40,8 @@ func NewRouter(services *service.Services, config *config.Config, hub *websocket
 	api.HandleFunc("/posts", postHandler.GetPosts).Methods("GET")
 	api.HandleFunc("/posts", postHandler.CreatePost).Methods("POST")
 	api.HandleFunc("/posts/{id}", postHandler.GetPostByID).Methods("GET")
+	api.HandleFunc("/posts/{id}", postHandler.UpdatePost).Methods("PUT")
+	api.HandleFunc("/posts/{id}", postHandler.DeletePost).Methods("DELETE")
 	api.HandleFunc("/posts/{id}/comments", commentHandler.CreateComment).Methods("POST")
 
 	// Follow routes
