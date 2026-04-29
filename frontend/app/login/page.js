@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { login } from "../../lib/api";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -31,6 +33,7 @@ export default function LoginPage() {
 
       setSuccessMessage(`Welcome back, ${payload.user?.nickname || "user"}!`);
       setPassword("");
+      router.push("/dashboard");
     } catch (error) {
       setErrorMessage(error.message || "Unable to login.");
     } finally {
@@ -48,14 +51,14 @@ export default function LoginPage() {
         </p>
 
         <form className="login-form" onSubmit={handleSubmit}>
-          <label htmlFor="identifier">Identifier</label>
+          <label htmlFor="identifier">Email or Username</label>
           <input
             id="identifier"
             type="text"
             name="identifier"
             value={identifier}
             onChange={(event) => setIdentifier(event.target.value)}
-            placeholder="email or nickname"
+            placeholder="email or username"
             autoComplete="username"
             disabled={isSubmitting}
           />

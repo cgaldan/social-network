@@ -133,3 +133,51 @@ body {
   color: #15803d;
   font-size: 0.9rem;
 }
+
+.dashboard-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.dashboard-card {
+  width: 100%;
+  max-width: 520px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+}
+
+.dashboard-card h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.dashboard-details {
+  margin: 1rem 0;
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0.75rem 0;
+}
+
+.dashboard-details p {
+  margin: 0.4rem 0;
+}
+
+.logout-button {
+  border: 0;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: #dc2626;
+  cursor: pointer;
+}
+
+.logout-button:hover {
+  background: #b91c1c;
+}

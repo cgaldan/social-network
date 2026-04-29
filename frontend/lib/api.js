@@ -1,4 +1,4 @@
-const FALLBACK_API_BASE_URL = "http://localhost:8080";
+const FALLBACK_API_BASE_URL = "http://localhost:8000";
 
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || FALLBACK_API_BASE_URL;
