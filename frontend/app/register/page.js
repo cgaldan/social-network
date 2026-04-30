@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { register } from "../../lib/api";
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [form, setForm] = useState({
     email: "",
     password: "",
@@ -58,6 +60,7 @@ export default function RegisterPage() {
         ...prev,
         password: "",
       }));
+      router.push("/dashboard");
     } catch (error) {
       setErrorMessage(error.message || "Unable to register.");
     } finally {
