@@ -19,18 +19,13 @@ type Services struct {
 	Notification NotificationServiceInterface
 }
 
-func NewServices(repos *repository.Repositories, eventBus event.EventBus, logger *logger.Logger, notificationPushers ...NotificationPusher) *Services {
-	var notificationPusher NotificationPusher
-	if len(notificationPushers) > 0 {
-		notificationPusher = notificationPushers[0]
-	}
-
+func NewServices(repos *repository.Repositories, eventBus event.EventBus, logger *logger.Logger, notificationPusher NotificationPusher, messageBroadcaster MessageBroadcaster) *Services {
 	authService := NewAuthService(repos.User, repos.Session, logger)
 	contentService := NewContentService(repos.Post, repos.Group, logger)
 	postService := NewPostService(repos.Post, repos.Group, logger)
 	commentService := NewCommentService(repos.Comment, repos.Post, repos.Group, logger)
 	followService := NewFollowService(repos.Follow, repos.User, eventBus, logger)
-	messageService := NewMessageService(repos.Message, repos.User, repos.Conversation, logger)
+	messageService := NewMessageService(repos.Message, repos.User, repos.Conversation, repos.Follow, messageBroadcaster, logger)
 	conversationService := NewConversationService(repos.Conversation, repos.Follow, logger)
 	groupService := NewGroupService(repos.Group, repos.User, conversationService, eventBus, logger)
 	notificationService := NewNotificationService(repos.Notification, logger, notificationPusher)

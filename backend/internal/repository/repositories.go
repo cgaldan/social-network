@@ -89,6 +89,7 @@ type ConversationRepositoryInterface interface {
 	GetGroupConversationByID(conversationID int) (*domain.Conversation, error)
 	AddConversationParticipant(conversationID, userID int) error
 	RemoveConversationParticipant(conversationID, userID int) error
+	GetParticipantIDs(conversationID int) ([]int, error)
 }
 
 type MessageRepositoryInterface interface {

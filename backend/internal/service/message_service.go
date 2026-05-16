@@ -9,29 +9,35 @@ import (
 	"time"
 )
 
+type MessageBroadcaster interface {
+	BroadcastMessage(message *domain.Message, receiverIDs []int)
+}
+
 type MessageService struct {
 	messageRepo repository.MessageRepositoryInterface
 	userRepo    repository.UserRepositoryInterface
 	convRepo    repository.ConversationRepositoryInterface
+	broadcaster MessageBroadcaster
 	logger      *logger.Logger
 }
 
-func NewMessageService(messageRepo repository.MessageRepositoryInterface, userRepo repository.UserRepositoryInterface, convRepo repository.ConversationRepositoryInterface, logger *logger.Logger) *MessageService {
+func NewMessageService(messageRepo repository.MessageRepositoryInterface, userRepo repository.UserRepositoryInterface, convRepo repository.ConversationRepositoryInterface, broadcaster MessageBroadcaster, logger *logger.Logger) *MessageService {
 	return &MessageService{
 		messageRepo: messageRepo,
 		userRepo:    userRepo,
 		convRepo:    convRepo,
+		broadcaster: broadcaster,
 		logger:      logger,
 	}
 }
 
 func (s *MessageService) SendMessage(convID, senderID int, content string) (*domain.Message, error) {
-	IsMember, err := s.convRepo.IsUserInConversation(convID, senderID)
+	isMember, err := s.convRepo.IsUserInConversation(convID, senderID)
 	if err != nil {
 		s.logger.Error("Failed to check conversation membership", "error", err, "convID", convID, "senderID", senderID)
 		return nil, fmt.Errorf("failed to send message")
 	}
-	if !IsMember {
+	if !isMember {
 		return nil, fmt.Errorf("sender is not part of the conversation")
 	}
 
@@ -57,7 +63,14 @@ func (s *MessageService) SendMessage(convID, senderID int, content string) (*dom
 		CreatedAt:      time.Now(),
 	}
 
-	// s.hub.BroadcastMessage(message, receiverID)
+	if s.broadcaster != nil {
+		participants, err := s.convRepo.GetParticipantIDs(convID)
+		if err != nil {
+			s.logger.Error("Failed to fetch participants for broadcast", "error", err, "convID", convID)
+		} else if len(participants) > 0 {
+			s.broadcaster.BroadcastMessage(message, participants)
+		}
+	}
 
 	s.logger.Info("Message sent successfully", "messageID", messageID, "conversationID", convID, "senderID", senderID)
 	return message, nil

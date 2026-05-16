@@ -168,6 +168,28 @@ func (r *ConversationRepository) IsUserInConversation(conversationID, userID int
 	return count > 0, nil
 }
 
+func (r *ConversationRepository) GetParticipantIDs(conversationID int) ([]int, error) {
+	rows, err := r.db.Query(`
+		SELECT user_id
+		FROM conversation_participants
+		WHERE conversation_id = ?`, conversationID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get participant ids: %w", err)
+	}
+	defer rows.Close()
+
+	ids := make([]int, 0)
+	for rows.Next() {
+		var id int
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("failed to scan participant id: %w", err)
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
+}
+
 func makePairKey(userID1, userID2 int) string {
 	if userID1 > userID2 {
 		userID1, userID2 = userID2, userID1
