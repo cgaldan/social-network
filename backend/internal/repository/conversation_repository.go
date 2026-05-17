@@ -190,6 +190,103 @@ func (r *ConversationRepository) GetParticipantIDs(conversationID int) ([]int, e
 	return ids, rows.Err()
 }
 
+func (r *ConversationRepository) ListConversationsByUserID(userID, limit, offset int) ([]domain.ConversationSummary, error) {
+	rows, err := r.db.Query(`
+		SELECT
+			c.id,
+			c.name,
+			c.type,
+			c.created_at,
+			(SELECT m.id FROM messages m WHERE m.conversation_id = c.id ORDER BY m.created_at DESC, m.id DESC LIMIT 1),
+			(SELECT m.sender_id FROM messages m WHERE m.conversation_id = c.id ORDER BY m.created_at DESC, m.id DESC LIMIT 1),
+			(SELECT m.content FROM messages m WHERE m.conversation_id = c.id ORDER BY m.created_at DESC, m.id DESC LIMIT 1),
+			(SELECT m.created_at FROM messages m WHERE m.conversation_id = c.id ORDER BY m.created_at DESC, m.id DESC LIMIT 1),
+			(SELECT COUNT(*) FROM messages m WHERE m.conversation_id = c.id AND m.sender_id != ? AND (cp.last_read_at IS NULL OR m.created_at > cp.last_read_at))
+		FROM conversations c
+		JOIN conversation_participants cp ON cp.conversation_id = c.id
+		WHERE cp.user_id = ?
+		ORDER BY COALESCE(
+			(SELECT m.created_at FROM messages m WHERE m.conversation_id = c.id ORDER BY m.created_at DESC LIMIT 1),
+			c.created_at
+		) DESC
+		LIMIT ? OFFSET ?`,
+		userID, userID, limit, offset,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list conversations: %w", err)
+	}
+	defer rows.Close()
+
+	out := make([]domain.ConversationSummary, 0)
+	for rows.Next() {
+		var c domain.ConversationSummary
+		var (
+			msgID        sql.NullInt64
+			msgSenderID  sql.NullInt64
+			msgContent   sql.NullString
+			msgCreatedAt sql.NullTime
+		)
+		if err := rows.Scan(
+			&c.ID, &c.Name, &c.Type, &c.CreatedAt,
+			&msgID, &msgSenderID, &msgContent, &msgCreatedAt,
+			&c.UnreadCount,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan conversation: %w", err)
+		}
+		if msgID.Valid {
+			c.LastMessage = &domain.Message{
+				ID:             int(msgID.Int64),
+				ConversationID: c.ID,
+				SenderID:       int(msgSenderID.Int64),
+				Content:        msgContent.String,
+				CreatedAt:      msgCreatedAt.Time,
+			}
+		}
+		out = append(out, c)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	for i := range out {
+		participants, err := r.GetParticipants(out[i].ID)
+		if err != nil {
+			return nil, err
+		}
+		out[i].Participants = participants
+	}
+	return out, nil
+}
+
+func (r *ConversationRepository) GetParticipants(conversationID int) ([]domain.ConversationParticipant, error) {
+	rows, err := r.db.Query(`
+		SELECT
+			u.id,
+			u.nickname,
+			u.first_name,
+			u.last_name,
+			u.avatar_path,
+			EXISTS(SELECT 1 FROM sessions s WHERE s.user_id = u.id AND s.expires_at > NOW())
+		FROM conversation_participants cp
+		JOIN users u ON cp.user_id = u.id
+		WHERE cp.conversation_id = ?`, conversationID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get participants: %w", err)
+	}
+	defer rows.Close()
+
+	participants := make([]domain.ConversationParticipant, 0)
+	for rows.Next() {
+		var p domain.ConversationParticipant
+		if err := rows.Scan(&p.UserID, &p.Nickname, &p.FirstName, &p.LastName, &p.AvatarPath, &p.IsOnline); err != nil {
+			return nil, fmt.Errorf("failed to scan participant: %w", err)
+		}
+		participants = append(participants, p)
+	}
+	return participants, rows.Err()
+}
+
 func makePairKey(userID1, userID2 int) string {
 	if userID1 > userID2 {
 		userID1, userID2 = userID2, userID1

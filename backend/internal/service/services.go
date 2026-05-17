@@ -92,6 +92,7 @@ type ConversationServiceInterface interface {
 	CreateGroupConversation(name string, initialUserIDs ...int) (*domain.Conversation, error)
 	AddConversationParticipant(convID, userID int) error
 	RemoveConversationParticipant(convID, userID int) error
+	ListConversations(userID, limit, offset int) ([]domain.ConversationSummary, error)
 }
 
 type GroupServiceInterface interface {

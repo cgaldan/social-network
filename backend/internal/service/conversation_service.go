@@ -86,3 +86,7 @@ func (s *ConversationService) RemoveConversationParticipant(convID, userID int) 
 	}
 	return nil
 }
+
+func (s *ConversationService) ListConversations(userID, limit, offset int) ([]domain.ConversationSummary, error) {
+	return s.convRepo.ListConversationsByUserID(userID, limit, offset)
+}

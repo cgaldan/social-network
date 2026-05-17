@@ -56,6 +56,7 @@ func NewRouter(services *service.Services, config *config.Config, hub *websocket
 	api.HandleFunc("/follow/{id}/remove", followHandler.RemoveFollower).Methods("POST")
 
 	// Chat routes
+	api.HandleFunc("/conversations", conversationHandler.ListConversations).Methods("GET")
 	api.HandleFunc("/conversations/direct", conversationHandler.CreateDirectConversation).Methods("POST")
 	api.HandleFunc("/messages", messageHandler.SendMessage).Methods("POST")
 

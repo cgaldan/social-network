@@ -69,3 +69,35 @@ func (h *ConversationHandler) CreateDirectConversation(w http.ResponseWriter, r 
 		Conversation: conv,
 	})
 }
+
+func (h *ConversationHandler) ListConversations(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	token := r.Header.Get("Authorization")
+	user, err := h.authService.ValidateSession(token)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.ConversationsResponse{
+			Success: false,
+			Message: "Unauthorized",
+		})
+		return
+	}
+
+	limit, offset := parsePagination(r)
+
+	conversations, err := h.convService.ListConversations(user.ID, limit, offset)
+	if err != nil {
+		h.logger.Error("Failed to list conversations", "error", err, "userID", user.ID)
+		json.NewEncoder(w).Encode(domain.ConversationsResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	json.NewEncoder(w).Encode(domain.ConversationsResponse{
+		Success:       true,
+		Message:       "Conversations retrieved successfully",
+		Conversations: conversations,
+	})
+}

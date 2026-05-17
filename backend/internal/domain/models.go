@@ -85,6 +85,25 @@ type Message struct {
 	CreatedAt      time.Time `json:"created_at"`
 }
 
+type ConversationParticipant struct {
+	UserID     int    `json:"user_id"`
+	Nickname   string `json:"nickname"`
+	FirstName  string `json:"first_name"`
+	LastName   string `json:"last_name"`
+	AvatarPath string `json:"avatar_path,omitempty"`
+	IsOnline   bool   `json:"is_online"`
+}
+
+type ConversationSummary struct {
+	ID           int                       `json:"id"`
+	Type         string                    `json:"type"`
+	Name         string                    `json:"name"`
+	Participants []ConversationParticipant `json:"participants"`
+	LastMessage  *Message                  `json:"last_message,omitempty"`
+	UnreadCount  int                       `json:"unread_count"`
+	CreatedAt    time.Time                 `json:"created_at"`
+}
+
 type Follow struct {
 	ID          int       `json:"id"`
 	FollowerID  int       `json:"follower_id"`
