@@ -31,6 +31,12 @@ type CommentResponse struct {
 	Comment *Comment `json:"comment,omitempty"`
 }
 
+type CommentsResponse struct {
+	Success  bool      `json:"success"`
+	Message  string    `json:"message,omitempty"`
+	Comments []Comment `json:"comments"`
+}
+
 type FollowResponse struct {
 	Success bool   `json:"success"`
 	Message string `json:"message,omitempty"`
