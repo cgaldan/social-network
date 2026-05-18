@@ -16,13 +16,15 @@ import (
 type AuthService struct {
 	userRepo    repository.UserRepositoryInterface
 	sessionRepo repository.SessionRepositoryInterface
+	followRepo  repository.FollowRepositoryInterface
 	logger      *logger.Logger
 }
 
-func NewAuthService(userRepo repository.UserRepositoryInterface, sessionRepo repository.SessionRepositoryInterface, logger *logger.Logger) *AuthService {
+func NewAuthService(userRepo repository.UserRepositoryInterface, sessionRepo repository.SessionRepositoryInterface, followRepo repository.FollowRepositoryInterface, logger *logger.Logger) *AuthService {
 	return &AuthService{
 		userRepo:    userRepo,
 		sessionRepo: sessionRepo,
+		followRepo:  followRepo,
 		logger:      logger,
 	}
 }
@@ -87,12 +89,12 @@ func (s *AuthService) Login(loginData domain.LoginRequest) (*domain.User, string
 	}
 
 	// REMEMBER TO REMOVE THIS BEFORE SUBMIT
-	if user.Nickname != "cgaldan" && user.Nickname != "cmarkos" {
-		if err := bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(loginData.Password)); err != nil {
-			s.logger.Debug("Login failed - password mismatch", "identifier", loginData.Identifier)
-			return nil, "", fmt.Errorf("invalid identifier or password")
-		}
+	// if user.Nickname != "cgaldan" && user.Nickname != "cmarkos" && user.Nickname != "testuser" && user.Nickname != "jane" {
+	if err := bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(loginData.Password)); err != nil {
+		s.logger.Debug("Login failed - password mismatch", "identifier", loginData.Identifier)
+		return nil, "", fmt.Errorf("invalid identifier or password")
 	}
+	// }
 
 	if err := s.userRepo.UpdateLastSeen(user.ID); err != nil {
 		s.logger.Error("Failed to update last seen for user", "userID", user.ID, "error", err)
@@ -177,6 +179,77 @@ func (s *AuthService) DeleteUser(userID int) error {
 		return fmt.Errorf("failed to delete user")
 	}
 	return nil
+}
+
+func (s *AuthService) GetUserProfile(viewerID, targetID int) (*domain.UserProfile, error) {
+	user, err := s.userRepo.GetUserByID(targetID)
+	if err != nil {
+		return nil, err
+	}
+
+	followStatus := "none"
+	if viewerID == targetID {
+		followStatus = "self"
+	} else if s.followRepo != nil {
+		follow, err := s.followRepo.GetFollowByUsers(viewerID, targetID)
+		if err != nil {
+			s.logger.Error("Failed to get follow status", "error", err, "viewerID", viewerID, "targetID", targetID)
+		} else if follow != nil {
+			switch follow.Status {
+			case "accepted":
+				followStatus = "following"
+			case "pending":
+				followStatus = "pending"
+			}
+		}
+	}
+
+	canView := user.IsPublic || followStatus == "self" || followStatus == "following"
+
+	profile := &domain.UserProfile{
+		ID:             user.ID,
+		Nickname:       user.Nickname,
+		FirstName:      user.FirstName,
+		LastName:       user.LastName,
+		AvatarPath:     user.AvatarPath,
+		IsOnline:       user.IsOnline,
+		IsPublic:       user.IsPublic,
+		CreatedAt:      user.CreatedAt,
+		FollowStatus:   followStatus,
+		CanView:        canView,
+		FollowersCount: user.FollowersCount,
+		FollowingCount: user.FollowingCount,
+	}
+
+	if canView {
+		profile.Email = user.Email
+		profile.DateOfBirth = user.DateOfBirth
+		profile.Gender = user.Gender
+		profile.AboutMe = user.AboutMe
+	}
+
+	return profile, nil
+}
+
+func (s *AuthService) CanViewUser(viewerID, targetID int) (bool, error) {
+	if viewerID == targetID {
+		return true, nil
+	}
+	user, err := s.userRepo.GetUserByID(targetID)
+	if err != nil {
+		return false, err
+	}
+	if user.IsPublic {
+		return true, nil
+	}
+	if s.followRepo == nil {
+		return false, nil
+	}
+	follow, err := s.followRepo.GetFollowByUsers(viewerID, targetID)
+	if err != nil {
+		return false, err
+	}
+	return follow != nil && follow.Status == "accepted", nil
 }
 
 // Helper functions

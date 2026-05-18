@@ -20,9 +20,9 @@ type Services struct {
 }
 
 func NewServices(repos *repository.Repositories, eventBus event.EventBus, logger *logger.Logger, notificationPusher NotificationPusher, messageBroadcaster MessageBroadcaster) *Services {
-	authService := NewAuthService(repos.User, repos.Session, logger)
+	authService := NewAuthService(repos.User, repos.Session, repos.Follow, logger)
 	contentService := NewContentService(repos.Post, repos.Group, logger)
-	postService := NewPostService(repos.Post, repos.Group, logger)
+	postService := NewPostService(repos.Post, repos.Group, repos.Follow, logger)
 	commentService := NewCommentService(repos.Comment, repos.Post, repos.Group, logger)
 	followService := NewFollowService(repos.Follow, repos.User, eventBus, logger)
 	messageService := NewMessageService(repos.Message, repos.User, repos.Conversation, repos.Follow, messageBroadcaster, logger)
@@ -50,6 +50,8 @@ type AuthServiceInterface interface {
 	ValidateSession(sessionID string) (*domain.User, error)
 	UpdateUser(userID int, data domain.UpdateUserRequest) (*domain.User, error)
 	DeleteUser(userID int) error
+	GetUserProfile(viewerID, targetID int) (*domain.UserProfile, error)
+	CanViewUser(viewerID, targetID int) (bool, error)
 }
 
 type ContentServiceInterface interface {

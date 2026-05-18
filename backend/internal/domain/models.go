@@ -104,6 +104,27 @@ type ConversationSummary struct {
 	CreatedAt    time.Time                 `json:"created_at"`
 }
 
+type UserProfile struct {
+	ID           int       `json:"id"`
+	Nickname     string    `json:"nickname"`
+	FirstName    string    `json:"first_name"`
+	LastName     string    `json:"last_name"`
+	AvatarPath   string    `json:"avatar_path,omitempty"`
+	IsOnline     bool      `json:"is_online"`
+	IsPublic     bool      `json:"is_public"`
+	CreatedAt    time.Time `json:"created_at"`
+	FollowStatus string    `json:"follow_status"`
+	CanView      bool      `json:"can_view"`
+
+	// CanView Fields:
+	Email          string    `json:"email,omitempty"`
+	DateOfBirth    time.Time `json:"date_of_birth,omitempty"`
+	Gender         string    `json:"gender,omitempty"`
+	AboutMe        string    `json:"about_me,omitempty"`
+	FollowersCount int       `json:"followers_count"`
+	FollowingCount int       `json:"following_count"`
+}
+
 type Follow struct {
 	ID          int       `json:"id"`
 	FollowerID  int       `json:"follower_id"`

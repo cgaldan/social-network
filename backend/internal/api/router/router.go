@@ -24,6 +24,7 @@ func NewRouter(services *service.Services, config *config.Config, hub *websocket
 	messageHandler := handlers.NewMessageHandler(services.Message, services.Auth, logger)
 	groupHandler := handlers.NewGroupHandler(services.Group, services.Auth, logger)
 	notificationHandler := handlers.NewNotificationHandler(services.Notification, services.Auth, logger)
+	userHandler := handlers.NewUserHandler(services.Auth, services.Post, services.Follow, logger)
 	healthHandler := handlers.NewHealthHandler("1.0.0")
 
 	r.HandleFunc("/health", healthHandler.Health).Methods("GET")
@@ -55,6 +56,10 @@ func NewRouter(services *service.Services, config *config.Config, hub *websocket
 	api.HandleFunc("/follow/{id}/decline", followHandler.DeclineFollowRequest).Methods("POST")
 	api.HandleFunc("/follow/{id}/unfollow", followHandler.UnfollowUser).Methods("POST")
 	api.HandleFunc("/follow/{id}/remove", followHandler.RemoveFollower).Methods("POST")
+
+	// User routes
+	api.HandleFunc("/users/{id}", userHandler.GetUser).Methods("GET")
+	api.HandleFunc("/users/{id}/posts", userHandler.ListUserPosts).Methods("GET")
 
 	// Chat routes
 	api.HandleFunc("/conversations", conversationHandler.ListConversations).Methods("GET")
