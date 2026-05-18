@@ -76,6 +76,19 @@ func (s *MessageService) SendMessage(convID, senderID int, content string) (*dom
 	return message, nil
 }
 
+func (s *MessageService) ListMessages(convID, userID, limit, offset int) ([]domain.Message, error) {
+	isMember, err := s.convRepo.IsUserInConversation(convID, userID)
+	if err != nil {
+		s.logger.Error("Failed to check conversation membership", "error", err, "convID", convID, "userID", userID)
+		return nil, fmt.Errorf("failed to list messages")
+	}
+	if !isMember {
+		return nil, fmt.Errorf("user is not part of the conversation")
+	}
+
+	return s.messageRepo.ListMessagesByConversationID(convID, limit, offset)
+}
+
 func (s *MessageService) validateMessage(content string) error {
 	if len(content) == 0 {
 		return fmt.Errorf("message content cannot be empty")

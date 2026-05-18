@@ -49,6 +49,12 @@ type MessageResponse struct {
 	Msg     *Message `json:"msg,omitempty"`
 }
 
+type MessagesResponse struct {
+	Success  bool      `json:"success"`
+	Message  string    `json:"message,omitempty"`
+	Messages []Message `json:"messages"`
+}
+
 type ConversationResponse struct {
 	Success      bool          `json:"success"`
 	Message      string        `json:"message,omitempty"`

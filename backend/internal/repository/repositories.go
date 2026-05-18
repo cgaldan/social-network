@@ -98,6 +98,7 @@ type ConversationRepositoryInterface interface {
 type MessageRepositoryInterface interface {
 	CreateMessage(message *domain.Message) (int64, error)
 	GetMessageByID(messageID int) (*domain.Message, error)
+	ListMessagesByConversationID(conversationID, limit, offset int) ([]domain.Message, error)
 }
 
 type GroupRepositoryInterface interface {

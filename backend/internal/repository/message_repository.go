@@ -26,6 +26,38 @@ func (r *MessageRepository) CreateMessage(message *domain.Message) (int64, error
 	return result.LastInsertId()
 }
 
+func (r *MessageRepository) ListMessagesByConversationID(conversationID, limit, offset int) ([]domain.Message, error) {
+	rows, err := r.db.Query(`
+		SELECT id, conversation_id, sender_id, content, created_at
+		FROM messages
+		WHERE conversation_id = ?
+		ORDER BY created_at DESC, id DESC
+		LIMIT ? OFFSET ?`,
+		conversationID, limit, offset,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list messages: %w", err)
+	}
+	defer rows.Close()
+
+	out := make([]domain.Message, 0)
+	for rows.Next() {
+		var m domain.Message
+		if err := rows.Scan(&m.ID, &m.ConversationID, &m.SenderID, &m.Content, &m.CreatedAt); err != nil {
+			return nil, fmt.Errorf("failed to scan message: %w", err)
+		}
+		out = append(out, m)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	for i, j := 0, len(out)-1; i < j; i, j = i+1, j-1 {
+		out[i], out[j] = out[j], out[i]
+	}
+	return out, nil
+}
+
 func (r *MessageRepository) GetMessageByID(messageID int) (*domain.Message, error) {
 	var message domain.Message
 	err := r.db.QueryRow(`

@@ -89,6 +89,7 @@ type FollowServiceInterface interface {
 
 type MessageServiceInterface interface {
 	SendMessage(convID, senderID int, content string) (*domain.Message, error)
+	ListMessages(convID, userID, limit, offset int) ([]domain.Message, error)
 }
 
 type ConversationServiceInterface interface {
