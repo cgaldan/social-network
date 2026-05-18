@@ -60,6 +60,8 @@ func NewRouter(services *service.Services, config *config.Config, hub *websocket
 	// User routes
 	api.HandleFunc("/users/{id}", userHandler.GetUser).Methods("GET")
 	api.HandleFunc("/users/{id}/posts", userHandler.ListUserPosts).Methods("GET")
+	api.HandleFunc("/users/{id}/followers", userHandler.ListUserFollowers).Methods("GET")
+	api.HandleFunc("/users/{id}/following", userHandler.ListUserFollowing).Methods("GET")
 
 	// Chat routes
 	api.HandleFunc("/conversations", conversationHandler.ListConversations).Methods("GET")

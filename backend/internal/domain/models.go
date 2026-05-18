@@ -104,6 +104,16 @@ type ConversationSummary struct {
 	CreatedAt    time.Time                 `json:"created_at"`
 }
 
+type UserSummary struct {
+	ID         int    `json:"id"`
+	Nickname   string `json:"nickname"`
+	FirstName  string `json:"first_name"`
+	LastName   string `json:"last_name"`
+	AvatarPath string `json:"avatar_path,omitempty"`
+	IsOnline   bool   `json:"is_online"`
+	IsPublic   bool   `json:"is_public"`
+}
+
 type UserProfile struct {
 	ID           int       `json:"id"`
 	Nickname     string    `json:"nickname"`

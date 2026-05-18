@@ -78,6 +78,8 @@ type FollowRepositoryInterface interface {
 	DeleteFollow(followID int) error
 	GetFollowStatusByFollowID(followID int) (string, error)
 	EitherUserFollows(userID1, userID2 int) (bool, error)
+	ListFollowersOfUser(userID, limit, offset int) ([]domain.UserSummary, error)
+	ListFollowingByUser(userID, limit, offset int) ([]domain.UserSummary, error)
 }
 
 type ConversationRepositoryInterface interface {

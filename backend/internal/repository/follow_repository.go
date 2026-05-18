@@ -241,11 +241,11 @@ func (r *FollowRepository) GetFollowStatusByFollowID(followID int) (string, erro
 func (r *FollowRepository) EitherUserFollows(userID1, userID2 int) (bool, error) {
 	var count int
 	err := r.db.QueryRow(`
-		SELECT COUNT(*) 
-		FROM follows 
-		WHERE (follower_id = ? AND following_id = ?)
-		OR (follower_id = ? AND following_id = ?)
-		AND status = 'accepted'`,
+		SELECT COUNT(*)
+		FROM follows
+		WHERE status = 'accepted'
+		  AND ((follower_id = ? AND following_id = ?)
+		    OR (follower_id = ? AND following_id = ?))`,
 		userID1, userID2, userID2, userID1,
 	).Scan(&count)
 
@@ -254,4 +254,52 @@ func (r *FollowRepository) EitherUserFollows(userID1, userID2 int) (bool, error)
 	}
 
 	return count > 0, nil
+}
+
+func (r *FollowRepository) ListFollowersOfUser(userID, limit, offset int) ([]domain.UserSummary, error) {
+	rows, err := r.db.Query(`
+		SELECT u.id, u.nickname, u.first_name, u.last_name, u.avatar_path, u.is_online, u.is_public
+		FROM follows f
+		JOIN users u ON u.id = f.follower_id
+		WHERE f.following_id = ? AND f.status = 'accepted'
+		ORDER BY f.created_at DESC
+		LIMIT ? OFFSET ?`, userID, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list followers: %w", err)
+	}
+	defer rows.Close()
+
+	out := make([]domain.UserSummary, 0)
+	for rows.Next() {
+		var u domain.UserSummary
+		if err := rows.Scan(&u.ID, &u.Nickname, &u.FirstName, &u.LastName, &u.AvatarPath, &u.IsOnline, &u.IsPublic); err != nil {
+			return nil, fmt.Errorf("failed to scan follower: %w", err)
+		}
+		out = append(out, u)
+	}
+	return out, rows.Err()
+}
+
+func (r *FollowRepository) ListFollowingByUser(userID, limit, offset int) ([]domain.UserSummary, error) {
+	rows, err := r.db.Query(`
+		SELECT u.id, u.nickname, u.first_name, u.last_name, u.avatar_path, u.is_online, u.is_public
+		FROM follows f
+		JOIN users u ON u.id = f.following_id
+		WHERE f.follower_id = ? AND f.status = 'accepted'
+		ORDER BY f.created_at DESC
+		LIMIT ? OFFSET ?`, userID, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list following: %w", err)
+	}
+	defer rows.Close()
+
+	out := make([]domain.UserSummary, 0)
+	for rows.Next() {
+		var u domain.UserSummary
+		if err := rows.Scan(&u.ID, &u.Nickname, &u.FirstName, &u.LastName, &u.AvatarPath, &u.IsOnline, &u.IsPublic); err != nil {
+			return nil, fmt.Errorf("failed to scan following: %w", err)
+		}
+		out = append(out, u)
+	}
+	return out, rows.Err()
 }

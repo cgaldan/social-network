@@ -61,6 +61,12 @@ type ConversationsResponse struct {
 	Conversations []ConversationSummary `json:"conversations"`
 }
 
+type UsersResponse struct {
+	Success bool          `json:"success"`
+	Message string        `json:"message,omitempty"`
+	Users   []UserSummary `json:"users"`
+}
+
 type UserResponse struct {
 	Success bool         `json:"success"`
 	Message string       `json:"message,omitempty"`

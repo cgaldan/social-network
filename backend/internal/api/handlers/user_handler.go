@@ -122,3 +122,117 @@ func (h *UserHandler) ListUserPosts(w http.ResponseWriter, r *http.Request) {
 		Posts:   posts,
 	})
 }
+
+func (h *UserHandler) ListUserFollowers(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	token := r.Header.Get("Authorization")
+	viewer, err := h.authService.ValidateSession(token)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.UsersResponse{
+			Success: false,
+			Message: "Unauthorized",
+		})
+		return
+	}
+
+	vars := mux.Vars(r)
+	targetID, err := strconv.Atoi(vars["id"])
+	if err != nil || targetID <= 0 {
+		json.NewEncoder(w).Encode(domain.UsersResponse{
+			Success: false,
+			Message: "Invalid user ID",
+		})
+		return
+	}
+
+	canView, err := h.authService.CanViewUser(viewer.ID, targetID)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.UsersResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+	if !canView {
+		json.NewEncoder(w).Encode(domain.UsersResponse{
+			Success: false,
+			Message: "This profile is private",
+		})
+		return
+	}
+
+	limit, offset := parsePagination(r)
+	users, err := h.followService.ListFollowersOfUser(targetID, limit, offset)
+	if err != nil {
+		h.logger.Error("Failed to list followers", "error", err, "targetID", targetID)
+		json.NewEncoder(w).Encode(domain.UsersResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	json.NewEncoder(w).Encode(domain.UsersResponse{
+		Success: true,
+		Message: "Followers retrieved successfully",
+		Users:   users,
+	})
+}
+
+func (h *UserHandler) ListUserFollowing(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	token := r.Header.Get("Authorization")
+	viewer, err := h.authService.ValidateSession(token)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.UsersResponse{
+			Success: false,
+			Message: "Unauthorized",
+		})
+		return
+	}
+
+	vars := mux.Vars(r)
+	targetID, err := strconv.Atoi(vars["id"])
+	if err != nil || targetID <= 0 {
+		json.NewEncoder(w).Encode(domain.UsersResponse{
+			Success: false,
+			Message: "Invalid user ID",
+		})
+		return
+	}
+
+	canView, err := h.authService.CanViewUser(viewer.ID, targetID)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.UsersResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+	if !canView {
+		json.NewEncoder(w).Encode(domain.UsersResponse{
+			Success: false,
+			Message: "This profile is private",
+		})
+		return
+	}
+
+	limit, offset := parsePagination(r)
+	users, err := h.followService.ListFollowingByUser(targetID, limit, offset)
+	if err != nil {
+		h.logger.Error("Failed to list following", "error", err, "targetID", targetID)
+		json.NewEncoder(w).Encode(domain.UsersResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	json.NewEncoder(w).Encode(domain.UsersResponse{
+		Success: true,
+		Message: "Following retrieved successfully",
+		Users:   users,
+	})
+}

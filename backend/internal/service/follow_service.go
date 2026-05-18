@@ -203,3 +203,11 @@ func (s *FollowService) RemoveFollower(removeData domain.RemoveFollowerRequest) 
 func (s *FollowService) GetFollowByID(followID int) (*domain.Follow, error) {
 	return s.followRepo.GetFollowByID(followID)
 }
+
+func (s *FollowService) ListFollowersOfUser(userID, limit, offset int) ([]domain.UserSummary, error) {
+	return s.followRepo.ListFollowersOfUser(userID, limit, offset)
+}
+
+func (s *FollowService) ListFollowingByUser(userID, limit, offset int) ([]domain.UserSummary, error) {
+	return s.followRepo.ListFollowingByUser(userID, limit, offset)
+}
