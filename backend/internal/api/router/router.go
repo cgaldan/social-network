@@ -51,6 +51,7 @@ func NewRouter(services *service.Services, config *config.Config, hub *websocket
 	api.HandleFunc("/posts/{id}/comments/{commentId}", commentHandler.DeleteComment).Methods("DELETE")
 
 	// Follow routes
+	api.HandleFunc("/follow/requests", followHandler.ListFollowRequests).Methods("GET")
 	api.HandleFunc("/follow/{id}", followHandler.FollowUser).Methods("POST")
 	api.HandleFunc("/follow/{id}/accept", followHandler.AcceptFollowRequest).Methods("POST")
 	api.HandleFunc("/follow/{id}/decline", followHandler.DeclineFollowRequest).Methods("POST")

@@ -143,6 +143,13 @@ type Follow struct {
 	CreatedAt   time.Time `json:"created_at"`
 }
 
+type FollowRequestSummary struct {
+	ID        int         `json:"id"`
+	Status    string      `json:"status"`
+	CreatedAt time.Time   `json:"created_at"`
+	User      UserSummary `json:"user"`
+}
+
 type Follower struct {
 	ID          int       `json:"id"`
 	FollowerID  int       `json:"follower_id"`

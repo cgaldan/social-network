@@ -204,6 +204,14 @@ func (s *FollowService) GetFollowByID(followID int) (*domain.Follow, error) {
 	return s.followRepo.GetFollowByID(followID)
 }
 
+func (s *FollowService) ListIncomingPending(userID, limit, offset int) ([]domain.FollowRequestSummary, error) {
+	return s.followRepo.ListIncomingPending(userID, limit, offset)
+}
+
+func (s *FollowService) ListOutgoingPending(userID, limit, offset int) ([]domain.FollowRequestSummary, error) {
+	return s.followRepo.ListOutgoingPending(userID, limit, offset)
+}
+
 func (s *FollowService) ListFollowersOfUser(userID, limit, offset int) ([]domain.UserSummary, error) {
 	return s.followRepo.ListFollowersOfUser(userID, limit, offset)
 }

@@ -43,6 +43,12 @@ type FollowResponse struct {
 	Status  string `json:"status,omitempty"`
 }
 
+type FollowRequestsResponse struct {
+	Success  bool                   `json:"success"`
+	Message  string                 `json:"message,omitempty"`
+	Requests []FollowRequestSummary `json:"requests"`
+}
+
 type MessageResponse struct {
 	Success bool     `json:"success"`
 	Message string   `json:"message,omitempty"`

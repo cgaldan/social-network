@@ -83,6 +83,8 @@ type FollowServiceInterface interface {
 	UnfollowUser(unfollowData domain.UnfollowRequest) error
 	RemoveFollower(removeData domain.RemoveFollowerRequest) error
 	GetFollowByID(followID int) (*domain.Follow, error)
+	ListIncomingPending(userID, limit, offset int) ([]domain.FollowRequestSummary, error)
+	ListOutgoingPending(userID, limit, offset int) ([]domain.FollowRequestSummary, error)
 	ListFollowersOfUser(userID, limit, offset int) ([]domain.UserSummary, error)
 	ListFollowingByUser(userID, limit, offset int) ([]domain.UserSummary, error)
 }

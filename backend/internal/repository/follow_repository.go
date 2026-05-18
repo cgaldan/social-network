@@ -256,6 +256,66 @@ func (r *FollowRepository) EitherUserFollows(userID1, userID2 int) (bool, error)
 	return count > 0, nil
 }
 
+func (r *FollowRepository) ListIncomingPending(userID, limit, offset int) ([]domain.FollowRequestSummary, error) {
+	rows, err := r.db.Query(`
+		SELECT
+			f.id, f.status, f.created_at,
+			u.id, u.nickname, u.first_name, u.last_name, u.avatar_path, u.is_online, u.is_public
+		FROM follows f
+		JOIN users u ON u.id = f.follower_id
+		WHERE f.following_id = ? AND f.status = 'pending'
+		ORDER BY f.created_at DESC
+		LIMIT ? OFFSET ?`, userID, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list incoming pending follows: %w", err)
+	}
+	defer rows.Close()
+
+	out := make([]domain.FollowRequestSummary, 0)
+	for rows.Next() {
+		var s domain.FollowRequestSummary
+		if err := rows.Scan(
+			&s.ID, &s.Status, &s.CreatedAt,
+			&s.User.ID, &s.User.Nickname, &s.User.FirstName, &s.User.LastName,
+			&s.User.AvatarPath, &s.User.IsOnline, &s.User.IsPublic,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan follow request: %w", err)
+		}
+		out = append(out, s)
+	}
+	return out, rows.Err()
+}
+
+func (r *FollowRepository) ListOutgoingPending(userID, limit, offset int) ([]domain.FollowRequestSummary, error) {
+	rows, err := r.db.Query(`
+		SELECT
+			f.id, f.status, f.created_at,
+			u.id, u.nickname, u.first_name, u.last_name, u.avatar_path, u.is_online, u.is_public
+		FROM follows f
+		JOIN users u ON u.id = f.following_id
+		WHERE f.follower_id = ? AND f.status = 'pending'
+		ORDER BY f.created_at DESC
+		LIMIT ? OFFSET ?`, userID, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list outgoing pending follows: %w", err)
+	}
+	defer rows.Close()
+
+	out := make([]domain.FollowRequestSummary, 0)
+	for rows.Next() {
+		var s domain.FollowRequestSummary
+		if err := rows.Scan(
+			&s.ID, &s.Status, &s.CreatedAt,
+			&s.User.ID, &s.User.Nickname, &s.User.FirstName, &s.User.LastName,
+			&s.User.AvatarPath, &s.User.IsOnline, &s.User.IsPublic,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan follow request: %w", err)
+		}
+		out = append(out, s)
+	}
+	return out, rows.Err()
+}
+
 func (r *FollowRepository) ListFollowersOfUser(userID, limit, offset int) ([]domain.UserSummary, error) {
 	rows, err := r.db.Query(`
 		SELECT u.id, u.nickname, u.first_name, u.last_name, u.avatar_path, u.is_online, u.is_public

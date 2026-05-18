@@ -275,3 +275,52 @@ func (h *FollowHandler) RemoveFollower(w http.ResponseWriter, r *http.Request) {
 		Status:  "removed",
 	})
 }
+
+func (h *FollowHandler) ListFollowRequests(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	token := r.Header.Get("Authorization")
+	user, err := h.authService.ValidateSession(token)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.FollowRequestsResponse{
+			Success: false,
+			Message: "Unauthorized",
+		})
+		return
+	}
+
+	direction := r.URL.Query().Get("direction")
+	if direction == "" {
+		direction = "incoming"
+	}
+	limit, offset := parsePagination(r)
+
+	var requests []domain.FollowRequestSummary
+	switch direction {
+	case "outgoing":
+		requests, err = h.followService.ListOutgoingPending(user.ID, limit, offset)
+	case "incoming":
+		requests, err = h.followService.ListIncomingPending(user.ID, limit, offset)
+	default:
+		json.NewEncoder(w).Encode(domain.FollowRequestsResponse{
+			Success: false,
+			Message: "Invalid direction (use 'incoming' or 'outgoing')",
+		})
+		return
+	}
+
+	if err != nil {
+		h.logger.Error("Failed to list follow requests", "error", err, "userID", user.ID, "direction", direction)
+		json.NewEncoder(w).Encode(domain.FollowRequestsResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	json.NewEncoder(w).Encode(domain.FollowRequestsResponse{
+		Success:  true,
+		Message:  "Follow requests retrieved successfully",
+		Requests: requests,
+	})
+}
