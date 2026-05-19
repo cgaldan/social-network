@@ -39,3 +39,8 @@ type WebSocketConfig struct {
 type FrontendConfig struct {
 	Path string
 }
+
+type UploadConfig struct {
+	UploadPath  string
+	MaxFileSize int64
+}

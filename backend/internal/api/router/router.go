@@ -25,6 +25,7 @@ func NewRouter(services *service.Services, config *config.Config, hub *websocket
 	groupHandler := handlers.NewGroupHandler(services.Group, services.Auth, logger)
 	notificationHandler := handlers.NewNotificationHandler(services.Notification, services.Auth, logger)
 	userHandler := handlers.NewUserHandler(services.Auth, services.Post, services.Follow, logger)
+	uploadHandler := handlers.NewUploadHandler(services.Auth, logger, config)
 	healthHandler := handlers.NewHealthHandler("1.0.0")
 
 	r.HandleFunc("/health", healthHandler.Health).Methods("GET")
@@ -85,6 +86,9 @@ func NewRouter(services *service.Services, config *config.Config, hub *websocket
 	api.HandleFunc("/groups/{id}/events", groupHandler.CreateGroupEvent).Methods("POST")
 	api.HandleFunc("/groups/{id}/events/{eventId}/rsvp", groupHandler.SetGroupEventRSVP).Methods("POST")
 
+	// Upload routes
+	api.HandleFunc("/uploads", uploadHandler.UploadImage).Methods("POST")
+
 	// Notification routes
 	api.HandleFunc("/notifications", notificationHandler.ListNotifications).Methods("GET")
 	api.HandleFunc("/notifications/unread-count", notificationHandler.GetUnreadCount).Methods("GET")
@@ -93,6 +97,9 @@ func NewRouter(services *service.Services, config *config.Config, hub *websocket
 
 	// Websocket routes
 	r.HandleFunc("/ws", websocketHandler.HandleWebSocket)
+
+	// Static uploads
+	r.PathPrefix(handlers.UploadURLPrefix).Handler(http.StripPrefix(handlers.UploadURLPrefix, http.FileServer(http.Dir(config.Upload.UploadPath))))
 
 	frontendPath := "../frontend"
 	if config.Environment == "production" {

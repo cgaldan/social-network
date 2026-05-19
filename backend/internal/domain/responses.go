@@ -103,6 +103,12 @@ type HealthResponse struct {
 	Version   string `json:"version"`
 }
 
+type UploadResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message,omitempty"`
+	URL     string `json:"url,omitempty"`
+}
+
 type GroupInvitationResponse struct {
 	Success    bool             `json:"success"`
 	Message    string           `json:"message,omitempty"`
