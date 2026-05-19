@@ -512,7 +512,7 @@ func TestGroupService_CreateGroupEventAndRSVP(t *testing.T) {
 	})
 
 	t.Run("invalid rsvp response fails", func(t *testing.T) {
-		_, err := services.Group.SetGroupEventRSVP(creatorID, group.ID, event.ID, "maybe")
+		_, err := services.Group.SetGroupEventRSVP(creatorID, group.ID, event.ID, "perhaps")
 		if err == nil {
 			t.Error("Expected error for invalid rsvp response")
 		}

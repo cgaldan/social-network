@@ -421,7 +421,7 @@ func TestGroupRepository_CreateGroupEventAndRSVP(t *testing.T) {
 		t.Errorf("Expected group ID %d, got %d", groupID, event.GroupID)
 	}
 
-	events, err := groupRepo.ListGroupEvents(int(groupID), 10, 0)
+	events, err := groupRepo.ListGroupEvents(int(groupID), int(userID), 10, 0)
 	if err != nil {
 		t.Fatalf("Failed to list group events: %v", err)
 	}

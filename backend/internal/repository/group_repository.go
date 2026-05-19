@@ -456,13 +456,19 @@ func (r *GroupRepository) GetGroupEventByID(eventID int) (*domain.GroupEvent, er
 	return event, nil
 }
 
-func (r *GroupRepository) ListGroupEvents(groupID, limit, offset int) ([]domain.GroupEvent, error) {
+func (r *GroupRepository) ListGroupEvents(groupID, viewerID, limit, offset int) ([]domain.GroupEvent, error) {
 	rows, err := r.db.Query(`
-		SELECT id, group_id, creator_id, title, description, starts_at, created_at
-		FROM group_events
-		WHERE group_id = ?
-		ORDER BY starts_at ASC
+		SELECT
+			e.id, e.group_id, e.creator_id, e.title, e.description, e.starts_at, e.created_at,
+			(SELECT COUNT(*) FROM group_event_rsvps WHERE event_id = e.id AND response = 'going') AS going_count,
+			(SELECT COUNT(*) FROM group_event_rsvps WHERE event_id = e.id AND response = 'maybe') AS maybe_count,
+			(SELECT COUNT(*) FROM group_event_rsvps WHERE event_id = e.id AND response = 'not_going') AS not_going_count,
+			(SELECT response FROM group_event_rsvps WHERE event_id = e.id AND user_id = ?) AS my_response
+		FROM group_events e
+		WHERE e.group_id = ?
+		ORDER BY e.starts_at ASC
 		LIMIT ? OFFSET ?`,
+		viewerID,
 		groupID,
 		limit,
 		offset,
@@ -475,6 +481,7 @@ func (r *GroupRepository) ListGroupEvents(groupID, limit, offset int) ([]domain.
 	events := []domain.GroupEvent{}
 	for rows.Next() {
 		var event domain.GroupEvent
+		var myResponse sql.NullString
 		err := rows.Scan(
 			&event.ID,
 			&event.GroupID,
@@ -483,9 +490,16 @@ func (r *GroupRepository) ListGroupEvents(groupID, limit, offset int) ([]domain.
 			&event.Description,
 			&event.StartsAt,
 			&event.CreatedAt,
+			&event.GoingCount,
+			&event.MaybeCount,
+			&event.NotGoingCount,
+			&myResponse,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan group event: %w", err)
+		}
+		if myResponse.Valid {
+			event.MyResponse = myResponse.String
 		}
 		events = append(events, event)
 	}

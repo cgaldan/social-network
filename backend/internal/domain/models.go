@@ -206,13 +206,17 @@ type GroupJoinRequest struct {
 }
 
 type GroupEvent struct {
-	ID          int       `json:"id"`
-	GroupID     int       `json:"group_id"`
-	CreatorID   int       `json:"creator_id"`
-	Title       string    `json:"title"`
-	Description string    `json:"description"`
-	StartsAt    time.Time `json:"starts_at"`
-	CreatedAt   time.Time `json:"created_at"`
+	ID            int       `json:"id"`
+	GroupID       int       `json:"group_id"`
+	CreatorID     int       `json:"creator_id"`
+	Title         string    `json:"title"`
+	Description   string    `json:"description"`
+	StartsAt      time.Time `json:"starts_at"`
+	CreatedAt     time.Time `json:"created_at"`
+	GoingCount    int       `json:"going_count"`
+	MaybeCount    int       `json:"maybe_count"`
+	NotGoingCount int       `json:"not_going_count"`
+	MyResponse    string    `json:"my_response,omitempty"`
 }
 
 type GroupEventRSVP struct {
