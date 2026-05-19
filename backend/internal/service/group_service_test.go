@@ -137,7 +137,7 @@ func TestGroupService_ListGroups(t *testing.T) {
 	}
 
 	t.Run("list all groups", func(t *testing.T) {
-		groups, err := services.Group.ListGroups(10, 0)
+		groups, err := services.Group.ListGroups(0, 10, 0)
 		if err != nil {
 			t.Fatalf("Failed to list groups: %v", err)
 		}
@@ -147,7 +147,7 @@ func TestGroupService_ListGroups(t *testing.T) {
 	})
 
 	t.Run("list groups with limit", func(t *testing.T) {
-		groups, err := services.Group.ListGroups(2, 0)
+		groups, err := services.Group.ListGroups(0, 2, 0)
 		if err != nil {
 			t.Fatalf("Failed to list groups with limit: %v", err)
 		}
@@ -157,7 +157,7 @@ func TestGroupService_ListGroups(t *testing.T) {
 	})
 
 	t.Run("list groups with offset", func(t *testing.T) {
-		groups, err := services.Group.ListGroups(2, 2)
+		groups, err := services.Group.ListGroups(0, 2, 2)
 		if err != nil {
 			t.Fatalf("Failed to list groups with offset: %v", err)
 		}
@@ -167,7 +167,7 @@ func TestGroupService_ListGroups(t *testing.T) {
 	})
 
 	t.Run("list groups with invalid limit defaults", func(t *testing.T) {
-		groups, err := services.Group.ListGroups(0, -1)
+		groups, err := services.Group.ListGroups(0, 0, -1)
 		if err != nil {
 			t.Fatalf("Failed to list groups with invalid pagination: %v", err)
 		}

@@ -176,6 +176,8 @@ type Group struct {
 	Description    string    `json:"description"`
 	ConversationID int       `json:"conversation_id"`
 	CreatedAt      time.Time `json:"created_at"`
+	IsMember       bool      `json:"is_member"`
+	IsPending      bool      `json:"is_pending"`
 }
 
 type GroupMember struct {

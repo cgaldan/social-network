@@ -62,14 +62,26 @@ func (r *GroupRepository) GetGroupByID(groupID int) (*domain.Group, error) {
 	return group, nil
 }
 
-func (r *GroupRepository) ListGroups(limit, offset int) ([]domain.Group, error) {
+func (r *GroupRepository) ListGroups(viewerID, limit, offset int) ([]domain.Group, error) {
 	rows, err := r.db.Query(`
-		SELECT id, creator_id, title, description, conversation_id, created_at
-		FROM groups
-		ORDER BY created_at DESC
+		SELECT
+			g.id,
+			g.creator_id, 
+			g.title, 
+			g.description, 
+			g.conversation_id, 
+			g.created_at,
+			EXISTS(
+				SELECT 1 FROM group_members WHERE group_id = g.id AND user_id = ?) AS is_member,
+			EXISTS(
+				SELECT 1 FROM group_join_requests WHERE group_id = g.id AND user_id = ? AND status = 'pending'
+				UNION
+				SELECT 1 FROM group_invitations WHERE group_id = g.id AND invitee_id = ? AND status = 'pending'
+			) AS is_pending
+		FROM groups g
+		ORDER BY g.created_at DESC
 		LIMIT ? OFFSET ?`,
-		limit,
-		offset,
+		viewerID, viewerID, viewerID, limit, offset,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list groups: %w", err)
@@ -86,6 +98,8 @@ func (r *GroupRepository) ListGroups(limit, offset int) ([]domain.Group, error) 
 			&group.Description,
 			&group.ConversationID,
 			&group.CreatedAt,
+			&group.IsMember,
+			&group.IsPending,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan group: %w", err)
@@ -93,6 +107,45 @@ func (r *GroupRepository) ListGroups(limit, offset int) ([]domain.Group, error) 
 		groups = append(groups, group)
 	}
 	return groups, nil
+}
+
+func (r *GroupRepository) GetGroupByIDForViewer(groupID, viewerID int) (*domain.Group, error) {
+	group := &domain.Group{}
+	err := r.db.QueryRow(`
+		SELECT
+			g.id,
+			g.creator_id, 
+			g.title, 
+			g.description, 
+			g.conversation_id, 
+			g.created_at,
+			EXISTS(
+				SELECT 1 FROM group_members WHERE group_id = g.id AND user_id = ?) AS is_member,
+			EXISTS(
+				SELECT 1 FROM group_join_requests WHERE group_id = g.id AND user_id = ? AND status = 'pending'
+				UNION
+				SELECT 1 FROM group_invitations WHERE group_id = g.id AND invitee_id = ? AND status = 'pending'
+			) AS is_pending
+		FROM groups g
+		WHERE g.id = ?`,
+		viewerID, viewerID, viewerID, groupID,
+	).Scan(
+		&group.ID,
+		&group.CreatorID,
+		&group.Title,
+		&group.Description,
+		&group.ConversationID,
+		&group.CreatedAt,
+		&group.IsMember,
+		&group.IsPending,
+	)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("group not found")
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get group: %w", err)
+	}
+	return group, nil
 }
 
 func (r *GroupRepository) AddMember(groupID, userID int, role string) error {

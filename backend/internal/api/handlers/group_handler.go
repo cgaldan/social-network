@@ -74,7 +74,8 @@ func (h *GroupHandler) ListGroups(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	token := r.Header.Get("Authorization")
-	if _, err := h.authService.ValidateSession(token); err != nil {
+	user, err := h.authService.ValidateSession(token)
+	if err != nil {
 		json.NewEncoder(w).Encode(domain.GroupsResponse{
 			Success: false,
 			Message: "Unauthorized",
@@ -99,7 +100,7 @@ func (h *GroupHandler) ListGroups(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	groups, err := h.groupService.ListGroups(limit, offset)
+	groups, err := h.groupService.ListGroups(user.ID, limit, offset)
 	if err != nil {
 		h.logger.Error("Failed to list groups", "error", err)
 		json.NewEncoder(w).Encode(domain.GroupsResponse{
@@ -583,5 +584,44 @@ func (h *GroupHandler) SetGroupEventRSVP(w http.ResponseWriter, r *http.Request)
 		Success: true,
 		Message: "RSVP updated successfully",
 		RSVP:    rsvp,
+	})
+}
+
+func (h *GroupHandler) GetGroup(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	token := r.Header.Get("Authorization")
+	user, err := h.authService.ValidateSession(token)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.GroupResponse{
+			Success: false,
+			Message: "Unauthorized",
+		})
+		return
+	}
+
+	vars := mux.Vars(r)
+	groupID, err := strconv.Atoi(vars["id"])
+	if err != nil || groupID <= 0 {
+		json.NewEncoder(w).Encode(domain.GroupResponse{
+			Success: false,
+			Message: "Invalid group ID",
+		})
+		return
+	}
+
+	group, err := h.groupService.GetGroupByID(groupID, user.ID)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.GroupResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	json.NewEncoder(w).Encode(domain.GroupResponse{
+		Success: true,
+		Message: "Group retrieved successfully",
+		Group:   group,
 	})
 }
