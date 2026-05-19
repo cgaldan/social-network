@@ -90,3 +90,7 @@ func (s *ConversationService) RemoveConversationParticipant(convID, userID int) 
 func (s *ConversationService) ListConversations(userID, limit, offset int) ([]domain.ConversationSummary, error) {
 	return s.convRepo.ListConversationsByUserID(userID, limit, offset)
 }
+
+func (s *ConversationService) MarkRead(userID, conversationID int) error {
+	return s.convRepo.MarkConversationRead(conversationID, userID)
+}

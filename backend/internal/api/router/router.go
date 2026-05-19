@@ -69,6 +69,7 @@ func NewRouter(services *service.Services, config *config.Config, hub *websocket
 	api.HandleFunc("/conversations", conversationHandler.ListConversations).Methods("GET")
 	api.HandleFunc("/conversations/direct", conversationHandler.CreateDirectConversation).Methods("POST")
 	api.HandleFunc("/conversations/{id}/messages", messageHandler.ListMessages).Methods("GET")
+	api.HandleFunc("/conversations/{id}/read", conversationHandler.MarkRead).Methods("POST")
 	api.HandleFunc("/messages", messageHandler.SendMessage).Methods("POST")
 
 	// Group routes

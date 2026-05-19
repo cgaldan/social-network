@@ -91,7 +91,7 @@ type ConversationRepositoryInterface interface {
 
 	CreateGroupConversation(name string, initialUserIDs ...int) (*domain.Conversation, error)
 	GetGroupConversationByID(conversationID int) (*domain.Conversation, error)
-	GetConversationByID(conversationID int) (*domain.Conversation, error)
+	MarkConversationRead(conversationID, userID int) error
 	AddConversationParticipant(conversationID, userID int) error
 	RemoveConversationParticipant(conversationID, userID int) error
 	GetParticipantIDs(conversationID int) ([]int, error)

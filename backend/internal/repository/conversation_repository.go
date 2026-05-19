@@ -293,3 +293,23 @@ func makePairKey(userID1, userID2 int) string {
 	}
 	return fmt.Sprintf("%d-%d", userID2, userID1)
 }
+
+func (r *ConversationRepository) MarkConversationRead(conversationID, userID int) error {
+	res, err := r.db.Exec(`
+		UPDATE conversation_participants
+		SET last_read_at = CURRENT_TIMESTAMP
+		WHERE conversation_id = ? AND user_id = ?`,
+		conversationID, userID,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to mark conversation read: %w", err)
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to mark conversation read: %w", err)
+	}
+	if n == 0 {
+		return fmt.Errorf("user is not part of the conversation")
+	}
+	return nil
+}

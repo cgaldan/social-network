@@ -6,6 +6,9 @@ import (
 	"social-network/internal/domain"
 	"social-network/internal/service"
 	"social-network/packages/logger"
+	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 type ConversationHandler struct {
@@ -99,5 +102,43 @@ func (h *ConversationHandler) ListConversations(w http.ResponseWriter, r *http.R
 		Success:       true,
 		Message:       "Conversations retrieved successfully",
 		Conversations: conversations,
+	})
+}
+
+func (h *ConversationHandler) MarkRead(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	token := r.Header.Get("Authorization")
+	user, err := h.authService.ValidateSession(token)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.ConversationResponse{
+			Success: false,
+			Message: "Unauthorized",
+		})
+		return
+	}
+
+	vars := mux.Vars(r)
+	convID, err := strconv.Atoi(vars["id"])
+	if err != nil || convID <= 0 {
+		json.NewEncoder(w).Encode(domain.ConversationResponse{
+			Success: false,
+			Message: "Invalid conversation ID",
+		})
+		return
+	}
+
+	if err := h.convService.MarkRead(user.ID, convID); err != nil {
+		h.logger.Error("Failed to mark conversation read", "error", err, "userID", user.ID, "convID", convID)
+		json.NewEncoder(w).Encode(domain.ConversationResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	json.NewEncoder(w).Encode(domain.ConversationResponse{
+		Success: true,
+		Message: "Conversation marked as read",
 	})
 }

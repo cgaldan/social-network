@@ -100,6 +100,7 @@ type ConversationServiceInterface interface {
 	AddConversationParticipant(convID, userID int) error
 	RemoveConversationParticipant(convID, userID int) error
 	ListConversations(userID, limit, offset int) ([]domain.ConversationSummary, error)
+	MarkRead(userID, conversationID int) error
 }
 
 type GroupServiceInterface interface {
