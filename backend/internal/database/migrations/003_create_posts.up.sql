@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS posts (
     privacy_level TEXT DEFAULT 'public' CHECK(privacy_level IN ('public', 'almost_private', 'private')),
     media_url TEXT,
     like_count INTEGER DEFAULT 0,
-    comment_count INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE

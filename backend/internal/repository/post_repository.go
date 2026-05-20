@@ -61,7 +61,7 @@ func (r *PostRepository) GetPostByID(postID int) (*domain.Post, error) {
 			p.privacy_level, 
 			p.media_url,
 			p.like_count,
-			p.comment_count,
+			(SELECT COUNT(*) FROM comments WHERE post_id = p.id) AS comment_count,
 			p.created_at, 
 			p.updated_at, 
 			u.nickname
@@ -104,18 +104,18 @@ func (r *PostRepository) ListPosts(category string, limit, offset int) ([]domain
 
 	if category != "" {
 		rows, err = r.db.Query(`
-			SELECT 
-				p.id, 
-				p.user_id, 
-				p.title, 
-				p.content, 
-				p.category, 
-				p.privacy_level, 
+			SELECT
+				p.id,
+				p.user_id,
+				p.title,
+				p.content,
+				p.category,
+				p.privacy_level,
 				p.media_url,
 				p.like_count,
-				p.comment_count,
-				p.created_at, 
-				p.updated_at, 
+				(SELECT COUNT(*) FROM comments WHERE post_id = p.id) AS comment_count,
+				p.created_at,
+				p.updated_at,
 				u.nickname
 			FROM posts p
 			JOIN users u ON p.user_id = u.id
@@ -124,18 +124,18 @@ func (r *PostRepository) ListPosts(category string, limit, offset int) ([]domain
 			LIMIT ? OFFSET ?`, category, limit, offset)
 	} else {
 		rows, err = r.db.Query(`
-			SELECT 
-				p.id, 
-				p.user_id, 
-				p.title, 
-				p.content, 
-				p.category, 
-				p.privacy_level, 
+			SELECT
+				p.id,
+				p.user_id,
+				p.title,
+				p.content,
+				p.category,
+				p.privacy_level,
 				p.media_url,
 				p.like_count,
-				p.comment_count,
-				p.created_at, 
-				p.updated_at, 
+				(SELECT COUNT(*) FROM comments WHERE post_id = p.id) AS comment_count,
+				p.created_at,
+				p.updated_at,
 				u.nickname
 			FROM posts p
 			JOIN users u ON p.user_id = u.id
@@ -186,7 +186,7 @@ func (r *PostRepository) ListPostsByGroupID(groupID, limit, offset int) ([]domai
 			p.privacy_level, 
 			p.media_url,
 			p.like_count,
-			p.comment_count,
+			(SELECT COUNT(*) FROM comments WHERE post_id = p.id) AS comment_count,
 			p.created_at, 
 			p.updated_at, 
 			u.nickname
@@ -233,18 +233,18 @@ func (r *PostRepository) ListPostsByGroupID(groupID, limit, offset int) ([]domai
 
 func (r *PostRepository) GetPostsByUserID(userID int, limit, offset int) ([]domain.Post, error) {
 	rows, err := r.db.Query(`
-		SELECT 
-			p.id, 
-			p.user_id, 
-			p.title, 
-			p.content, 
-			p.category, 
-			p.privacy_level, 
+		SELECT
+			p.id,
+			p.user_id,
+			p.title,
+			p.content,
+			p.category,
+			p.privacy_level,
 			p.media_url,
 			p.like_count,
-			p.comment_count,
-			p.created_at, 
-			p.updated_at, 
+			(SELECT COUNT(*) FROM comments WHERE post_id = p.id) AS comment_count,
+			p.created_at,
+			p.updated_at,
 			u.nickname
 		FROM posts p
 		JOIN users u ON p.user_id = u.id
