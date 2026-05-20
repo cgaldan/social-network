@@ -30,6 +30,11 @@ func NewAuthService(userRepo repository.UserRepositoryInterface, sessionRepo rep
 }
 
 func (s *AuthService) Register(registrationData domain.RegisterRequest) (*domain.User, string, error) {
+	autoNickname := strings.TrimSpace(registrationData.Nickname) == ""
+	if autoNickname {
+		registrationData.Nickname = baseNickname(registrationData.FirstName, registrationData.LastName)
+	}
+
 	if err := s.validateRegistrationData(registrationData); err != nil {
 		return nil, "", err
 	}
@@ -40,26 +45,34 @@ func (s *AuthService) Register(registrationData domain.RegisterRequest) (*domain
 		return nil, "", fmt.Errorf("failed to process password")
 	}
 
-	userID, err := s.userRepo.CreateUser(
-		registrationData.Email,
-		string(hashedPassword),
-		registrationData.FirstName,
-		registrationData.LastName,
-		registrationData.DateOfBirth,
-		registrationData.Nickname,
-		registrationData.Gender,
-		registrationData.AvatarPath,
-		registrationData.AboutMe,
-		registrationData.IsPublic,
-	)
-
-	if err != nil {
-		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
+	var userID int64
+	nickname := registrationData.Nickname
+	for attempts := 0; ; attempts++ {
+		userID, err = s.userRepo.CreateUser(
+			registrationData.Email,
+			string(hashedPassword),
+			registrationData.FirstName,
+			registrationData.LastName,
+			registrationData.DateOfBirth,
+			nickname,
+			registrationData.Gender,
+			registrationData.AvatarPath,
+			registrationData.AboutMe,
+			registrationData.IsPublic,
+		)
+		if err == nil {
+			break
+		}
+		if !strings.Contains(err.Error(), "UNIQUE constraint failed") {
+			s.logger.Error("Failed to create user", "error", err)
+			return nil, "", fmt.Errorf("failed to create user")
+		}
+		if !autoNickname || attempts >= 5 || strings.Contains(err.Error(), "users.email") {
 			return nil, "", fmt.Errorf("nickname or email already in use")
 		}
-		s.logger.Error("Failed to create user", "error", err)
-		return nil, "", fmt.Errorf("failed to create user")
+		nickname = baseNickname(registrationData.FirstName, registrationData.LastName) + randomNicknameSuffix()
 	}
+	registrationData.Nickname = nickname
 
 	user, err := s.userRepo.GetUserByID(int(userID))
 	if err != nil {
@@ -358,4 +371,27 @@ func generateSessionID() string {
 	bytes := make([]byte, 32)
 	rand.Read(bytes)
 	return hex.EncodeToString(bytes)
+}
+
+func baseNickname(firstName, lastName string) string {
+	combined := strings.TrimSpace(firstName) + strings.TrimSpace(lastName)
+	var b strings.Builder
+	for _, r := range strings.ToLower(combined) {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			b.WriteRune(r)
+		}
+	}
+	if b.Len() == 0 {
+		return "user"
+	}
+	return b.String()
+}
+
+func randomNicknameSuffix() string {
+	var buf [2]byte
+	if _, err := rand.Read(buf[:]); err != nil {
+		return fmt.Sprintf("%d", time.Now().UnixNano()%10000)
+	}
+	n := int(buf[0])<<8 | int(buf[1])
+	return fmt.Sprintf("%04d", n%10000)
 }
