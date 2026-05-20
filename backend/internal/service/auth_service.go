@@ -141,21 +141,63 @@ func (s *AuthService) ValidateSession(sessionID string) (*domain.User, error) {
 }
 
 func (s *AuthService) UpdateUser(userID int, data domain.UpdateUserRequest) (*domain.User, error) {
-	if err := s.validateUserUpdateData(data); err != nil {
+	current, err := s.userRepo.GetUserByID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	merged := *current
+	if data.Email != nil {
+		merged.Email = *data.Email
+	}
+	if data.FirstName != nil {
+		merged.FirstName = *data.FirstName
+	}
+	if data.LastName != nil {
+		merged.LastName = *data.LastName
+	}
+	if data.DateOfBirth != nil {
+		merged.DateOfBirth = *data.DateOfBirth
+	}
+	if data.Nickname != nil {
+		merged.Nickname = *data.Nickname
+	}
+	if data.Gender != nil {
+		merged.Gender = *data.Gender
+	}
+	if data.AvatarPath != nil {
+		merged.AvatarPath = *data.AvatarPath
+	}
+	if data.AboutMe != nil {
+		merged.AboutMe = *data.AboutMe
+	}
+	if data.IsPublic != nil {
+		merged.IsPublic = *data.IsPublic
+	}
+
+	if err := s.validateCommonUserData(
+		merged.Email,
+		merged.FirstName,
+		merged.LastName,
+		merged.DateOfBirth,
+		merged.Nickname,
+		merged.Gender,
+		merged.AboutMe,
+	); err != nil {
 		return nil, err
 	}
 
 	if err := s.userRepo.UpdateUser(
 		userID,
-		data.Email,
-		data.FirstName,
-		data.LastName,
-		data.DateOfBirth,
-		data.Nickname,
-		data.Gender,
-		data.AvatarPath,
-		data.AboutMe,
-		data.IsPublic,
+		merged.Email,
+		merged.FirstName,
+		merged.LastName,
+		merged.DateOfBirth,
+		merged.Nickname,
+		merged.Gender,
+		merged.AvatarPath,
+		merged.AboutMe,
+		merged.IsPublic,
 	); err != nil {
 		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
 			return nil, fmt.Errorf("nickname or email already in use")
@@ -258,18 +300,6 @@ func (s *AuthService) validateRegistrationData(data domain.RegisterRequest) erro
 	if data.Password == "" || len(data.Password) < 6 {
 		return fmt.Errorf("password must be at least 6 characters")
 	}
-	return s.validateCommonUserData(
-		data.Email,
-		data.FirstName,
-		data.LastName,
-		data.DateOfBirth,
-		data.Nickname,
-		data.Gender,
-		data.AboutMe,
-	)
-}
-
-func (s *AuthService) validateUserUpdateData(data domain.UpdateUserRequest) error {
 	return s.validateCommonUserData(
 		data.Email,
 		data.FirstName,

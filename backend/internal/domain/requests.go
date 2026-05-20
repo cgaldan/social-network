@@ -21,15 +21,15 @@ type LoginRequest struct {
 }
 
 type UpdateUserRequest struct {
-	Email       string    `json:"email"`
-	FirstName   string    `json:"first_name"`
-	LastName    string    `json:"last_name"`
-	DateOfBirth time.Time `json:"date_of_birth"`
-	Nickname    string    `json:"nickname"`
-	Gender      string    `json:"gender"`
-	AvatarPath  string    `json:"avatar_path"`
-	AboutMe     string    `json:"about_me"`
-	IsPublic    bool      `json:"is_public"`
+	Email       *string    `json:"email,omitempty"`
+	FirstName   *string    `json:"first_name,omitempty"`
+	LastName    *string    `json:"last_name,omitempty"`
+	DateOfBirth *time.Time `json:"date_of_birth,omitempty"`
+	Nickname    *string    `json:"nickname,omitempty"`
+	Gender      *string    `json:"gender,omitempty"`
+	AvatarPath  *string    `json:"avatar_path,omitempty"`
+	AboutMe     *string    `json:"about_me,omitempty"`
+	IsPublic    *bool      `json:"is_public,omitempty"`
 }
 
 type CreatePostRequest struct {
