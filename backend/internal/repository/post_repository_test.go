@@ -61,7 +61,7 @@ func TestPostRepository_ListPosts(t *testing.T) {
 	postRepo.CreatePost(int(userID), "Test Post 3", "Content 3", "General", "private", "", 0)
 	postRepo.CreatePost(int(userID), "Test Post 4", "Content 4", "General", "almost-private", "", 0)
 
-	posts, err := postRepo.ListPosts("", 10, 0)
+	posts, err := postRepo.ListPosts("", 0, 10, 0)
 	if err != nil {
 		t.Fatalf("Failed to list posts: %v", err)
 	}
@@ -82,7 +82,7 @@ func TestPostRepository_GetPostsByUserID(t *testing.T) {
 	postRepo.CreatePost(int(userID1), "User 1 Post", "Content for user 1", "General", "public", "", 0)
 	postRepo.CreatePost(int(userID2), "User 2 Post", "Content for user 2", "General", "public", "", 0)
 
-	posts, err := postRepo.GetPostsByUserID(int(userID1), 10, 0)
+	posts, err := postRepo.GetPostsByUserID(int(userID1), int(userID1), 10, 0)
 	if err != nil {
 		t.Fatalf("Failed to get posts by user ID: %v", err)
 	}
@@ -135,7 +135,7 @@ func TestPostRepository_ListPostsByGroupID(t *testing.T) {
 		}
 	}
 
-	globalPosts, err := postRepo.ListPosts("", 10, 0)
+	globalPosts, err := postRepo.ListPosts("", 0, 10, 0)
 	if err != nil {
 		t.Fatalf("Failed to list posts: %v", err)
 	}
@@ -146,7 +146,7 @@ func TestPostRepository_ListPostsByGroupID(t *testing.T) {
 		t.Errorf("Expected global post title 'Global Post', got '%s'", globalPosts[0].Title)
 	}
 
-	userPosts, err := postRepo.GetPostsByUserID(int(userID), 10, 0)
+	userPosts, err := postRepo.GetPostsByUserID(int(userID), int(userID), 10, 0)
 	if err != nil {
 		t.Fatalf("Failed to get posts by user ID: %v", err)
 	}
@@ -202,7 +202,7 @@ func TestPostRepository_GetPostByID_GroupID(t *testing.T) {
 		t.Errorf("Expected group post title 'Group Post', got '%s'", groupPosts[0].Title)
 	}
 
-	globalPosts, err := postRepo.ListPosts("", 10, 0)
+	globalPosts, err := postRepo.ListPosts("", 0, 10, 0)
 	if err != nil {
 		t.Fatalf("Failed to list posts: %v", err)
 	}

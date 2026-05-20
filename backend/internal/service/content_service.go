@@ -58,6 +58,13 @@ func (s *ContentService) createPost(userID, groupID int, postData domain.CreateP
 		return nil, fmt.Errorf("failed to create post")
 	}
 
+	if postData.PrivacyLevel == "private" && groupID == 0 && len(postData.Audience) > 0 {
+		if err := s.postRepo.SetPostAudience(int(postID), postData.Audience); err != nil {
+			s.logger.Error("Failed to set post audience", "error", err, "postID", postID)
+			return nil, fmt.Errorf("failed to set post audience")
+		}
+	}
+
 	post, err := s.postRepo.GetPostByID(int(postID))
 	if err != nil {
 		s.logger.Error("Failed to retrieve created post", "error", err)

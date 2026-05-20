@@ -38,6 +38,7 @@ type CreatePostRequest struct {
 	Category     string `json:"category"`
 	PrivacyLevel string `json:"privacy_level"`
 	MediaURL     string `json:"media_url,omitempty"`
+	Audience     []int  `json:"audience,omitempty"`
 }
 
 type UpdatePostRequest struct {

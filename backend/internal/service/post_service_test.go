@@ -78,7 +78,7 @@ func TestPostService_ListPosts(t *testing.T) {
 	}
 
 	t.Run("list all posts", func(t *testing.T) {
-		retrievedPosts, err := services.Post.ListPosts("", 10, 0)
+		retrievedPosts, err := services.Post.ListPosts(userID, "", 10, 0)
 		if err != nil {
 			t.Fatalf("Failed to list posts: %v", err)
 		}
@@ -89,7 +89,7 @@ func TestPostService_ListPosts(t *testing.T) {
 	})
 
 	t.Run("list posts by category", func(t *testing.T) {
-		retrievedPosts, err := services.Post.ListPosts("general", 10, 0)
+		retrievedPosts, err := services.Post.ListPosts(userID, "general", 10, 0)
 		if err != nil {
 			t.Fatalf("Failed to list posts by category: %v", err)
 		}
@@ -106,7 +106,7 @@ func TestPostService_ListPosts(t *testing.T) {
 	})
 
 	t.Run("list posts with pagination", func(t *testing.T) {
-		retrievedPosts, err := services.Post.ListPosts("", 2, 0)
+		retrievedPosts, err := services.Post.ListPosts(userID, "", 2, 0)
 		if err != nil {
 			t.Fatalf("Failed to list posts with pagination: %v", err)
 		}
@@ -154,7 +154,7 @@ func TestPostService_GetPostsByUserID(t *testing.T) {
 	})
 
 	t.Run("get posts by user ID", func(t *testing.T) {
-		posts, err := services.Post.GetPostsByUserID(user1ID, 10, 0)
+		posts, err := services.Post.GetPostsByUserID(user1ID, user1ID, 10, 0)
 		if err != nil {
 			t.Fatalf("Failed to get posts by user ID: %v", err)
 		}

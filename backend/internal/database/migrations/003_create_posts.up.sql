@@ -12,8 +12,7 @@ CREATE TABLE IF NOT EXISTS posts (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS post_access (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+CREATE TABLE IF NOT EXISTS post_audiences (
     post_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
     UNIQUE(post_id, user_id),
@@ -38,8 +37,8 @@ CREATE INDEX idx_posts_category ON posts(category);
 CREATE INDEX idx_posts_created_at ON posts(created_at);
 CREATE INDEX idx_posts_privacy_level ON posts(privacy_level);
 
-CREATE INDEX idx_post_access_post_id ON post_access(post_id);
-CREATE INDEX idx_post_access_user_id ON post_access(user_id);
+CREATE INDEX idx_post_audiences_post_id ON post_audiences(post_id);
+CREATE INDEX idx_post_audiences_user_id ON post_audiences(user_id);
 
 CREATE INDEX idx_comments_post_id ON comments(post_id);
 CREATE INDEX idx_comments_user_id ON comments(user_id);

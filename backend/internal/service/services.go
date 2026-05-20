@@ -63,9 +63,9 @@ type ContentServiceInterface interface {
 
 type PostServiceInterface interface {
 	GetPostByID(userID, postID int) (*domain.Post, error)
-	ListPosts(category string, limit, offset int) ([]domain.Post, error)
+	ListPosts(viewerID int, category string, limit, offset int) ([]domain.Post, error)
 	ListPostsByGroupID(userID, groupID, limit, offset int) ([]domain.Post, error)
-	GetPostsByUserID(userID int, limit, offset int) ([]domain.Post, error)
+	GetPostsByUserID(targetUserID, viewerID, limit, offset int) ([]domain.Post, error)
 }
 
 type CommentServiceInterface interface {
