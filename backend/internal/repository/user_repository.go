@@ -209,6 +209,51 @@ func (r *UserRepository) UpdateUser(userID int, email, firstName, lastName strin
 	return nil
 }
 
+func (r *UserRepository) ListUsers(query string, excludeUserID, limit, offset int) ([]domain.UserSummary, error) {
+	q := "%" + query + "%"
+	rows, err := r.db.Query(`
+		SELECT
+			id,
+			nickname,
+			first_name,
+			last_name,
+			avatar_path,
+			is_online,
+			is_public
+		FROM users
+		WHERE
+			(? = '' OR nickname LIKE ? OR first_name LIKE ? OR last_name LIKE ? OR email LIKE ?)
+			AND (? = 0 OR id != ?)
+		ORDER BY nickname
+		LIMIT ? OFFSET ?`,
+		query, q, q, q, q,
+		excludeUserID, excludeUserID,
+		limit, offset,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list users: %w", err)
+	}
+	defer rows.Close()
+
+	users := make([]domain.UserSummary, 0)
+	for rows.Next() {
+		var u domain.UserSummary
+		if err := rows.Scan(
+			&u.ID,
+			&u.Nickname,
+			&u.FirstName,
+			&u.LastName,
+			&u.AvatarPath,
+			&u.IsOnline,
+			&u.IsPublic,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan user: %w", err)
+		}
+		users = append(users, u)
+	}
+	return users, rows.Err()
+}
+
 func (r *UserRepository) DeleteUser(userID int) error {
 	result, err := r.db.Exec(`DELETE FROM users WHERE id = ?`, userID)
 	if err != nil {

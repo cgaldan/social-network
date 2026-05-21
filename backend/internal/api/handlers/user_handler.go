@@ -27,6 +27,39 @@ func NewUserHandler(authService service.AuthServiceInterface, postService servic
 	}
 }
 
+func (h *UserHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	token := r.Header.Get("Authorization")
+	user, err := h.authService.ValidateSession(token)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.UsersResponse{
+			Success: false,
+			Message: "Unauthorized",
+		})
+		return
+	}
+
+	query := r.URL.Query().Get("q")
+	limit, offset := parsePagination(r)
+
+	users, err := h.authService.ListUsers(query, user.ID, limit, offset)
+	if err != nil {
+		h.logger.Error("Failed to list users", "error", err)
+		json.NewEncoder(w).Encode(domain.UsersResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	json.NewEncoder(w).Encode(domain.UsersResponse{
+		Success: true,
+		Message: "Users retrieved successfully",
+		Users:   users,
+	})
+}
+
 func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 

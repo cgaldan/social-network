@@ -40,6 +40,7 @@ type UserRepositoryInterface interface {
 	GetUserPrivacyByUserID(userID int) (bool, error)
 	UpdateUser(userID int, email, firstName, lastName string, dateOfBirth time.Time, nickname, gender, avatarPath, aboutMe string, isPublic bool) error
 	DeleteUser(userID int) error
+	ListUsers(query string, excludeUserID, limit, offset int) ([]domain.UserSummary, error)
 }
 
 type SessionRepositoryInterface interface {

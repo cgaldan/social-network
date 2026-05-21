@@ -236,6 +236,31 @@ func (s *AuthService) DeleteUser(userID int) error {
 	return nil
 }
 
+func (s *AuthService) ListUsers(query string, excludeUserID, limit, offset int) ([]domain.UserSummary, error) {
+	users, err := s.userRepo.ListUsers(strings.TrimSpace(query), excludeUserID, limit, offset)
+	if err != nil {
+		s.logger.Error("Failed to list users", "error", err)
+		return nil, fmt.Errorf("failed to list users")
+	}
+	return users, nil
+}
+
+func (s *AuthService) GetUserSummaryByID(userID int) (*domain.UserSummary, error) {
+	user, err := s.userRepo.GetUserByID(userID)
+	if err != nil {
+		return nil, err
+	}
+	return &domain.UserSummary{
+		ID:         user.ID,
+		Nickname:   user.Nickname,
+		FirstName:  user.FirstName,
+		LastName:   user.LastName,
+		AvatarPath: user.AvatarPath,
+		IsOnline:   user.IsOnline,
+		IsPublic:   user.IsPublic,
+	}, nil
+}
+
 func (s *AuthService) GetUserProfile(viewerID, targetID int) (*domain.UserProfile, error) {
 	user, err := s.userRepo.GetUserByID(targetID)
 	if err != nil {

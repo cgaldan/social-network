@@ -60,6 +60,7 @@ func NewRouter(services *service.Services, config *config.Config, hub *websocket
 	api.HandleFunc("/follow/{id}/remove", followHandler.RemoveFollower).Methods("POST")
 
 	// User routes
+	api.HandleFunc("/users", userHandler.ListUsers).Methods("GET")
 	api.HandleFunc("/users/{id}", userHandler.GetUser).Methods("GET")
 	api.HandleFunc("/users/{id}/posts", userHandler.ListUserPosts).Methods("GET")
 	api.HandleFunc("/users/{id}/followers", userHandler.ListUserFollowers).Methods("GET")

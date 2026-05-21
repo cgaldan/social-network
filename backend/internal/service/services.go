@@ -50,6 +50,8 @@ type AuthServiceInterface interface {
 	ValidateSession(sessionID string) (*domain.User, error)
 	UpdateUser(userID int, data domain.UpdateUserRequest) (*domain.User, error)
 	DeleteUser(userID int) error
+	ListUsers(query string, excludeUserID, limit, offset int) ([]domain.UserSummary, error)
+	GetUserSummaryByID(userID int) (*domain.UserSummary, error)
 	GetUserProfile(viewerID, targetID int) (*domain.UserProfile, error)
 	CanViewUser(viewerID, targetID int) (bool, error)
 }
