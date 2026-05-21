@@ -8,6 +8,7 @@ import { useWebSocket } from "@/components/WebSocketProvider";
 import { useNotificationCount } from "@/components/NotificationCountProvider";
 import { useMessageCount } from "@/components/MessageCountProvider";
 import { Avatar } from "@/components/Avatar";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import type { Notification } from "@/types/api";
 
 const NAV = [
@@ -109,12 +110,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         ) : null}
 
-        <div className="mt-3 flex items-center gap-2 px-2 text-xs text-slate-500">
-          <span
-            className={`h-2 w-2 rounded-full ${connected ? "bg-emerald-500" : "bg-slate-300"}`}
-            aria-hidden
-          />
-          {connected ? `${online.length} online` : "Offline"}
+        <div className="mt-3 flex items-center justify-between gap-2 px-2 text-xs text-slate-500">
+          <div className="flex items-center gap-2">
+            <span
+              className={`h-2 w-2 rounded-full ${connected ? "bg-emerald-500" : "bg-slate-300"}`}
+              aria-hidden
+            />
+            {connected ? `${online.length} online` : "Offline"}
+          </div>
+          <ThemeToggle />
         </div>
       </aside>
 
@@ -123,17 +127,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <Link href="/feed" className="text-lg font-semibold text-slate-900">
             Social
           </Link>
-          {user ? (
-            <Link href="/profile">
-              <Avatar
-                src={user.avatar_path}
-                firstName={user.first_name}
-                lastName={user.last_name}
-                nickname={user.nickname}
-                size={32}
-              />
-            </Link>
-          ) : null}
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            {user ? (
+              <Link href="/profile">
+                <Avatar
+                  src={user.avatar_path}
+                  firstName={user.first_name}
+                  lastName={user.last_name}
+                  nickname={user.nickname}
+                  size={32}
+                />
+              </Link>
+            ) : null}
+          </div>
         </header>
 
         <main className="flex-1">
