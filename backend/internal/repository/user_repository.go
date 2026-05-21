@@ -157,6 +157,11 @@ func (r *UserRepository) UpdateLastSeen(userID int) error {
 	return err
 }
 
+func (r *UserRepository) SetOnline(userID int, online bool) error {
+	_, err := r.db.Exec("UPDATE users SET is_online = ? WHERE id = ?", online, userID)
+	return err
+}
+
 func (r *UserRepository) GetUserPrivacyByUserID(userID int) (bool, error) {
 	var isPublic bool
 	err := r.db.QueryRow("SELECT is_public FROM users WHERE id = ?", userID).Scan(&isPublic)

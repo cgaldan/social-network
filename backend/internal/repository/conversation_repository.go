@@ -266,10 +266,11 @@ func (r *ConversationRepository) GetParticipants(conversationID int) ([]domain.C
 			u.first_name,
 			u.last_name,
 			u.avatar_path,
-			EXISTS(SELECT 1 FROM sessions s WHERE s.user_id = u.id AND s.expires_at > NOW())
+			u.is_online
 		FROM conversation_participants cp
 		JOIN users u ON cp.user_id = u.id
-		WHERE cp.conversation_id = ?`, conversationID,
+		WHERE cp.conversation_id = ?
+		ORDER BY u.nickname`, conversationID,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get participants: %w", err)

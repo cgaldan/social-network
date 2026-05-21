@@ -37,6 +37,7 @@ type UserRepositoryInterface interface {
 	GetUserByID(userID int) (*domain.User, error)
 	GetUserByIdentifier(identifier string) (*domain.User, string, error)
 	UpdateLastSeen(userID int) error
+	SetOnline(userID int, online bool) error
 	GetUserPrivacyByUserID(userID int) (bool, error)
 	UpdateUser(userID int, email, firstName, lastName string, dateOfBirth time.Time, nickname, gender, avatarPath, aboutMe string, isPublic bool) error
 	DeleteUser(userID int) error
