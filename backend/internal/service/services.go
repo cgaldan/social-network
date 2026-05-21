@@ -19,18 +19,13 @@ type Services struct {
 	Notification NotificationServiceInterface
 }
 
-func NewServices(repos *repository.Repositories, eventBus event.EventBus, logger *logger.Logger, notificationPushers ...NotificationPusher) *Services {
-	var notificationPusher NotificationPusher
-	if len(notificationPushers) > 0 {
-		notificationPusher = notificationPushers[0]
-	}
-
-	authService := NewAuthService(repos.User, repos.Session, logger)
+func NewServices(repos *repository.Repositories, eventBus event.EventBus, logger *logger.Logger, notificationPusher NotificationPusher, messageBroadcaster MessageBroadcaster) *Services {
+	authService := NewAuthService(repos.User, repos.Session, repos.Follow, logger)
 	contentService := NewContentService(repos.Post, repos.Group, logger)
-	postService := NewPostService(repos.Post, repos.Group, logger)
+	postService := NewPostService(repos.Post, repos.Group, repos.Follow, logger)
 	commentService := NewCommentService(repos.Comment, repos.Post, repos.Group, logger)
 	followService := NewFollowService(repos.Follow, repos.User, eventBus, logger)
-	messageService := NewMessageService(repos.Message, repos.User, repos.Conversation, logger)
+	messageService := NewMessageService(repos.Message, repos.User, repos.Conversation, repos.Follow, messageBroadcaster, logger)
 	conversationService := NewConversationService(repos.Conversation, repos.Follow, logger)
 	groupService := NewGroupService(repos.Group, repos.User, conversationService, eventBus, logger)
 	notificationService := NewNotificationService(repos.Notification, logger, notificationPusher)
@@ -55,6 +50,10 @@ type AuthServiceInterface interface {
 	ValidateSession(sessionID string) (*domain.User, error)
 	UpdateUser(userID int, data domain.UpdateUserRequest) (*domain.User, error)
 	DeleteUser(userID int) error
+	ListUsers(query string, excludeUserID, limit, offset int) ([]domain.UserSummary, error)
+	GetUserSummaryByID(userID int) (*domain.UserSummary, error)
+	GetUserProfile(viewerID, targetID int) (*domain.UserProfile, error)
+	CanViewUser(viewerID, targetID int) (bool, error)
 }
 
 type ContentServiceInterface interface {
@@ -66,9 +65,9 @@ type ContentServiceInterface interface {
 
 type PostServiceInterface interface {
 	GetPostByID(userID, postID int) (*domain.Post, error)
-	ListPosts(category string, limit, offset int) ([]domain.Post, error)
+	ListPosts(viewerID int, category string, limit, offset int) ([]domain.Post, error)
 	ListPostsByGroupID(userID, groupID, limit, offset int) ([]domain.Post, error)
-	GetPostsByUserID(userID int, limit, offset int) ([]domain.Post, error)
+	GetPostsByUserID(targetUserID, viewerID, limit, offset int) ([]domain.Post, error)
 }
 
 type CommentServiceInterface interface {
@@ -86,10 +85,15 @@ type FollowServiceInterface interface {
 	UnfollowUser(unfollowData domain.UnfollowRequest) error
 	RemoveFollower(removeData domain.RemoveFollowerRequest) error
 	GetFollowByID(followID int) (*domain.Follow, error)
+	ListIncomingPending(userID, limit, offset int) ([]domain.FollowRequestSummary, error)
+	ListOutgoingPending(userID, limit, offset int) ([]domain.FollowRequestSummary, error)
+	ListFollowersOfUser(userID, limit, offset int) ([]domain.UserSummary, error)
+	ListFollowingByUser(userID, limit, offset int) ([]domain.UserSummary, error)
 }
 
 type MessageServiceInterface interface {
 	SendMessage(convID, senderID int, content string) (*domain.Message, error)
+	ListMessages(convID, userID, limit, offset int) ([]domain.Message, error)
 }
 
 type ConversationServiceInterface interface {
@@ -97,11 +101,14 @@ type ConversationServiceInterface interface {
 	CreateGroupConversation(name string, initialUserIDs ...int) (*domain.Conversation, error)
 	AddConversationParticipant(convID, userID int) error
 	RemoveConversationParticipant(convID, userID int) error
+	ListConversations(userID, limit, offset int) ([]domain.ConversationSummary, error)
+	MarkRead(userID, conversationID int) error
 }
 
 type GroupServiceInterface interface {
 	CreateGroup(group *domain.Group) (*domain.Group, error)
-	ListGroups(limit, offset int) ([]domain.Group, error)
+	ListGroups(viewerID, limit, offset int) ([]domain.Group, error)
+	GetGroupByID(groupID, viewerID int) (*domain.Group, error)
 	GetMembersByGroupID(groupID int) ([]domain.GroupMember, error)
 	AddMember(convID, groupID, userID int, role string) error
 	RemoveMember(convID, groupID, userID int) error

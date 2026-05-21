@@ -31,10 +31,22 @@ type CommentResponse struct {
 	Comment *Comment `json:"comment,omitempty"`
 }
 
+type CommentsResponse struct {
+	Success  bool      `json:"success"`
+	Message  string    `json:"message,omitempty"`
+	Comments []Comment `json:"comments"`
+}
+
 type FollowResponse struct {
 	Success bool   `json:"success"`
 	Message string `json:"message,omitempty"`
 	Status  string `json:"status,omitempty"`
+}
+
+type FollowRequestsResponse struct {
+	Success  bool                   `json:"success"`
+	Message  string                 `json:"message,omitempty"`
+	Requests []FollowRequestSummary `json:"requests"`
 }
 
 type MessageResponse struct {
@@ -43,10 +55,34 @@ type MessageResponse struct {
 	Msg     *Message `json:"msg,omitempty"`
 }
 
+type MessagesResponse struct {
+	Success  bool      `json:"success"`
+	Message  string    `json:"message,omitempty"`
+	Messages []Message `json:"messages"`
+}
+
 type ConversationResponse struct {
 	Success      bool          `json:"success"`
 	Message      string        `json:"message,omitempty"`
 	Conversation *Conversation `json:"conversation,omitempty"`
+}
+
+type ConversationsResponse struct {
+	Success       bool                  `json:"success"`
+	Message       string                `json:"message,omitempty"`
+	Conversations []ConversationSummary `json:"conversations"`
+}
+
+type UsersResponse struct {
+	Success bool          `json:"success"`
+	Message string        `json:"message,omitempty"`
+	Users   []UserSummary `json:"users"`
+}
+
+type UserResponse struct {
+	Success bool         `json:"success"`
+	Message string       `json:"message,omitempty"`
+	User    *UserProfile `json:"user,omitempty"`
 }
 
 type GroupResponse struct {
@@ -65,6 +101,12 @@ type HealthResponse struct {
 	Status    string `json:"status"`
 	Timestamp string `json:"timestamp"`
 	Version   string `json:"version"`
+}
+
+type UploadResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message,omitempty"`
+	URL     string `json:"url,omitempty"`
 }
 
 type GroupInvitationResponse struct {

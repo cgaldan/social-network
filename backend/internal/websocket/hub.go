@@ -45,6 +45,9 @@ func (h *Hub) registerClientCase(client *Client) {
 	h.mu.Unlock()
 
 	h.userRepo.UpdateLastSeen(client.UserID)
+	if err := h.userRepo.SetOnline(client.UserID, true); err != nil {
+		h.logger.Error("Failed to mark user online", "userID", client.UserID, "error", err)
+	}
 
 	h.broadcastUserStatus(client.UserID, true)
 
@@ -55,13 +58,20 @@ func (h *Hub) registerClientCase(client *Client) {
 
 func (h *Hub) unregisterClientCase(client *Client) {
 	h.mu.Lock()
+	removed := false
 	if _, ok := h.clients[client.UserID]; ok {
 		delete(h.clients, client.UserID)
 		close(client.Send)
+		removed = true
 	}
 	h.mu.Unlock()
 
 	h.userRepo.UpdateLastSeen(client.UserID)
+	if removed {
+		if err := h.userRepo.SetOnline(client.UserID, false); err != nil {
+			h.logger.Error("Failed to mark user offline", "userID", client.UserID, "error", err)
+		}
+	}
 
 	h.broadcastUserStatus(client.UserID, false)
 

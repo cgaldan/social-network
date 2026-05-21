@@ -53,19 +53,24 @@ func (s *GroupService) CreateGroup(group *domain.Group) (*domain.Group, error) {
 		return nil, fmt.Errorf("failed to add member")
 	}
 
+	group.IsMember = true
 	return group, nil
 }
 
-func (s *GroupService) ListGroups(limit, offset int) ([]domain.Group, error) {
+func (s *GroupService) ListGroups(viewerID, limit, offset int) ([]domain.Group, error) {
 	limit, offset = s.validateLimitAndOffset(limit, offset)
 
-	groups, err := s.groupRepo.ListGroups(limit, offset)
+	groups, err := s.groupRepo.ListGroups(viewerID, limit, offset)
 	if err != nil {
 		s.logger.Error("Failed to list groups", "error", err, "limit", limit, "offset", offset)
 		return nil, fmt.Errorf("failed to list groups")
 	}
 
 	return groups, nil
+}
+
+func (s *GroupService) GetGroupByID(groupID, viewerID int) (*domain.Group, error) {
+	return s.groupRepo.GetGroupByIDForViewer(groupID, viewerID)
 }
 
 func (s *GroupService) validateLimitAndOffset(limit, offset int) (int, int) {
@@ -516,7 +521,7 @@ func (s *GroupService) ListGroupEvents(userID, groupID, limit, offset int) ([]do
 
 	limit, offset = s.validateLimitAndOffset(limit, offset)
 
-	events, err := s.groupRepo.ListGroupEvents(groupID, limit, offset)
+	events, err := s.groupRepo.ListGroupEvents(groupID, userID, limit, offset)
 	if err != nil {
 		s.logger.Error("Failed to list group events", "error", err, "groupID", groupID, "limit", limit, "offset", offset)
 		return nil, fmt.Errorf("failed to list group events")
@@ -544,7 +549,7 @@ func (s *GroupService) SetGroupEventRSVP(userID, groupID, eventID int, response 
 		return nil, fmt.Errorf("event does not belong to this group")
 	}
 
-	if response != "going" && response != "not_going" {
+	if response != "going" && response != "not_going" && response != "maybe" {
 		return nil, fmt.Errorf("invalid rsvp response")
 	}
 

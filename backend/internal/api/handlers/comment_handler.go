@@ -25,6 +25,46 @@ func NewCommentHandler(commentService service.CommentServiceInterface, authServi
 	}
 }
 
+func (h *CommentHandler) ListComments(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	token := r.Header.Get("Authorization")
+	user, err := h.authService.ValidateSession(token)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.CommentsResponse{
+			Success: false,
+			Message: "Unauthorized",
+		})
+		return
+	}
+
+	vars := mux.Vars(r)
+	postID, err := strconv.Atoi(vars["id"])
+	if err != nil || postID <= 0 {
+		json.NewEncoder(w).Encode(domain.CommentsResponse{
+			Success: false,
+			Message: "Invalid post ID",
+		})
+		return
+	}
+
+	comments, err := h.commentService.GetCommentsByPostID(user.ID, postID)
+	if err != nil {
+		h.logger.Error("Failed to list comments", "error", err, "postID", postID, "userID", user.ID)
+		json.NewEncoder(w).Encode(domain.CommentsResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	json.NewEncoder(w).Encode(domain.CommentsResponse{
+		Success:  true,
+		Message:  "Comments retrieved successfully",
+		Comments: comments,
+	})
+}
+
 func (h *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 

@@ -85,12 +85,69 @@ type Message struct {
 	CreatedAt      time.Time `json:"created_at"`
 }
 
+type ConversationParticipant struct {
+	UserID     int    `json:"user_id"`
+	Nickname   string `json:"nickname"`
+	FirstName  string `json:"first_name"`
+	LastName   string `json:"last_name"`
+	AvatarPath string `json:"avatar_path,omitempty"`
+	IsOnline   bool   `json:"is_online"`
+}
+
+type ConversationSummary struct {
+	ID           int                       `json:"id"`
+	Type         string                    `json:"type"`
+	Name         string                    `json:"name"`
+	Participants []ConversationParticipant `json:"participants"`
+	LastMessage  *Message                  `json:"last_message,omitempty"`
+	UnreadCount  int                       `json:"unread_count"`
+	CreatedAt    time.Time                 `json:"created_at"`
+}
+
+type UserSummary struct {
+	ID         int    `json:"id"`
+	Nickname   string `json:"nickname"`
+	FirstName  string `json:"first_name"`
+	LastName   string `json:"last_name"`
+	AvatarPath string `json:"avatar_path,omitempty"`
+	IsOnline   bool   `json:"is_online"`
+	IsPublic   bool   `json:"is_public"`
+}
+
+type UserProfile struct {
+	ID           int       `json:"id"`
+	Nickname     string    `json:"nickname"`
+	FirstName    string    `json:"first_name"`
+	LastName     string    `json:"last_name"`
+	AvatarPath   string    `json:"avatar_path,omitempty"`
+	IsOnline     bool      `json:"is_online"`
+	IsPublic     bool      `json:"is_public"`
+	CreatedAt    time.Time `json:"created_at"`
+	FollowStatus string    `json:"follow_status"`
+	CanView      bool      `json:"can_view"`
+
+	// CanView Fields:
+	Email          string    `json:"email,omitempty"`
+	DateOfBirth    time.Time `json:"date_of_birth,omitempty"`
+	Gender         string    `json:"gender,omitempty"`
+	AboutMe        string    `json:"about_me,omitempty"`
+	FollowersCount int       `json:"followers_count"`
+	FollowingCount int       `json:"following_count"`
+}
+
 type Follow struct {
 	ID          int       `json:"id"`
 	FollowerID  int       `json:"follower_id"`
 	FollowingID int       `json:"following_id"`
 	Status      string    `json:"status"`
 	CreatedAt   time.Time `json:"created_at"`
+}
+
+type FollowRequestSummary struct {
+	ID        int         `json:"id"`
+	Status    string      `json:"status"`
+	CreatedAt time.Time   `json:"created_at"`
+	User      UserSummary `json:"user"`
 }
 
 type Follower struct {
@@ -119,6 +176,8 @@ type Group struct {
 	Description    string    `json:"description"`
 	ConversationID int       `json:"conversation_id"`
 	CreatedAt      time.Time `json:"created_at"`
+	IsMember       bool      `json:"is_member"`
+	IsPending      bool      `json:"is_pending"`
 }
 
 type GroupMember struct {
@@ -147,13 +206,17 @@ type GroupJoinRequest struct {
 }
 
 type GroupEvent struct {
-	ID          int       `json:"id"`
-	GroupID     int       `json:"group_id"`
-	CreatorID   int       `json:"creator_id"`
-	Title       string    `json:"title"`
-	Description string    `json:"description"`
-	StartsAt    time.Time `json:"starts_at"`
-	CreatedAt   time.Time `json:"created_at"`
+	ID            int       `json:"id"`
+	GroupID       int       `json:"group_id"`
+	CreatorID     int       `json:"creator_id"`
+	Title         string    `json:"title"`
+	Description   string    `json:"description"`
+	StartsAt      time.Time `json:"starts_at"`
+	CreatedAt     time.Time `json:"created_at"`
+	GoingCount    int       `json:"going_count"`
+	MaybeCount    int       `json:"maybe_count"`
+	NotGoingCount int       `json:"not_going_count"`
+	MyResponse    string    `json:"my_response,omitempty"`
 }
 
 type GroupEventRSVP struct {

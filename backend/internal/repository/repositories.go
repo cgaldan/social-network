@@ -37,9 +37,11 @@ type UserRepositoryInterface interface {
 	GetUserByID(userID int) (*domain.User, error)
 	GetUserByIdentifier(identifier string) (*domain.User, string, error)
 	UpdateLastSeen(userID int) error
+	SetOnline(userID int, online bool) error
 	GetUserPrivacyByUserID(userID int) (bool, error)
 	UpdateUser(userID int, email, firstName, lastName string, dateOfBirth time.Time, nickname, gender, avatarPath, aboutMe string, isPublic bool) error
 	DeleteUser(userID int) error
+	ListUsers(query string, excludeUserID, limit, offset int) ([]domain.UserSummary, error)
 }
 
 type SessionRepositoryInterface interface {
@@ -51,12 +53,14 @@ type SessionRepositoryInterface interface {
 type PostRepositoryInterface interface {
 	CreatePost(userID int, title, content, category, privacyLevel, mediaURL string, groupID int) (int64, error)
 	GetPostByID(postID int) (*domain.Post, error)
-	ListPosts(category string, limit, offset int) ([]domain.Post, error)
+	ListPosts(category string, viewerID, limit, offset int) ([]domain.Post, error)
 	ListPostsByGroupID(groupID, limit, offset int) ([]domain.Post, error)
-	GetPostsByUserID(userID int, limit, offset int) ([]domain.Post, error)
+	GetPostsByUserID(targetUserID, viewerID, limit, offset int) ([]domain.Post, error)
 	PostExists(postID int) (bool, error)
 	UpdatePost(userID, postID int, title, content, category, privacyLevel, mediaURL string) error
 	DeletePost(userID, postID int) error
+	SetPostAudience(postID int, userIDs []int) error
+	IsInPostAudience(postID, userID int) (bool, error)
 }
 
 type CommentRepositoryInterface interface {
@@ -78,6 +82,10 @@ type FollowRepositoryInterface interface {
 	DeleteFollow(followID int) error
 	GetFollowStatusByFollowID(followID int) (string, error)
 	EitherUserFollows(userID1, userID2 int) (bool, error)
+	ListIncomingPending(userID, limit, offset int) ([]domain.FollowRequestSummary, error)
+	ListOutgoingPending(userID, limit, offset int) ([]domain.FollowRequestSummary, error)
+	ListFollowersOfUser(userID, limit, offset int) ([]domain.UserSummary, error)
+	ListFollowingByUser(userID, limit, offset int) ([]domain.UserSummary, error)
 }
 
 type ConversationRepositoryInterface interface {
@@ -87,19 +95,26 @@ type ConversationRepositoryInterface interface {
 
 	CreateGroupConversation(name string, initialUserIDs ...int) (*domain.Conversation, error)
 	GetGroupConversationByID(conversationID int) (*domain.Conversation, error)
+	GetConversationByID(conversationID int) (*domain.Conversation, error)
+	MarkConversationRead(conversationID, userID int) error
 	AddConversationParticipant(conversationID, userID int) error
 	RemoveConversationParticipant(conversationID, userID int) error
+	GetParticipantIDs(conversationID int) ([]int, error)
+	GetParticipants(conversationID int) ([]domain.ConversationParticipant, error)
+	ListConversationsByUserID(userID, limit, offset int) ([]domain.ConversationSummary, error)
 }
 
 type MessageRepositoryInterface interface {
 	CreateMessage(message *domain.Message) (int64, error)
 	GetMessageByID(messageID int) (*domain.Message, error)
+	ListMessagesByConversationID(conversationID, limit, offset int) ([]domain.Message, error)
 }
 
 type GroupRepositoryInterface interface {
 	CreateGroup(group *domain.Group) (int64, error)
 	GetGroupByID(groupID int) (*domain.Group, error)
-	ListGroups(limit, offset int) ([]domain.Group, error)
+	GetGroupByIDForViewer(groupID, viewerID int) (*domain.Group, error)
+	ListGroups(viewerID, limit, offset int) ([]domain.Group, error)
 
 	AddMember(groupID, userID int, role string) error
 	RemoveMember(groupID, userID int) error
@@ -125,7 +140,7 @@ type GroupRepositoryInterface interface {
 
 	CreateGroupEvent(event *domain.GroupEvent) (int64, error)
 	GetGroupEventByID(eventID int) (*domain.GroupEvent, error)
-	ListGroupEvents(groupID, limit, offset int) ([]domain.GroupEvent, error)
+	ListGroupEvents(groupID, viewerID, limit, offset int) ([]domain.GroupEvent, error)
 	SetGroupEventRSVP(eventID, userID int, response string) error
 	GetGroupEventRSVP(eventID, userID int) (*domain.GroupEventRSVP, error)
 }

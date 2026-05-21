@@ -77,6 +77,16 @@ func (h *PostHandler) CreatePost(w http.ResponseWriter, r *http.Request) {
 func (h *PostHandler) GetPosts(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
+	token := r.Header.Get("Authorization")
+	user, err := h.authService.ValidateSession(token)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.PostsResponse{
+			Success: false,
+			Message: "Unauthorized",
+		})
+		return
+	}
+
 	category := r.URL.Query().Get("category")
 	limitStr := r.URL.Query().Get("limit")
 	offsetStr := r.URL.Query().Get("offset")
@@ -95,7 +105,7 @@ func (h *PostHandler) GetPosts(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	posts, err := h.postService.ListPosts(category, limit, offset)
+	posts, err := h.postService.ListPosts(user.ID, category, limit, offset)
 	if err != nil {
 		h.logger.Error("Failed to list posts", "error", err)
 		json.NewEncoder(w).Encode(domain.PostsResponse{

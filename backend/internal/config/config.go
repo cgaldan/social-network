@@ -14,6 +14,7 @@ type Config struct {
 	CORS        CORSConfig
 	Websocket   WebSocketConfig
 	Frontend    FrontendConfig
+	Upload      UploadConfig
 }
 
 func LoadConfig() (*Config, error) {
@@ -54,6 +55,10 @@ func LoadConfig() (*Config, error) {
 		},
 		Frontend: FrontendConfig{
 			Path: getEnv("FRONTEND_PATH", "./frontend"),
+		},
+		Upload: UploadConfig{
+			UploadPath:  getEnv("UPLOAD_PATH", "./data/uploads"),
+			MaxFileSize: getInt64Env("MAX_FILE_SIZE", 5*1024*1024), // 5 MB
 		},
 	}
 

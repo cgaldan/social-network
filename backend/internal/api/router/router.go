@@ -24,6 +24,8 @@ func NewRouter(services *service.Services, config *config.Config, hub *websocket
 	messageHandler := handlers.NewMessageHandler(services.Message, services.Auth, logger)
 	groupHandler := handlers.NewGroupHandler(services.Group, services.Auth, logger)
 	notificationHandler := handlers.NewNotificationHandler(services.Notification, services.Auth, logger)
+	userHandler := handlers.NewUserHandler(services.Auth, services.Post, services.Follow, logger)
+	uploadHandler := handlers.NewUploadHandler(services.Auth, logger, config)
 	healthHandler := handlers.NewHealthHandler("1.0.0")
 
 	r.HandleFunc("/health", healthHandler.Health).Methods("GET")
@@ -44,19 +46,31 @@ func NewRouter(services *service.Services, config *config.Config, hub *websocket
 	api.HandleFunc("/posts/{id}", postHandler.GetPostByID).Methods("GET")
 	api.HandleFunc("/posts/{id}", postHandler.UpdatePost).Methods("PUT")
 	api.HandleFunc("/posts/{id}", postHandler.DeletePost).Methods("DELETE")
+	api.HandleFunc("/posts/{id}/comments", commentHandler.ListComments).Methods("GET")
 	api.HandleFunc("/posts/{id}/comments", commentHandler.CreateComment).Methods("POST")
 	api.HandleFunc("/posts/{id}/comments/{commentId}", commentHandler.UpdateComment).Methods("PUT")
 	api.HandleFunc("/posts/{id}/comments/{commentId}", commentHandler.DeleteComment).Methods("DELETE")
 
 	// Follow routes
+	api.HandleFunc("/follow/requests", followHandler.ListFollowRequests).Methods("GET")
 	api.HandleFunc("/follow/{id}", followHandler.FollowUser).Methods("POST")
 	api.HandleFunc("/follow/{id}/accept", followHandler.AcceptFollowRequest).Methods("POST")
 	api.HandleFunc("/follow/{id}/decline", followHandler.DeclineFollowRequest).Methods("POST")
 	api.HandleFunc("/follow/{id}/unfollow", followHandler.UnfollowUser).Methods("POST")
 	api.HandleFunc("/follow/{id}/remove", followHandler.RemoveFollower).Methods("POST")
 
+	// User routes
+	api.HandleFunc("/users", userHandler.ListUsers).Methods("GET")
+	api.HandleFunc("/users/{id}", userHandler.GetUser).Methods("GET")
+	api.HandleFunc("/users/{id}/posts", userHandler.ListUserPosts).Methods("GET")
+	api.HandleFunc("/users/{id}/followers", userHandler.ListUserFollowers).Methods("GET")
+	api.HandleFunc("/users/{id}/following", userHandler.ListUserFollowing).Methods("GET")
+
 	// Chat routes
+	api.HandleFunc("/conversations", conversationHandler.ListConversations).Methods("GET")
 	api.HandleFunc("/conversations/direct", conversationHandler.CreateDirectConversation).Methods("POST")
+	api.HandleFunc("/conversations/{id}/messages", messageHandler.ListMessages).Methods("GET")
+	api.HandleFunc("/conversations/{id}/read", conversationHandler.MarkRead).Methods("POST")
 	api.HandleFunc("/messages", messageHandler.SendMessage).Methods("POST")
 
 	// Group routes
@@ -68,11 +82,15 @@ func NewRouter(services *service.Services, config *config.Config, hub *websocket
 	api.HandleFunc("/groups/invitations", groupHandler.InviteToGroup).Methods("POST")
 	api.HandleFunc("/groups/invitations/{id}/accept", groupHandler.AcceptGroupInvitation).Methods("POST")
 	api.HandleFunc("/groups/invitations/{id}/decline", groupHandler.DeclineGroupInvitation).Methods("POST")
+	api.HandleFunc("/groups/{id}", groupHandler.GetGroup).Methods("GET")
 	api.HandleFunc("/groups/{id}/posts", postHandler.GetGroupPosts).Methods("GET")
 	api.HandleFunc("/groups/{id}/posts", postHandler.CreateGroupPost).Methods("POST")
 	api.HandleFunc("/groups/{id}/events", groupHandler.ListGroupEvents).Methods("GET")
 	api.HandleFunc("/groups/{id}/events", groupHandler.CreateGroupEvent).Methods("POST")
 	api.HandleFunc("/groups/{id}/events/{eventId}/rsvp", groupHandler.SetGroupEventRSVP).Methods("POST")
+
+	// Upload routes
+	api.HandleFunc("/uploads", uploadHandler.UploadImage).Methods("POST")
 
 	// Notification routes
 	api.HandleFunc("/notifications", notificationHandler.ListNotifications).Methods("GET")
@@ -82,6 +100,9 @@ func NewRouter(services *service.Services, config *config.Config, hub *websocket
 
 	// Websocket routes
 	r.HandleFunc("/ws", websocketHandler.HandleWebSocket)
+
+	// Static uploads
+	r.PathPrefix(handlers.UploadURLPrefix).Handler(http.StripPrefix(handlers.UploadURLPrefix, http.FileServer(http.Dir(config.Upload.UploadPath))))
 
 	frontendPath := "../frontend"
 	if config.Environment == "production" {

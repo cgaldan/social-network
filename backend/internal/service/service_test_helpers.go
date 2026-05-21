@@ -49,7 +49,7 @@ func SetupTestServicesWithEventBus(t *testing.T, pusher NotificationPusher) (*Se
 	testLogger := logger.NewLogger(io.Discard, logger.InfoLevel)
 	eventBus := event.NewInMemoryBus(testLogger)
 
-	return NewServices(repos, eventBus, testLogger, pusher), eventBus
+	return NewServices(repos, eventBus, testLogger, pusher, nil), eventBus
 }
 
 func CreateTestUser(t *testing.T, services *Services, req domain.RegisterRequest) int {

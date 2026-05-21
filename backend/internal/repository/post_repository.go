@@ -14,6 +14,19 @@ func NewPostRepository(db *sql.DB) *PostRepository {
 	return &PostRepository{db: db}
 }
 
+const visibilityClause = `(
+	p.privacy_level = 'public'
+	OR p.user_id = ?
+	OR (p.privacy_level = 'almost_private' AND EXISTS (
+		SELECT 1 FROM follows f
+		WHERE f.follower_id = ? AND f.following_id = p.user_id AND f.status = 'accepted'
+	))
+	OR (p.privacy_level = 'private' AND EXISTS (
+		SELECT 1 FROM post_audiences pa
+		WHERE pa.post_id = p.id AND pa.user_id = ?
+	))
+)`
+
 func (r *PostRepository) CreatePost(userID int, title, content, category, privacyLevel, mediaURL string, groupID int) (int64, error) {
 	var groupIDArg interface{}
 	if groupID > 0 {
@@ -61,7 +74,7 @@ func (r *PostRepository) GetPostByID(postID int) (*domain.Post, error) {
 			p.privacy_level, 
 			p.media_url,
 			p.like_count,
-			p.comment_count,
+			(SELECT COUNT(*) FROM comments WHERE post_id = p.id) AS comment_count,
 			p.created_at, 
 			p.updated_at, 
 			u.nickname
@@ -98,50 +111,50 @@ func (r *PostRepository) GetPostByID(postID int) (*domain.Post, error) {
 	return &post, nil
 }
 
-func (r *PostRepository) ListPosts(category string, limit, offset int) ([]domain.Post, error) {
+func (r *PostRepository) ListPosts(category string, viewerID, limit, offset int) ([]domain.Post, error) {
 	var rows *sql.Rows
 	var err error
 
 	if category != "" {
 		rows, err = r.db.Query(`
-			SELECT 
-				p.id, 
-				p.user_id, 
-				p.title, 
-				p.content, 
-				p.category, 
-				p.privacy_level, 
+			SELECT
+				p.id,
+				p.user_id,
+				p.title,
+				p.content,
+				p.category,
+				p.privacy_level,
 				p.media_url,
 				p.like_count,
-				p.comment_count,
-				p.created_at, 
-				p.updated_at, 
+				(SELECT COUNT(*) FROM comments WHERE post_id = p.id) AS comment_count,
+				p.created_at,
+				p.updated_at,
 				u.nickname
 			FROM posts p
 			JOIN users u ON p.user_id = u.id
-			WHERE p.category = ? AND p.privacy_level = 'public' AND p.group_id IS NULL
+			WHERE p.category = ? AND p.group_id IS NULL AND `+visibilityClause+`
 			ORDER BY p.created_at DESC
-			LIMIT ? OFFSET ?`, category, limit, offset)
+			LIMIT ? OFFSET ?`, category, viewerID, viewerID, viewerID, limit, offset)
 	} else {
 		rows, err = r.db.Query(`
-			SELECT 
-				p.id, 
-				p.user_id, 
-				p.title, 
-				p.content, 
-				p.category, 
-				p.privacy_level, 
+			SELECT
+				p.id,
+				p.user_id,
+				p.title,
+				p.content,
+				p.category,
+				p.privacy_level,
 				p.media_url,
 				p.like_count,
-				p.comment_count,
-				p.created_at, 
-				p.updated_at, 
+				(SELECT COUNT(*) FROM comments WHERE post_id = p.id) AS comment_count,
+				p.created_at,
+				p.updated_at,
 				u.nickname
 			FROM posts p
 			JOIN users u ON p.user_id = u.id
-			WHERE p.privacy_level = 'public' AND p.group_id IS NULL
+			WHERE p.group_id IS NULL AND `+visibilityClause+`
 			ORDER BY p.created_at DESC
-			LIMIT ? OFFSET ?`, limit, offset)
+			LIMIT ? OFFSET ?`, viewerID, viewerID, viewerID, limit, offset)
 	}
 
 	if err != nil {
@@ -186,7 +199,7 @@ func (r *PostRepository) ListPostsByGroupID(groupID, limit, offset int) ([]domai
 			p.privacy_level, 
 			p.media_url,
 			p.like_count,
-			p.comment_count,
+			(SELECT COUNT(*) FROM comments WHERE post_id = p.id) AS comment_count,
 			p.created_at, 
 			p.updated_at, 
 			u.nickname
@@ -231,26 +244,26 @@ func (r *PostRepository) ListPostsByGroupID(groupID, limit, offset int) ([]domai
 	return posts, nil
 }
 
-func (r *PostRepository) GetPostsByUserID(userID int, limit, offset int) ([]domain.Post, error) {
+func (r *PostRepository) GetPostsByUserID(targetUserID, viewerID, limit, offset int) ([]domain.Post, error) {
 	rows, err := r.db.Query(`
-		SELECT 
-			p.id, 
-			p.user_id, 
-			p.title, 
-			p.content, 
-			p.category, 
-			p.privacy_level, 
+		SELECT
+			p.id,
+			p.user_id,
+			p.title,
+			p.content,
+			p.category,
+			p.privacy_level,
 			p.media_url,
 			p.like_count,
-			p.comment_count,
-			p.created_at, 
-			p.updated_at, 
+			(SELECT COUNT(*) FROM comments WHERE post_id = p.id) AS comment_count,
+			p.created_at,
+			p.updated_at,
 			u.nickname
 		FROM posts p
 		JOIN users u ON p.user_id = u.id
-		WHERE p.user_id = ? AND p.group_id IS NULL
+		WHERE p.user_id = ? AND p.group_id IS NULL AND `+visibilityClause+`
 		ORDER BY p.created_at DESC
-		LIMIT ? OFFSET ?`, userID, limit, offset)
+		LIMIT ? OFFSET ?`, targetUserID, viewerID, viewerID, viewerID, limit, offset)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user posts: %w", err)
@@ -334,4 +347,40 @@ func (r *PostRepository) DeletePost(userID, postID int) error {
 		return fmt.Errorf("post not found")
 	}
 	return nil
+}
+
+func (r *PostRepository) SetPostAudience(postID int, userIDs []int) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin tx: %w", err)
+	}
+	defer tx.Rollback()
+
+	if _, err := tx.Exec(`DELETE FROM post_audiences WHERE post_id = ?`, postID); err != nil {
+		return fmt.Errorf("failed to clear audience: %w", err)
+	}
+
+	if len(userIDs) > 0 {
+		stmt, err := tx.Prepare(`INSERT OR IGNORE INTO post_audiences (post_id, user_id) VALUES (?, ?)`)
+		if err != nil {
+			return fmt.Errorf("failed to prepare audience insert: %w", err)
+		}
+		defer stmt.Close()
+		for _, uid := range userIDs {
+			if _, err := stmt.Exec(postID, uid); err != nil {
+				return fmt.Errorf("failed to insert audience row: %w", err)
+			}
+		}
+	}
+
+	return tx.Commit()
+}
+
+func (r *PostRepository) IsInPostAudience(postID, userID int) (bool, error) {
+	var n int
+	err := r.db.QueryRow(`SELECT COUNT(*) FROM post_audiences WHERE post_id = ? AND user_id = ?`, postID, userID).Scan(&n)
+	if err != nil {
+		return false, fmt.Errorf("failed to check audience: %w", err)
+	}
+	return n > 0, nil
 }

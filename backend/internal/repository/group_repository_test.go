@@ -261,7 +261,7 @@ func TestGroupRepository_ListGroups(t *testing.T) {
 		}
 	}
 
-	groups, err := groupRepo.ListGroups(10, 0)
+	groups, err := groupRepo.ListGroups(0, 10, 0)
 	if err != nil {
 		t.Fatalf("Failed to list groups: %v", err)
 	}
@@ -269,7 +269,7 @@ func TestGroupRepository_ListGroups(t *testing.T) {
 		t.Errorf("Expected 5 groups, got %d", len(groups))
 	}
 
-	groups, err = groupRepo.ListGroups(2, 0)
+	groups, err = groupRepo.ListGroups(0, 2, 0)
 	if err != nil {
 		t.Fatalf("Failed to list groups with limit: %v", err)
 	}
@@ -277,7 +277,7 @@ func TestGroupRepository_ListGroups(t *testing.T) {
 		t.Errorf("Expected 2 groups with limit 2, got %d", len(groups))
 	}
 
-	groups, err = groupRepo.ListGroups(2, 2)
+	groups, err = groupRepo.ListGroups(0, 2, 2)
 	if err != nil {
 		t.Fatalf("Failed to list groups with offset: %v", err)
 	}
@@ -285,7 +285,7 @@ func TestGroupRepository_ListGroups(t *testing.T) {
 		t.Errorf("Expected 2 groups with limit 2 offset 2, got %d", len(groups))
 	}
 
-	groups, err = groupRepo.ListGroups(10, 5)
+	groups, err = groupRepo.ListGroups(0, 10, 5)
 	if err != nil {
 		t.Fatalf("Failed to list groups with offset past end: %v", err)
 	}
@@ -421,7 +421,7 @@ func TestGroupRepository_CreateGroupEventAndRSVP(t *testing.T) {
 		t.Errorf("Expected group ID %d, got %d", groupID, event.GroupID)
 	}
 
-	events, err := groupRepo.ListGroupEvents(int(groupID), 10, 0)
+	events, err := groupRepo.ListGroupEvents(int(groupID), int(userID), 10, 0)
 	if err != nil {
 		t.Fatalf("Failed to list group events: %v", err)
 	}

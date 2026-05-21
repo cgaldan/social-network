@@ -77,7 +77,7 @@ func TestContentService_CreateGroupPost(t *testing.T) {
 			t.Fatalf("Failed to create global post: %v", err)
 		}
 
-		posts, err := services.Post.ListPosts("", 10, 0)
+		posts, err := services.Post.ListPosts(creatorID, "", 10, 0)
 		if err != nil {
 			t.Fatalf("Failed to list posts: %v", err)
 		}

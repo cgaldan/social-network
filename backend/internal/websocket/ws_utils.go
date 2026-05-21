@@ -9,6 +9,50 @@ func (hub *Hub) RegisterClientToHub(client *Client) {
 	hub.register <- client
 }
 
+func (hub *Hub) BroadcastMessage(message *domain.Message, receiverIDs []int) {
+	wsMessage := WsMessage{
+		Type: "message.created",
+		Payload: map[string]any{
+			"message": message,
+		},
+	}
+
+	data, err := json.Marshal(wsMessage)
+	if err != nil {
+		hub.logger.Error("Failed to marshal message", "error", err)
+		return
+	}
+
+	hub.mu.RLock()
+	clientsToSend := make([]*Client, 0, len(receiverIDs))
+	for _, id := range receiverIDs {
+		if client, ok := hub.clients[id]; ok {
+			clientsToSend = append(clientsToSend, client)
+		}
+	}
+	hub.mu.RUnlock()
+
+	var toRemove []int
+	for _, client := range clientsToSend {
+		select {
+		case client.Send <- data:
+		default:
+			toRemove = append(toRemove, client.UserID)
+		}
+	}
+
+	if len(toRemove) > 0 {
+		hub.mu.Lock()
+		for _, id := range toRemove {
+			if client, ok := hub.clients[id]; ok {
+				close(client.Send)
+				delete(hub.clients, id)
+			}
+		}
+		hub.mu.Unlock()
+	}
+}
+
 func (hub *Hub) PushNotification(userID int, notification *domain.Notification) {
 	message := WsMessage{
 		Type: "notification.created",

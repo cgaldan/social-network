@@ -327,16 +327,26 @@ func TestAuthService_UpdateUser(t *testing.T) {
 		IsPublic:    true,
 	})
 
+	email := "after@example.com"
+	firstName := "Jane"
+	lastName := "Smith"
+	dob := time.Now().AddDate(-30, 0, 0)
+	nickname := "afteruser"
+	gender := "female"
+	avatar := "/avatar.png"
+	about := "Updated bio"
+	isPublic := false
+
 	updated, err := services.Auth.UpdateUser(userID, domain.UpdateUserRequest{
-		Email:       "after@example.com",
-		FirstName:   "Jane",
-		LastName:    "Smith",
-		DateOfBirth: time.Now().AddDate(-30, 0, 0),
-		Nickname:    "afteruser",
-		Gender:      "female",
-		AvatarPath:  "/avatar.png",
-		AboutMe:     "Updated bio",
-		IsPublic:    false,
+		Email:       &email,
+		FirstName:   &firstName,
+		LastName:    &lastName,
+		DateOfBirth: &dob,
+		Nickname:    &nickname,
+		Gender:      &gender,
+		AvatarPath:  &avatar,
+		AboutMe:     &about,
+		IsPublic:    &isPublic,
 	})
 	if err != nil {
 		t.Fatalf("Expected update to succeed, got error: %v", err)
@@ -349,14 +359,9 @@ func TestAuthService_UpdateUser(t *testing.T) {
 		t.Errorf("Expected updated nickname, got %s", updated.Nickname)
 	}
 
+	badEmail := "invalid-email"
 	_, err = services.Auth.UpdateUser(userID, domain.UpdateUserRequest{
-		Email:       "invalid-email",
-		FirstName:   "Jane",
-		LastName:    "Smith",
-		DateOfBirth: time.Now().AddDate(-30, 0, 0),
-		Nickname:    "afteruser",
-		Gender:      "female",
-		IsPublic:    true,
+		Email: &badEmail,
 	})
 	if err == nil {
 		t.Error("Expected validation error for invalid email")
