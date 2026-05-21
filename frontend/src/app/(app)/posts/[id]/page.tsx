@@ -1,245 +1,245 @@
 "use client";
 
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { FormEvent, useEffect, useMemo, useState } from "react";
-import { PostForm } from "@/components/PostForm";
-import { FormMessage, TextArea, TextField } from "@/components/forms";
-import { api } from "@/lib/api";
-import { formatDate } from "@/lib/format";
-import type { Post } from "@/types/api";
+import Link from "next/link";
+import { useAuth } from "@/components/AuthProvider";
+import { PostCard } from "@/components/PostCard";
+import { api, ApiError, resolveMediaUrl } from "@/lib/api";
+import { formatRelative } from "@/lib/format";
+import type { Comment, Post } from "@/types/api";
 
 export default function PostDetailPage() {
   const params = useParams<{ id: string }>();
+  const id = Number(params.id);
   const router = useRouter();
-  const postId = useMemo(() => Number(params.id), [params.id]);
+  const { user } = useAuth();
   const [post, setPost] = useState<Post | null>(null);
-  const [message, setMessage] = useState("");
-  const [tone, setTone] = useState<"error" | "success">("success");
+  const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [comment, setComment] = useState({ content: "", media_url: "" });
-  const [editComment, setEditComment] = useState({
-    comment_id: "",
-    content: "",
-    media_url: "",
-  });
+  const [error, setError] = useState<string | null>(null);
+  const [commentText, setCommentText] = useState("");
+  const [commentMediaUrl, setCommentMediaUrl] = useState("");
+  const [uploadingComment, setUploadingComment] = useState(false);
+  const [sending, setSending] = useState(false);
+  const commentFileRef = useRef<HTMLInputElement>(null);
 
-  async function loadPost() {
+  const load = useCallback(async () => {
     setLoading(true);
-    setMessage("");
-
     try {
-      const response = await api.getPost(postId);
-      setPost(response.post ?? null);
-    } catch (error) {
-      setTone("error");
-      setMessage(error instanceof Error ? error.message : "Could not load post");
-    } finally {
+      const postRes = await api.posts.get(id);
+      setPost(postRes.post);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to load post");
       setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    if (Number.isFinite(postId)) {
-      void loadPost();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [postId]);
-
-  async function createComment(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    try {
-      await api.createComment(postId, {
-        content: comment.content,
-        media_url: comment.media_url || undefined,
-      });
-      setComment({ content: "", media_url: "" });
-      setTone("success");
-      setMessage("Comment created.");
-      await loadPost();
-    } catch (error) {
-      setTone("error");
-      setMessage(error instanceof Error ? error.message : "Comment failed");
-    }
-  }
-
-  async function updateComment(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    try {
-      await api.updateComment(postId, Number(editComment.comment_id), {
-        content: editComment.content,
-        media_url: editComment.media_url || undefined,
-      });
-      setTone("success");
-      setMessage("Comment updated.");
-    } catch (error) {
-      setTone("error");
-      setMessage(error instanceof Error ? error.message : "Update failed");
-    }
-  }
-
-  async function deleteComment() {
-    try {
-      await api.deleteComment(postId, Number(editComment.comment_id));
-      setTone("success");
-      setMessage("Comment deleted.");
-      setEditComment({ comment_id: "", content: "", media_url: "" });
-    } catch (error) {
-      setTone("error");
-      setMessage(error instanceof Error ? error.message : "Delete failed");
-    }
-  }
-
-  async function deletePost() {
-    if (!confirm("Delete this post?")) {
       return;
     }
+    setLoading(false);
 
     try {
-      await api.deletePost(postId);
-      router.push("/feed");
-    } catch (error) {
-      setTone("error");
-      setMessage(error instanceof Error ? error.message : "Delete failed");
+      const commentsRes = await api.comments.list(id);
+      setComments(commentsRes.comments ?? []);
+    } catch {
+      // comments are non-critical — leave the post visible
     }
+  }, [id]);
+
+  useEffect(() => {
+    if (!Number.isFinite(id)) return;
+    void load();
+  }, [id, load]);
+
+  const onCommentFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setError(null);
+    setUploadingComment(true);
+    try {
+      const res = await api.uploads.create(file);
+      setCommentMediaUrl(res.url);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Upload failed");
+      if (commentFileRef.current) commentFileRef.current.value = "";
+    } finally {
+      setUploadingComment(false);
+    }
+  };
+
+  const clearCommentImage = () => {
+    setCommentMediaUrl("");
+    if (commentFileRef.current) commentFileRef.current.value = "";
+  };
+
+  const onComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!commentText.trim()) return;
+    setSending(true);
+    try {
+      const res = await api.comments.create(id, {
+        content: commentText,
+        media_url: commentMediaUrl || undefined,
+      });
+      setComments((prev) => [...prev, res.comment]);
+      setCommentText("");
+      clearCommentImage();
+      if (post) setPost({ ...post, comment_count: post.comment_count + 1 });
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to send comment");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const onDeletePost = async () => {
+    if (!confirm("Delete this post?")) return;
+    try {
+      await api.posts.remove(id);
+      router.replace("/feed");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to delete post");
+    }
+  };
+
+  const onDeleteComment = async (commentId: number) => {
+    if (!confirm("Delete this comment?")) return;
+    try {
+      await api.comments.remove(id, commentId);
+      setComments((prev) => prev.filter((c) => c.id !== commentId));
+      if (post) setPost({ ...post, comment_count: Math.max(0, post.comment_count - 1) });
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to delete comment");
+    }
+  };
+
+  if (loading) return <p className="text-sm text-slate-500">Loading…</p>;
+  if (!post) {
+    return (
+      <div className="space-y-4">
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error ?? "Post not found"}
+        </p>
+        <Link href="/feed" className="text-sm text-indigo-600 hover:underline">
+          ← Back to feed
+        </Link>
+      </div>
+    );
   }
 
-  if (loading) {
-    return <p className="text-slate-600">Loading post...</p>;
-  }
+  const isOwner = user?.id === post.user_id;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_22rem]">
-      <section className="grid gap-6">
-        <FormMessage message={message} tone={tone} />
-        {post ? (
-          <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-sm font-semibold uppercase tracking-wide text-sky-700">
-              {post.category || "General"} / {post.privacy_level}
-            </p>
-            <h1 className="mt-3 text-4xl font-bold text-slate-950">
-              {post.title}
-            </h1>
-            <p className="mt-4 whitespace-pre-wrap text-lg leading-8 text-slate-700">
-              {post.content}
-            </p>
-            <footer className="mt-6 flex flex-wrap gap-4 text-sm text-slate-500">
-              <span>By {post.author || `User #${post.user_id}`}</span>
-              <span>{formatDate(post.created_at)}</span>
-              <span>{post.comment_count} comments</span>
-            </footer>
-            <button
-              className="mt-6 rounded-xl border border-red-200 px-4 py-3 font-semibold text-red-600 transition hover:bg-red-50"
-              onClick={deletePost}
-              type="button"
-            >
-              Delete post
-            </button>
-          </article>
-        ) : (
-          <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-600">
-            Post not found.
-          </p>
-        )}
-        {post ? (
-          <section>
-            <h2 className="mb-4 text-2xl font-bold text-slate-950">
-              Edit post
-            </h2>
-            <PostForm
-              initialPost={post}
-              onSubmit={async (body) => {
-                await api.updatePost(postId, body);
-                await loadPost();
-                setTone("success");
-                setMessage("Post updated.");
-              }}
-              submitLabel="Save post"
+    <div className="space-y-6">
+      <Link href="/feed" className="text-sm text-indigo-600 hover:underline">
+        ← Back to feed
+      </Link>
+
+      <PostCard post={post} />
+
+      {isOwner ? (
+        <button
+          onClick={onDeletePost}
+          className="text-sm text-red-600 hover:underline"
+        >
+          Delete post
+        </button>
+      ) : null}
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-slate-900">Comments</h2>
+
+        <form onSubmit={onComment} className="space-y-2 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              placeholder="Add a comment…"
+              className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
             />
-          </section>
-        ) : null}
+            <button
+              type="submit"
+              disabled={sending || uploadingComment || !commentText.trim()}
+              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700 disabled:opacity-60"
+            >
+              Send
+            </button>
+          </div>
+
+          <div>
+            <input
+              ref={commentFileRef}
+              type="file"
+              accept="image/jpeg,image/png,image/gif,image/webp"
+              onChange={onCommentFileChange}
+              disabled={uploadingComment}
+              className="block text-xs text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-3 file:py-1 file:text-xs file:font-medium file:text-indigo-700 hover:file:bg-indigo-100 disabled:opacity-60"
+            />
+            {uploadingComment ? (
+              <p className="mt-1 text-xs text-slate-500">Uploading…</p>
+            ) : commentMediaUrl ? (
+              <div className="mt-2 flex items-start gap-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={resolveMediaUrl(commentMediaUrl)}
+                  alt="preview"
+                  className="h-20 w-20 rounded-lg object-cover ring-1 ring-slate-200"
+                />
+                <button
+                  type="button"
+                  onClick={clearCommentImage}
+                  className="text-xs text-slate-500 hover:text-red-600"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : null}
+          </div>
+        </form>
+
+        {comments.length === 0 ? (
+          <p className="text-sm text-slate-500">No comments yet.</p>
+        ) : (
+          <ul className="space-y-3">
+            {comments.map((c) => (
+              <li
+                key={c.id}
+                className="rounded-lg border border-slate-200 bg-white p-3 text-sm shadow-sm"
+              >
+                <div className="flex items-center justify-between text-xs text-slate-500">
+                  <Link
+                    href={`/users/${c.user_id}`}
+                    className="font-medium text-slate-700 hover:text-indigo-600 hover:underline"
+                  >
+                    @{c.author}
+                  </Link>
+                  <span>{formatRelative(c.created_at)}</span>
+                </div>
+                <p className="mt-1 whitespace-pre-wrap text-slate-700">{c.content}</p>
+                {c.media_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={resolveMediaUrl(c.media_url)}
+                    alt=""
+                    className="mt-2 max-h-72 rounded-lg object-cover"
+                  />
+                ) : null}
+                {user?.id === c.user_id ? (
+                  <button
+                    onClick={() => onDeleteComment(c.id)}
+                    className="mt-2 text-xs text-red-600 hover:underline"
+                  >
+                    Delete
+                  </button>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
-      <aside className="grid content-start gap-6">
-        <form
-          className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-          onSubmit={createComment}
-        >
-          <h2 className="text-xl font-bold text-slate-950">Add comment</h2>
-          <TextArea
-            label="Comment"
-            name="content"
-            onChange={(value) =>
-              setComment((current) => ({ ...current, content: value }))
-            }
-            required
-            value={comment.content}
-          />
-          <TextField
-            label="Media URL"
-            name="media_url"
-            onChange={(value) =>
-              setComment((current) => ({ ...current, media_url: value }))
-            }
-            value={comment.media_url}
-          />
-          <button
-            className="rounded-xl bg-sky-600 px-4 py-3 font-semibold text-white transition hover:bg-sky-700"
-            type="submit"
-          >
-            Add comment
-          </button>
-          <p className="text-xs text-slate-500">
-            The backend accepts comment create/edit/delete, but does not expose a
-            comment listing route yet.
-          </p>
-        </form>
-        <form
-          className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-          onSubmit={updateComment}
-        >
-          <h2 className="text-xl font-bold text-slate-950">Edit comment by ID</h2>
-          <TextField
-            label="Comment ID"
-            name="comment_id"
-            onChange={(value) =>
-              setEditComment((current) => ({ ...current, comment_id: value }))
-            }
-            required
-            type="number"
-            value={editComment.comment_id}
-          />
-          <TextArea
-            label="New content"
-            name="content"
-            onChange={(value) =>
-              setEditComment((current) => ({ ...current, content: value }))
-            }
-            required
-            value={editComment.content}
-          />
-          <TextField
-            label="Media URL"
-            name="media_url"
-            onChange={(value) =>
-              setEditComment((current) => ({ ...current, media_url: value }))
-            }
-            value={editComment.media_url}
-          />
-          <button
-            className="rounded-xl bg-sky-600 px-4 py-3 font-semibold text-white transition hover:bg-sky-700"
-            type="submit"
-          >
-            Update comment
-          </button>
-          <button
-            className="rounded-xl border border-red-200 px-4 py-3 font-semibold text-red-600 transition hover:bg-red-50"
-            disabled={!editComment.comment_id}
-            onClick={deleteComment}
-            type="button"
-          >
-            Delete comment
-          </button>
-        </form>
-      </aside>
+
+      {error ? (
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+      ) : null}
     </div>
   );
 }

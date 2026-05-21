@@ -1,11 +1,11 @@
-export type ISODateString = string;
+export type PrivacyLevel = "public" | "almost_private" | "private";
 
-export type User = {
+export interface User {
   id: number;
   email: string;
   first_name: string;
   last_name: string;
-  date_of_birth: ISODateString;
+  date_of_birth: string;
   nickname: string;
   gender: string;
   avatar_path: string;
@@ -14,96 +14,11 @@ export type User = {
   followers_count: number;
   is_online: boolean;
   is_public: boolean;
-  created_at: ISODateString;
-  last_seen: ISODateString;
-};
+  created_at: string;
+  last_seen: string;
+}
 
-export type Post = {
-  id: number;
-  user_id: number;
-  group_id?: number;
-  title: string;
-  content: string;
-  category: string;
-  privacy_level: "public" | "almost_private" | "private" | string;
-  media_url?: string;
-  like_count: number;
-  comment_count: number;
-  created_at: ISODateString;
-  updated_at: ISODateString;
-  author: string;
-};
-
-export type Comment = {
-  id: number;
-  post_id: number;
-  user_id: number;
-  content: string;
-  media_url?: string;
-  created_at: ISODateString;
-  updated_at: ISODateString;
-  author: string;
-};
-
-export type Conversation = {
-  id: number;
-  name: string;
-  type: string;
-  created_at: ISODateString;
-};
-
-export type Message = {
-  id: number;
-  conversation_id: number;
-  sender_id: number;
-  content: string;
-  created_at: ISODateString;
-};
-
-export type Group = {
-  id: number;
-  creator_id: number;
-  name: string;
-  description: string;
-  conversation_id: number;
-  created_at: ISODateString;
-};
-
-export type GroupEvent = {
-  id: number;
-  group_id: number;
-  creator_id: number;
-  title: string;
-  description: string;
-  starts_at: ISODateString;
-  created_at: ISODateString;
-};
-
-export type GroupEventRSVP = {
-  id: number;
-  event_id: number;
-  user_id: number;
-  response: string;
-  created_at: ISODateString;
-  updated_at: ISODateString;
-};
-
-export type Notification = {
-  id: number;
-  recipient_id: number;
-  actor_id?: number;
-  type: string;
-  title: string;
-  body: string;
-  entity_type?: string;
-  entity_id?: number;
-  action_url?: string;
-  metadata?: string;
-  read_at?: ISODateString;
-  created_at: ISODateString;
-};
-
-export type RegisterRequest = {
+export interface RegisterPayload {
   email: string;
   password: string;
   first_name: string;
@@ -114,126 +29,236 @@ export type RegisterRequest = {
   avatar_path: string;
   about_me: string;
   is_public: boolean;
-};
+}
 
-export type LoginRequest = {
+export interface LoginPayload {
   identifier: string;
   password: string;
-};
+}
 
-export type UpdateUserRequest = Omit<RegisterRequest, "password">;
+export interface AuthResponse {
+  success: boolean;
+  message: string;
+  user: User;
+  token: string;
+}
 
-export type CreatePostRequest = {
+export interface MeResponse {
+  success: boolean;
+  message: string;
+  user: User;
+}
+
+export interface Post {
+  id: number;
+  user_id: number;
+  group_id: number;
   title: string;
   content: string;
   category: string;
-  privacy_level: string;
+  privacy_level: PrivacyLevel;
   media_url?: string;
-};
+  like_count: number;
+  comment_count: number;
+  created_at: string;
+  updated_at: string;
+  author: string;
+}
 
-export type UpdatePostRequest = CreatePostRequest;
+export interface CreatePostPayload {
+  title: string;
+  content: string;
+  category: string;
+  privacy_level: PrivacyLevel;
+  media_url?: string;
+  audience?: number[];
+}
 
-export type CreateCommentRequest = {
+export type UpdatePostPayload = Partial<CreatePostPayload>;
+
+export interface Comment {
+  id: number;
+  post_id: number;
+  user_id: number;
   content: string;
   media_url?: string;
-};
+  created_at: string;
+  updated_at: string;
+  author: string;
+}
 
-export type DirectConversationRequest = {
-  receiver_id: number;
-};
+export interface CreateCommentPayload {
+  content: string;
+  media_url?: string;
+}
 
-export type SendMessageRequest = {
+export interface Conversation {
+  id: number;
+  name: string;
+  type: "direct" | "group" | "private";
+  created_at: string;
+}
+
+export interface ConversationParticipant {
+  user_id: number;
+  nickname: string;
+  first_name: string;
+  last_name: string;
+  avatar_path?: string;
+  is_online: boolean;
+}
+
+export interface ConversationSummary {
+  id: number;
+  type: string;
+  name: string;
+  participants: ConversationParticipant[];
+  last_message?: Message;
+  unread_count: number;
+  created_at: string;
+}
+
+export interface Message {
+  id: number;
   conversation_id: number;
+  sender_id: number;
   content: string;
-};
+  created_at: string;
+}
 
-export type CreateGroupRequest = {
+export interface UserSummary {
+  id: number;
+  nickname: string;
+  first_name: string;
+  last_name: string;
+  avatar_path?: string;
+  is_online: boolean;
+  is_public: boolean;
+}
+
+export interface FollowRequestSummary {
+  id: number;
+  status: string;
+  created_at: string;
+  user: UserSummary;
+}
+
+export type FollowStatus = "self" | "following" | "pending" | "none";
+
+export interface UserProfile {
+  id: number;
+  nickname: string;
+  first_name: string;
+  last_name: string;
+  avatar_path?: string;
+  is_online: boolean;
+  is_public: boolean;
+  created_at: string;
+  follow_status: FollowStatus;
+  can_view: boolean;
+  followers_count: number;
+  following_count: number;
+
+  // Present only when can_view is true:
+  email?: string;
+  date_of_birth?: string;
+  gender?: string;
+  about_me?: string;
+}
+
+export interface MessageCreatedPayload {
+  message: Message;
+}
+
+export interface Group {
+  id: number;
+  creator_id: number;
+  name: string;
+  description: string;
+  conversation_id: number;
+  created_at: string;
+  is_member: boolean;
+  is_pending: boolean;
+}
+
+export interface CreateGroupPayload {
   title: string;
   description: string;
-  conversation_id?: number;
-};
+  conversation_id: number;
+}
 
-export type JoinGroupRequest = {
+export interface GroupEvent {
+  id: number;
   group_id: number;
-};
-
-export type InviteToGroupRequest = {
-  group_id: number;
-  invitee_id: number;
-};
-
-export type CreateGroupEventRequest = {
+  creator_id: number;
   title: string;
   description: string;
   starts_at: string;
-};
+  created_at: string;
+  going_count: number;
+  maybe_count: number;
+  not_going_count: number;
+  my_response?: RsvpResponse;
+}
 
-export type GroupEventRSVPRequest = {
-  response: string;
-};
+export interface CreateEventPayload {
+  title: string;
+  description: string;
+  starts_at: string;
+}
 
-export type ApiResponse = {
+export type RsvpResponse = "going" | "not_going" | "maybe";
+
+export interface Rsvp {
+  id: number;
+  event_id: number;
+  user_id: number;
+  response: RsvpResponse;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Notification {
+  id: number;
+  recipient_id: number;
+  actor_id?: number;
+  type: string;
+  title: string;
+  body: string;
+  entity_type?: string;
+  entity_id?: number;
+  action_url?: string;
+  metadata?: string | null;
+  read_at?: string | null;
+  created_at: string;
+}
+
+export interface ApiEnvelope {
   success: boolean;
-  message?: string;
-};
+  message: string;
+}
 
-export type AuthResponse = ApiResponse & {
-  user?: User;
-  token?: string;
-};
+export interface WsEnvelope<T = unknown> {
+  type: string;
+  payload: T;
+}
 
-export type PostsResponse = ApiResponse & {
-  posts?: Post[];
-};
+export interface OnlineUser {
+  user_id: number;
+  nickname: string;
+  is_online: boolean;
+}
 
-export type PostResponse = ApiResponse & {
-  post?: Post;
-};
+export interface UserStatusPayload {
+  user_id: number;
+  nickname: string;
+  is_online: boolean;
+}
 
-export type CommentResponse = ApiResponse & {
-  comment?: Comment;
-};
+export interface OnlineUsersPayload {
+  users: OnlineUser[];
+}
 
-export type FollowResponse = ApiResponse & {
-  status?: string;
-};
-
-export type ConversationResponse = ApiResponse & {
-  conversation?: Conversation;
-};
-
-export type MessageResponse = ApiResponse & {
-  msg?: Message;
-};
-
-export type GroupsResponse = ApiResponse & {
-  groups?: Group[];
-};
-
-export type GroupResponse = ApiResponse & {
-  group?: Group;
-};
-
-export type GroupEventsResponse = ApiResponse & {
-  events?: GroupEvent[];
-};
-
-export type GroupEventResponse = ApiResponse & {
-  event?: GroupEvent;
-};
-
-export type GroupEventRSVPResponse = ApiResponse & {
-  rsvp?: GroupEventRSVP;
-};
-
-export type NotificationsResponse = ApiResponse & {
-  notifications?: Notification[];
-};
-
-export type NotificationResponse = ApiResponse & {
-  notification?: Notification;
-};
-
-export type NotificationUnreadCountResponse = ApiResponse & {
-  unread_count: number;
-};
+export interface NotificationCreatedPayload {
+  notification: Notification;
+}

@@ -1,119 +1,184 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { FormMessage } from "@/components/forms";
-import { api } from "@/lib/api";
-import { formatDate } from "@/lib/format";
+import { useCallback, useEffect, useState } from "react";
+import { useWebSocket } from "@/components/WebSocketProvider";
+import { useNotificationCount } from "@/components/NotificationCountProvider";
+import { api, ApiError } from "@/lib/api";
+import { formatRelative } from "@/lib/format";
 import type { Notification } from "@/types/api";
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [message, setMessage] = useState("");
-  const [tone, setTone] = useState<"error" | "success">("success");
+  const { on } = useWebSocket();
+  const { decrement, reset } = useNotificationCount();
+  const [items, setItems] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  async function loadNotifications() {
+  const load = useCallback(async () => {
+    setLoading(true);
     try {
-      const response = await api.listNotifications();
-      setNotifications(response.notifications ?? []);
-    } catch (error) {
-      setTone("error");
-      setMessage(
-        error instanceof Error ? error.message : "Could not load notifications",
-      );
+      const res = await api.notifications.list({ limit: 50 });
+      setItems(res.notifications ?? []);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to load notifications");
+    } finally {
+      setLoading(false);
     }
-  }
-
-  useEffect(() => {
-    void loadNotifications();
   }, []);
 
-  async function markRead(id: number) {
-    try {
-      await api.markNotificationRead(id);
-      setTone("success");
-      setMessage("Notification marked read.");
-      await loadNotifications();
-    } catch (error) {
-      setTone("error");
-      setMessage(error instanceof Error ? error.message : "Action failed");
-    }
-  }
+  useEffect(() => {
+    void load();
+  }, [load]);
 
-  async function markAllRead() {
+  useEffect(() => {
+    return on((msg) => {
+      if (msg.type === "notification.created") {
+        const payload = msg.payload as { notification: Notification };
+        setItems((prev) => [payload.notification, ...prev]);
+      }
+    });
+  }, [on]);
+
+  const markRead = async (id: number) => {
+    const target = items.find((n) => n.id === id);
+    if (!target || target.read_at) return;
     try {
-      await api.markAllNotificationsRead();
-      setTone("success");
-      setMessage("All notifications marked read.");
-      await loadNotifications();
-    } catch (error) {
-      setTone("error");
-      setMessage(error instanceof Error ? error.message : "Action failed");
+      await api.notifications.markRead(id);
+      setItems((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, read_at: new Date().toISOString() } : n)),
+      );
+      decrement();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to mark as read");
     }
-  }
+  };
+
+  const markAll = async () => {
+    try {
+      await api.notifications.markAllRead();
+      const now = new Date().toISOString();
+      setItems((prev) => prev.map((n) => ({ ...n, read_at: n.read_at ?? now })));
+      reset();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to mark all as read");
+    }
+  };
+
+  const actOnGroup = async (
+    notification: Notification,
+    kind: "accept" | "decline",
+  ) => {
+    if (notification.entity_id == null) return;
+    try {
+      if (notification.entity_type === "group_invitation") {
+        if (kind === "accept") await api.groups.acceptInvite(notification.entity_id);
+        else await api.groups.declineInvite(notification.entity_id);
+      } else if (notification.entity_type === "group_join_request") {
+        if (kind === "accept") await api.groups.acceptJoin(notification.entity_id);
+        else await api.groups.declineJoin(notification.entity_id);
+      } else {
+        return;
+      }
+      try {
+        await api.notifications.markRead(notification.id);
+      } catch {
+        // best-effort; if it was already read this errors silently
+      }
+      setItems((prev) =>
+        prev.map((n) =>
+          n.id === notification.id ? { ...n, read_at: new Date().toISOString() } : n,
+        ),
+      );
+      if (!notification.read_at) decrement();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : `Failed to ${kind}`);
+    }
+  };
+
+  const unread = items.filter((n) => !n.read_at).length;
 
   return (
-    <section>
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-bold text-slate-950">Notifications</h1>
-        <div className="flex gap-2">
+    <div className="space-y-6">
+      <header className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold text-slate-900">
+          Notifications
+          {unread > 0 ? (
+            <span className="ml-2 rounded-full bg-indigo-600 px-2 py-0.5 align-middle text-xs font-medium text-white">
+              {unread}
+            </span>
+          ) : null}
+        </h1>
+        {unread > 0 ? (
           <button
-            className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
-            onClick={loadNotifications}
-            type="button"
+            onClick={markAll}
+            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
           >
-            Refresh
+            Mark all as read
           </button>
-          <button
-            className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white"
-            onClick={markAllRead}
-            type="button"
-          >
-            Mark all read
-          </button>
-        </div>
-      </div>
-      <FormMessage message={message} tone={tone} />
-      <div className="mt-6 grid gap-4">
-        {notifications.map((notification) => (
-          <article
-            className={`rounded-2xl border p-5 shadow-sm ${
-              notification.read_at
-                ? "border-slate-200 bg-white"
-                : "border-sky-200 bg-sky-50"
-            }`}
-            key={notification.id}
-          >
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-                  {notification.type}
-                </p>
-                <h2 className="mt-2 text-xl font-bold text-slate-950">
-                  {notification.title}
-                </h2>
-                <p className="mt-2 text-slate-700">{notification.body}</p>
-                <p className="mt-3 text-sm text-slate-500">
-                  {formatDate(notification.created_at)}
-                </p>
-              </div>
-              {!notification.read_at ? (
-                <button
-                  className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
-                  onClick={() => markRead(notification.id)}
-                  type="button"
-                >
-                  Mark read
-                </button>
-              ) : null}
-            </div>
-          </article>
-        ))}
-        {notifications.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-600">
-            No notifications yet.
-          </p>
         ) : null}
-      </div>
-    </section>
+      </header>
+
+      {error ? (
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+      ) : null}
+
+      {loading ? (
+        <p className="text-sm text-slate-500">Loading…</p>
+      ) : items.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">
+          No notifications yet.
+        </p>
+      ) : (
+        <ul className="space-y-2">
+          {items.map((n) => {
+            const actionable =
+              !n.read_at &&
+              (n.entity_type === "group_invitation" || n.entity_type === "group_join_request");
+            return (
+              <li
+                key={n.id}
+                className={`flex items-start justify-between gap-3 rounded-xl border p-4 shadow-sm transition ${
+                  n.read_at
+                    ? "border-slate-200 bg-white"
+                    : "border-indigo-200 bg-indigo-50/50"
+                }`}
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-slate-900">{n.title}</p>
+                  <p className="mt-1 text-sm text-slate-600">{n.body}</p>
+                  <p className="mt-1 text-xs text-slate-400">{formatRelative(n.created_at)}</p>
+                </div>
+                <div className="flex shrink-0 flex-col items-end gap-2">
+                  {actionable ? (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => actOnGroup(n, "accept")}
+                        className="rounded-lg bg-indigo-600 px-3 py-1 text-xs font-medium text-white shadow-sm hover:bg-indigo-700"
+                      >
+                        Accept
+                      </button>
+                      <button
+                        onClick={() => actOnGroup(n, "decline")}
+                        className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                      >
+                        Decline
+                      </button>
+                    </div>
+                  ) : null}
+                  {!n.read_at && !actionable ? (
+                    <button
+                      onClick={() => markRead(n.id)}
+                      className="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                    >
+                      Mark read
+                    </button>
+                  ) : null}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
   );
 }

@@ -1,97 +1,83 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, Suspense, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
-import { FormMessage, TextField } from "@/components/forms";
-import { api, ApiError } from "@/lib/api";
-
-function LoginForm() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const { setSession } = useAuth();
-  const [identifier, setIdentifier] = useState("");
-  const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setLoading(true);
-    setMessage("");
-
-    try {
-      const response = await api.login({ identifier, password });
-      if (!response.token || !response.user) {
-        throw new ApiError("Login response did not include a session.");
-      }
-
-      setSession(response.token, response.user);
-      router.push(searchParams.get("next") || "/feed");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Login failed");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-12">
-      <form
-        className="rounded-3xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/70"
-        onSubmit={onSubmit}
-      >
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-sky-600">
-          Welcome back
-        </p>
-        <h1 className="mt-3 text-3xl font-bold text-slate-950">Log in</h1>
-        <div className="mt-8 grid gap-5">
-          <TextField
-            label="Email or nickname"
-            name="identifier"
-            onChange={setIdentifier}
-            required
-            value={identifier}
-          />
-          <TextField
-            label="Password"
-            name="password"
-            onChange={setPassword}
-            required
-            type="password"
-            value={password}
-          />
-          <FormMessage message={message} tone="error" />
-          <button
-            className="rounded-xl bg-sky-600 px-4 py-3 font-semibold text-white transition hover:bg-sky-700"
-            disabled={loading}
-            type="submit"
-          >
-            {loading ? "Logging in..." : "Log in"}
-          </button>
-        </div>
-        <p className="mt-6 text-center text-sm text-slate-600">
-          New here?{" "}
-          <Link className="font-semibold text-sky-700" href="/register">
-            Create an account
-          </Link>
-        </p>
-      </form>
-    </main>
-  );
-}
+import { ApiError } from "@/lib/api";
 
 export default function LoginPage() {
+  const { login } = useAuth();
+  const router = useRouter();
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSubmitting(true);
+    try {
+      await login({ identifier, password });
+      router.replace("/feed");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Login failed");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
-    <Suspense
-      fallback={
-        <main className="flex min-h-screen items-center justify-center text-slate-600">
-          Loading login...
-        </main>
-      }
-    >
-      <LoginForm />
-    </Suspense>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold text-slate-900">Welcome back</h1>
+        <p className="mt-1 text-sm text-slate-500">Sign in to your account</p>
+      </div>
+
+      <form onSubmit={onSubmit} className="space-y-4">
+        <label className="block">
+          <span className="text-sm font-medium text-slate-700">Email or nickname</span>
+          <input
+            type="text"
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
+            required
+            autoComplete="username"
+            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+          />
+        </label>
+        <label className="block">
+          <span className="text-sm font-medium text-slate-700">Password</span>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            autoComplete="current-password"
+            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+          />
+        </label>
+
+        {error ? (
+          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+        ) : null}
+
+        <button
+          type="submit"
+          disabled={submitting}
+          className="w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700 disabled:opacity-60"
+        >
+          {submitting ? "Signing in…" : "Sign in"}
+        </button>
+      </form>
+
+      <p className="text-center text-sm text-slate-500">
+        Don&apos;t have an account?{" "}
+        <Link href="/register" className="font-medium text-indigo-600 hover:underline">
+          Create one
+        </Link>
+      </p>
+    </div>
   );
 }

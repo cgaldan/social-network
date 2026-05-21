@@ -1,102 +1,71 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { PostCard } from "@/components/PostCard";
 import { PostForm } from "@/components/PostForm";
-import { FormMessage, TextField } from "@/components/forms";
-import { api } from "@/lib/api";
-import type { Post } from "@/types/api";
+import { api, ApiError } from "@/lib/api";
+import type { CreatePostPayload, Post } from "@/types/api";
 
 export default function FeedPage() {
   const [posts, setPosts] = useState<Post[]>([]);
-  const [category, setCategory] = useState("");
-  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [category, setCategory] = useState("");
 
-  async function loadPosts(nextCategory = category) {
+  const load = useCallback(async () => {
     setLoading(true);
-    setMessage("");
-
+    setError(null);
     try {
-      const response = await api.listPosts({
-        category: nextCategory || undefined,
-        limit: 50,
-      });
-      setPosts(response.posts ?? []);
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Could not load posts");
+      const res = await api.posts.list({ category: category || undefined, limit: 20 });
+      setPosts(res.posts ?? []);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to load feed");
     } finally {
       setLoading(false);
     }
-  }
+  }, [category]);
 
   useEffect(() => {
-    void loadPosts("");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    void load();
+  }, [load]);
 
-  function filterPosts(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    void loadPosts(category);
-  }
+  const onCreate = async (payload: CreatePostPayload) => {
+    const res = await api.posts.create(payload);
+    setPosts((prev) => [res.post, ...prev]);
+  };
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[22rem_1fr]">
-      <aside className="grid content-start gap-6">
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h1 className="text-2xl font-bold text-slate-950">Create post</h1>
-          <div className="mt-4">
-            <PostForm onSubmit={async (body) => {
-              await api.createPost(body);
-              await loadPosts();
-            }} />
-          </div>
-        </section>
-        <form
-          className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-          onSubmit={filterPosts}
-        >
-          <TextField
-            label="Filter by category"
-            name="category"
-            onChange={setCategory}
-            placeholder="general"
-            value={category}
-          />
-          <button
-            className="rounded-xl border border-slate-300 px-4 py-3 font-semibold text-slate-700 transition hover:border-sky-400 hover:text-sky-700"
-            type="submit"
-          >
-            Apply filter
-          </button>
-        </form>
-      </aside>
-      <section>
-        <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-3xl font-bold text-slate-950">Feed</h2>
-          <button
-            className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-sky-400 hover:text-sky-700"
-            onClick={() => loadPosts()}
-            type="button"
-          >
-            Refresh
-          </button>
+    <div className="space-y-6">
+      <header className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold text-slate-900">Feed</h1>
+        <input
+          type="text"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          placeholder="Filter by category…"
+          className="w-48 rounded-lg border border-slate-300 px-3 py-1.5 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+        />
+      </header>
+
+      <PostForm onSubmit={onCreate} />
+
+      {error ? (
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+      ) : null}
+
+      {loading ? (
+        <p className="text-sm text-slate-500">Loading posts…</p>
+      ) : posts.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">
+          No posts yet. Be the first to share something.
+        </p>
+      ) : (
+        <div className="space-y-4">
+          {posts.map((post) => (
+            <PostCard key={post.id} post={post} />
+          ))}
         </div>
-        <FormMessage message={message} tone="error" />
-        {loading ? (
-          <p className="mt-6 text-slate-600">Loading posts...</p>
-        ) : posts.length === 0 ? (
-          <p className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-600">
-            No posts found.
-          </p>
-        ) : (
-          <div className="mt-6 grid gap-4">
-            {posts.map((post) => (
-              <PostCard key={post.id} post={post} />
-            ))}
-          </div>
-        )}
-      </section>
+      )}
     </div>
   );
 }

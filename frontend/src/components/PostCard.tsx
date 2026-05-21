@@ -1,43 +1,60 @@
 import Link from "next/link";
-import { formatDate } from "@/lib/format";
+import { resolveMediaUrl } from "@/lib/api";
+import { formatRelative } from "@/lib/format";
 import type { Post } from "@/types/api";
+
+const PRIVACY_LABEL: Record<string, string> = {
+  public: "Public",
+  almost_private: "Followers",
+  private: "Private",
+};
 
 export function PostCard({ post }: { post: Post }) {
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-        <span>{post.category || "General"}</span>
-        <span>/</span>
-        <span>{post.privacy_level}</span>
-        {post.group_id ? (
-          <>
-            <span>/</span>
-            <span>Group #{post.group_id}</span>
-          </>
-        ) : null}
+    <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex items-center justify-between text-sm text-slate-500">
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/users/${post.user_id}`}
+            className="font-medium text-slate-700 hover:text-indigo-600 hover:underline"
+          >
+            @{post.author}
+          </Link>
+          <span aria-hidden>•</span>
+          <span>{formatRelative(post.created_at)}</span>
+          {post.category ? (
+            <>
+              <span aria-hidden>•</span>
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs">{post.category}</span>
+            </>
+          ) : null}
+        </div>
+        <span className="rounded-full bg-slate-50 px-2 py-0.5 text-xs text-slate-500">
+          {PRIVACY_LABEL[post.privacy_level] ?? post.privacy_level}
+        </span>
       </div>
-      <Link href={`/posts/${post.id}`}>
-        <h2 className="mt-3 text-2xl font-bold text-slate-950 transition hover:text-sky-700">
+
+      <h2 className="mt-3 text-lg font-semibold text-slate-900">
+        <Link href={`/posts/${post.id}`} className="hover:underline">
           {post.title}
-        </h2>
-      </Link>
-      <p className="mt-3 whitespace-pre-wrap text-slate-700">{post.content}</p>
+        </Link>
+      </h2>
+      <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">{post.content}</p>
+
       {post.media_url ? (
-        <a
-          className="mt-3 inline-flex text-sm font-semibold text-sky-700"
-          href={post.media_url}
-          rel="noreferrer"
-          target="_blank"
-        >
-          View media
-        </a>
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={resolveMediaUrl(post.media_url)}
+          alt=""
+          className="mt-3 max-h-96 w-full rounded-lg object-cover"
+        />
       ) : null}
-      <footer className="mt-5 flex flex-wrap gap-4 text-sm text-slate-500">
-        <span>By {post.author || `User #${post.user_id}`}</span>
-        <span>{formatDate(post.created_at)}</span>
-        <span>{post.comment_count} comments</span>
-        <span>{post.like_count} likes</span>
-      </footer>
+
+      <div className="mt-4 flex items-center gap-4 text-sm text-slate-500">
+        <Link href={`/posts/${post.id}`} className="hover:text-indigo-600">
+          💬 {post.comment_count} comments
+        </Link>
+      </div>
     </article>
   );
 }
