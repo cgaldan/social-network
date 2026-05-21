@@ -17,15 +17,17 @@ type MessageService struct {
 	messageRepo repository.MessageRepositoryInterface
 	userRepo    repository.UserRepositoryInterface
 	convRepo    repository.ConversationRepositoryInterface
+	followRepo  repository.FollowRepositoryInterface
 	broadcaster MessageBroadcaster
 	logger      *logger.Logger
 }
 
-func NewMessageService(messageRepo repository.MessageRepositoryInterface, userRepo repository.UserRepositoryInterface, convRepo repository.ConversationRepositoryInterface, broadcaster MessageBroadcaster, logger *logger.Logger) *MessageService {
+func NewMessageService(messageRepo repository.MessageRepositoryInterface, userRepo repository.UserRepositoryInterface, convRepo repository.ConversationRepositoryInterface, followRepo repository.FollowRepositoryInterface, broadcaster MessageBroadcaster, logger *logger.Logger) *MessageService {
 	return &MessageService{
 		messageRepo: messageRepo,
 		userRepo:    userRepo,
 		convRepo:    convRepo,
+		followRepo:  followRepo,
 		broadcaster: broadcaster,
 		logger:      logger,
 	}
@@ -39,6 +41,36 @@ func (s *MessageService) SendMessage(convID, senderID int, content string) (*dom
 	}
 	if !isMember {
 		return nil, fmt.Errorf("sender is not part of the conversation")
+	}
+
+	conv, err := s.convRepo.GetConversationByID(convID)
+	if err != nil {
+		s.logger.Error("Failed to load conversation", "error", err, "convID", convID)
+		return nil, fmt.Errorf("failed to send message")
+	}
+	if conv != nil && conv.Type == "private" && s.followRepo != nil {
+		participants, err := s.convRepo.GetParticipantIDs(convID)
+		if err != nil {
+			s.logger.Error("Failed to load participants", "error", err, "convID", convID)
+			return nil, fmt.Errorf("failed to send message")
+		}
+		var other int
+		for _, p := range participants {
+			if p != senderID {
+				other = p
+				break
+			}
+		}
+		if other != 0 {
+			eligible, err := s.followRepo.EitherUserFollows(senderID, other)
+			if err != nil {
+				s.logger.Error("Failed to check follow eligibility", "error", err)
+				return nil, fmt.Errorf("failed to send message")
+			}
+			if !eligible {
+				return nil, fmt.Errorf("you must follow each other to send messages")
+			}
+		}
 	}
 
 	if err := s.validateMessage(strings.TrimSpace(content)); err != nil {

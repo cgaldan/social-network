@@ -294,6 +294,23 @@ func makePairKey(userID1, userID2 int) string {
 	return fmt.Sprintf("%d-%d", userID2, userID1)
 }
 
+func (r *ConversationRepository) GetConversationByID(conversationID int) (*domain.Conversation, error) {
+	var c domain.Conversation
+	err := r.db.QueryRow(`
+		SELECT id, name, type, created_at
+		FROM conversations
+		WHERE id = ?`, conversationID,
+	).Scan(&c.ID, &c.Name, &c.Type, &c.CreatedAt)
+
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("conversation not found")
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get conversation: %w", err)
+	}
+	return &c, nil
+}
+
 func (r *ConversationRepository) MarkConversationRead(conversationID, userID int) error {
 	res, err := r.db.Exec(`
 		UPDATE conversation_participants
