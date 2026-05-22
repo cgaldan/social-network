@@ -427,7 +427,7 @@ function ConversationPane({
         {other ? (
           <p className="text-xs text-slate-500">
             @{other.nickname}
-            {other.is_online ? " · online" : ""}
+            {other.is_online ? " · online" : " · offline"}
           </p>
         ) : null}
       </div>

@@ -261,7 +261,7 @@ export default function UserProfilePage() {
               Joined {formatDate(profile.created_at)}
               {" · "}
               {profile.is_public ? "Public profile" : "Private profile"}
-              {profile.is_online ? " · online" : ""}
+              {profile.is_online ? " · online" : " · offline"}
             </p>
           </div>
           <div className="flex shrink-0 flex-wrap items-start justify-end gap-2">
@@ -512,7 +512,7 @@ function UserList({ users }: { users: UserSummary[] }) {
               </p>
               <p className="truncate text-xs text-slate-500">
                 @{u.nickname}
-                {u.is_online ? " · online" : ""}
+                {u.is_online ? " · online" : " · offline"}
               </p>
             </div>
           </Link>
