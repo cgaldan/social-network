@@ -27,16 +27,16 @@ var allowedContentTypes = map[string]string{
 }
 
 type UploadHandler struct {
-	authService service.AuthServiceInterface
-	logger      *logger.Logger
-	config      *config.Config
+	authService  service.AuthServiceInterface
+	logger       *logger.Logger
+	uploadConfig config.UploadConfig
 }
 
-func NewUploadHandler(authService service.AuthServiceInterface, logger *logger.Logger, config *config.Config) *UploadHandler {
+func NewUploadHandler(authService service.AuthServiceInterface, logger *logger.Logger, uploadConfig config.UploadConfig) *UploadHandler {
 	return &UploadHandler{
-		authService: authService,
-		logger:      logger,
-		config:      config,
+		authService:  authService,
+		logger:       logger,
+		uploadConfig: uploadConfig,
 	}
 }
 
@@ -52,9 +52,9 @@ func (h *UploadHandler) UploadImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	r.Body = http.MaxBytesReader(w, r.Body, h.config.Upload.MaxFileSize)
+	r.Body = http.MaxBytesReader(w, r.Body, h.uploadConfig.MaxFileSize)
 
-	if err := r.ParseMultipartForm(h.config.Upload.MaxFileSize); err != nil {
+	if err := r.ParseMultipartForm(h.uploadConfig.MaxFileSize); err != nil {
 		json.NewEncoder(w).Encode(domain.UploadResponse{
 			Success: false,
 			Message: "File too large or invalid form (max 5MB)",
@@ -99,7 +99,7 @@ func (h *UploadHandler) UploadImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := os.MkdirAll(h.config.Upload.UploadPath, 0o755); err != nil {
+	if err := os.MkdirAll(h.uploadConfig.UploadPath, 0o755); err != nil {
 		h.logger.Error("Failed to create upload dir", "error", err)
 		json.NewEncoder(w).Encode(domain.UploadResponse{
 			Success: false,
@@ -118,7 +118,7 @@ func (h *UploadHandler) UploadImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dstPath := filepath.Join(h.config.Upload.UploadPath, name)
+	dstPath := filepath.Join(h.uploadConfig.UploadPath, name)
 	dst, err := os.Create(dstPath)
 	if err != nil {
 		h.logger.Error("Failed to create upload file", "error", err, "path", dstPath)

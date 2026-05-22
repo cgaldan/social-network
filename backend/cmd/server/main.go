@@ -56,7 +56,7 @@ func main() {
 	appLogger.Info("WebSocket hub initialized")
 
 	eventBus := event.NewInMemoryBus(appLogger)
-	services := service.NewServices(repos, eventBus, appLogger, hub, hub)
+	services := service.NewServices(repos, eventBus, appLogger, hub, hub, config.Session.Duration)
 
 	consumers := consumer.NewConsumers(services.Notification, eventBus, appLogger)
 	if err := consumers.RegisterHandlers(); err != nil {

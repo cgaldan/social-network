@@ -18,14 +18,14 @@ func NewRouter(services *service.Services, config *config.Config, hub *websocket
 	authHandler := handlers.NewAuthHandler(services.Auth, logger)
 	postHandler := handlers.NewPostHandler(services.Post, services.Auth, services.Content, logger)
 	commentHandler := handlers.NewCommentHandler(services.Comment, services.Auth, logger)
-	websocketHandler := handlers.NewWebSocketHandler(hub, services.Auth, logger)
+	websocketHandler := handlers.NewWebSocketHandler(hub, services.Auth, logger, config.Websocket, config.CORS.AllowedOrigins)
 	followHandler := handlers.NewFollowHandler(services.Follow, services.Auth, logger)
 	conversationHandler := handlers.NewConversationHandler(services.Conversation, services.Auth, logger)
 	messageHandler := handlers.NewMessageHandler(services.Message, services.Auth, logger)
 	groupHandler := handlers.NewGroupHandler(services.Group, services.Auth, logger)
 	notificationHandler := handlers.NewNotificationHandler(services.Notification, services.Auth, logger)
 	userHandler := handlers.NewUserHandler(services.Auth, services.Post, services.Follow, logger)
-	uploadHandler := handlers.NewUploadHandler(services.Auth, logger, config)
+	uploadHandler := handlers.NewUploadHandler(services.Auth, logger, config.Upload)
 	healthHandler := handlers.NewHealthHandler("1.0.0")
 
 	r.HandleFunc("/health", healthHandler.Health).Methods("GET")
@@ -104,10 +104,7 @@ func NewRouter(services *service.Services, config *config.Config, hub *websocket
 	// Static uploads
 	r.PathPrefix(handlers.UploadURLPrefix).Handler(http.StripPrefix(handlers.UploadURLPrefix, http.FileServer(http.Dir(config.Upload.UploadPath))))
 
-	frontendPath := "../frontend"
-	if config.Environment == "production" {
-		frontendPath = config.Frontend.Path
-	}
+	frontendPath := config.Frontend.Path
 	r.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir(frontendPath))))
 
 	r.Use(middleware.RecoveryMiddleware(logger))

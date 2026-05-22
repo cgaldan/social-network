@@ -14,18 +14,20 @@ import (
 )
 
 type AuthService struct {
-	userRepo    repository.UserRepositoryInterface
-	sessionRepo repository.SessionRepositoryInterface
-	followRepo  repository.FollowRepositoryInterface
-	logger      *logger.Logger
+	userRepo        repository.UserRepositoryInterface
+	sessionRepo     repository.SessionRepositoryInterface
+	followRepo      repository.FollowRepositoryInterface
+	logger          *logger.Logger
+	sessionDuration time.Duration
 }
 
-func NewAuthService(userRepo repository.UserRepositoryInterface, sessionRepo repository.SessionRepositoryInterface, followRepo repository.FollowRepositoryInterface, logger *logger.Logger) *AuthService {
+func NewAuthService(userRepo repository.UserRepositoryInterface, sessionRepo repository.SessionRepositoryInterface, followRepo repository.FollowRepositoryInterface, logger *logger.Logger, sessionDuration time.Duration) *AuthService {
 	return &AuthService{
-		userRepo:    userRepo,
-		sessionRepo: sessionRepo,
-		followRepo:  followRepo,
-		logger:      logger,
+		userRepo:        userRepo,
+		sessionRepo:     sessionRepo,
+		followRepo:      followRepo,
+		logger:          logger,
+		sessionDuration: sessionDuration,
 	}
 }
 
@@ -102,12 +104,12 @@ func (s *AuthService) Login(loginData domain.LoginRequest) (*domain.User, string
 	}
 
 	// REMEMBER TO REMOVE THIS BEFORE SUBMIT
-	if user.Nickname != "cgaldan" && user.Nickname != "cmarkos" && user.Nickname != "testuser" && user.Nickname != "jane" {
-		if err := bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(loginData.Password)); err != nil {
-			s.logger.Debug("Login failed - password mismatch", "identifier", loginData.Identifier)
-			return nil, "", fmt.Errorf("invalid identifier or password")
-		}
+	// if user.Nickname != "cgaldan" && user.Nickname != "cmarkos" && user.Nickname != "testuser" && user.Nickname != "jane" {
+	if err := bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(loginData.Password)); err != nil {
+		s.logger.Debug("Login failed - password mismatch", "identifier", loginData.Identifier)
+		return nil, "", fmt.Errorf("invalid identifier or password")
 	}
+	// }
 
 	if err := s.userRepo.UpdateLastSeen(user.ID); err != nil {
 		s.logger.Error("Failed to update last seen for user", "userID", user.ID, "error", err)
@@ -384,7 +386,7 @@ func (s *AuthService) validateCommonUserData(email, firstName, lastName string, 
 
 func (s *AuthService) createSession(userID int) (string, error) {
 	sessionID := generateSessionID()
-	expiresAt := time.Now().Add(24 * time.Hour)
+	expiresAt := time.Now().Add(s.sessionDuration)
 
 	if err := s.sessionRepo.CreateSession(sessionID, userID, expiresAt); err != nil {
 		return "", fmt.Errorf("failed to create session: %w", err)

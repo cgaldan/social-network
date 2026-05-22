@@ -5,6 +5,7 @@ import (
 	"social-network/internal/event"
 	"social-network/internal/repository"
 	"social-network/packages/logger"
+	"time"
 )
 
 type Services struct {
@@ -19,8 +20,8 @@ type Services struct {
 	Notification NotificationServiceInterface
 }
 
-func NewServices(repos *repository.Repositories, eventBus event.EventBus, logger *logger.Logger, notificationPusher NotificationPusher, messageBroadcaster MessageBroadcaster) *Services {
-	authService := NewAuthService(repos.User, repos.Session, repos.Follow, logger)
+func NewServices(repos *repository.Repositories, eventBus event.EventBus, logger *logger.Logger, notificationPusher NotificationPusher, messageBroadcaster MessageBroadcaster, sessionDuration time.Duration) *Services {
+	authService := NewAuthService(repos.User, repos.Session, repos.Follow, logger, sessionDuration)
 	contentService := NewContentService(repos.Post, repos.Group, logger)
 	postService := NewPostService(repos.Post, repos.Group, repos.Follow, logger)
 	commentService := NewCommentService(repos.Comment, repos.Post, repos.Group, logger)

@@ -54,7 +54,7 @@ func LoadConfig() (*Config, error) {
 			WriteWait:       getEnvDuration("WS_WRITE_WAIT", 10*time.Second),
 		},
 		Frontend: FrontendConfig{
-			Path: getEnv("FRONTEND_PATH", "./frontend"),
+			Path: getEnv("FRONTEND_PATH", "../frontend"),
 		},
 		Upload: UploadConfig{
 			UploadPath:  getEnv("UPLOAD_PATH", "./data/uploads"),

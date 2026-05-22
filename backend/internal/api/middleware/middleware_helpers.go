@@ -20,9 +20,9 @@ func getIP(r *http.Request) string {
 	return strings.Split(r.RemoteAddr, ":")[0]
 }
 
-func isAllowedOrigin(origin string, allowed []string) bool {
+func IsAllowedOrigin(origin string, allowed []string) bool {
 	for _, o := range allowed {
-		if o == origin {
+		if o == origin || o == "*" {
 			return true
 		}
 	}

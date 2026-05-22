@@ -11,7 +11,7 @@ func CORSMiddleware(config *config.Config) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			origin := r.Header.Get("Origin")
 
-			if isAllowedOrigin(origin, config.CORS.AllowedOrigins) {
+			if IsAllowedOrigin(origin, config.CORS.AllowedOrigins) {
 				w.Header().Set("Access-Control-Allow-Origin", origin)
 				w.Header().Set("Vary", "Origin")
 				w.Header().Set("Access-Control-Allow-Credentials", "true")

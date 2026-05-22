@@ -2,17 +2,11 @@ package websocket
 
 import (
 	"encoding/json"
+	"social-network/internal/config"
 	"social-network/packages/logger"
 	"time"
 
 	"github.com/gorilla/websocket"
-)
-
-const (
-	writeWait      = 10 * time.Second
-	pongWait       = 60 * time.Second
-	pingPeriod     = (pongWait * 9) / 10
-	maxMessageSize = 512
 )
 
 type Client struct {
@@ -21,6 +15,7 @@ type Client struct {
 	Send       chan []byte
 	UserID     int
 	Logger     *logger.Logger
+	WsConfig   config.WebSocketConfig
 }
 
 type WsMessage struct {
@@ -28,13 +23,14 @@ type WsMessage struct {
 	Payload any    `json:"payload"`
 }
 
-func NewClient(hub *Hub, connection *websocket.Conn, userID int, logger *logger.Logger) *Client {
+func NewClient(hub *Hub, connection *websocket.Conn, userID int, logger *logger.Logger, wsConfig config.WebSocketConfig) *Client {
 	return &Client{
 		Hub:        hub,
 		Connection: connection,
 		Send:       make(chan []byte, 256),
 		UserID:     userID,
 		Logger:     logger,
+		WsConfig:   wsConfig,
 	}
 }
 
@@ -43,9 +39,9 @@ func (c *Client) ReadPump() {
 		c.Hub.unregister <- c
 		c.Connection.Close()
 	}()
-	c.Connection.SetReadDeadline(time.Now().Add(pongWait))
+	c.Connection.SetReadDeadline(time.Now().Add(c.WsConfig.PongWait))
 	c.Connection.SetPongHandler(func(string) error {
-		c.Connection.SetReadDeadline(time.Now().Add(pongWait))
+		c.Connection.SetReadDeadline(time.Now().Add(c.WsConfig.PongWait))
 		return nil
 	})
 
@@ -78,7 +74,7 @@ func (c *Client) ReadPump() {
 }
 
 func (c *Client) WritePump() {
-	ticker := time.NewTicker(pingPeriod)
+	ticker := time.NewTicker(c.WsConfig.PingPeriod)
 	defer func() {
 		ticker.Stop()
 		c.Connection.Close()
@@ -87,7 +83,7 @@ func (c *Client) WritePump() {
 	for {
 		select {
 		case message, ok := <-c.Send:
-			c.Connection.SetWriteDeadline(time.Now().Add(writeWait))
+			c.Connection.SetWriteDeadline(time.Now().Add(c.WsConfig.WriteWait))
 			if !ok {
 				c.Connection.WriteMessage(websocket.CloseMessage, []byte{})
 				return
@@ -104,7 +100,7 @@ func (c *Client) WritePump() {
 			}
 
 		case <-ticker.C:
-			c.Connection.SetWriteDeadline(time.Now().Add(writeWait))
+			c.Connection.SetWriteDeadline(time.Now().Add(c.WsConfig.WriteWait))
 			if err := c.Connection.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}

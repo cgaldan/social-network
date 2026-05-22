@@ -43,7 +43,7 @@ func setupNotificationConsumerTest(t *testing.T) (*service.Services, event.Event
 	eventBus := event.NewInMemoryBus(testLogger)
 	pusher := &fakeNotificationPusher{}
 	repos := repository.NewRepositories(db)
-	services := service.NewServices(repos, eventBus, testLogger, pusher, nil)
+	services := service.NewServices(repos, eventBus, testLogger, pusher, nil, time.Hour)
 	consumers := NewConsumers(services.Notification, eventBus, testLogger)
 	if err := consumers.RegisterHandlers(); err != nil {
 		t.Fatalf("Failed to register notification handlers: %v", err)

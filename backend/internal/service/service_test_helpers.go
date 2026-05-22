@@ -8,6 +8,7 @@ import (
 	"social-network/internal/repository"
 	"social-network/packages/logger"
 	"testing"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -49,7 +50,7 @@ func SetupTestServicesWithEventBus(t *testing.T, pusher NotificationPusher) (*Se
 	testLogger := logger.NewLogger(io.Discard, logger.InfoLevel)
 	eventBus := event.NewInMemoryBus(testLogger)
 
-	return NewServices(repos, eventBus, testLogger, pusher, nil), eventBus
+	return NewServices(repos, eventBus, testLogger, pusher, nil, time.Hour), eventBus
 }
 
 func CreateTestUser(t *testing.T, services *Services, req domain.RegisterRequest) int {
