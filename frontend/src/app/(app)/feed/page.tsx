@@ -1,37 +1,31 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { PostCard } from "@/components/PostCard";
 import { PostForm } from "@/components/PostForm";
-import { api, ApiError } from "@/lib/api";
+import { InfiniteScrollSentinel } from "@/components/InfiniteScrollSentinel";
+import { usePaginatedList } from "@/hooks/usePaginatedList";
+import { api } from "@/lib/api";
 import type { CreatePostPayload, Post } from "@/types/api";
 
+const PAGE_SIZE = 20;
+
 export default function FeedPage() {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [category, setCategory] = useState("");
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await api.posts.list({ category: category || undefined, limit: 20 });
-      setPosts(res.posts ?? []);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to load feed");
-    } finally {
-      setLoading(false);
-    }
-  }, [category]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
+  const fetcher = useCallback(
+    async ({ limit, offset }: { limit: number; offset: number }) => {
+      const res = await api.posts.list({ category: category || undefined, limit, offset });
+      return { items: res.posts ?? [], hasMore: res.has_more };
+    },
+    [category],
+  );
+  const { items: posts, hasMore, loading, error, loadMore, setItems } =
+    usePaginatedList<Post>(fetcher, PAGE_SIZE);
 
   const onCreate = async (payload: CreatePostPayload) => {
     const res = await api.posts.create(payload);
-    setPosts((prev) => [res.post, ...prev]);
+    setItems((prev) => [res.post, ...prev]);
   };
 
   return (
@@ -53,7 +47,7 @@ export default function FeedPage() {
         <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
       ) : null}
 
-      {loading ? (
+      {loading && posts.length === 0 ? (
         <p className="text-sm text-slate-500">Loading posts…</p>
       ) : posts.length === 0 ? (
         <p className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">
@@ -66,6 +60,13 @@ export default function FeedPage() {
           ))}
         </div>
       )}
+
+      {posts.length > 0 && hasMore ? (
+        <InfiniteScrollSentinel onIntersect={loadMore} enabled={!loading} />
+      ) : null}
+      {loading && posts.length > 0 ? (
+        <p className="text-center text-xs text-slate-400">Loading more…</p>
+      ) : null}
     </div>
   );
 }

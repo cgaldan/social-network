@@ -5,9 +5,13 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { PostCard } from "@/components/PostCard";
+import { InfiniteScrollSentinel } from "@/components/InfiniteScrollSentinel";
+import { usePaginatedList } from "@/hooks/usePaginatedList";
 import { api, ApiError, resolveMediaUrl } from "@/lib/api";
 import { formatRelative } from "@/lib/format";
 import type { Comment, Post } from "@/types/api";
+
+const COMMENTS_PAGE_SIZE = 20;
 
 export default function PostDetailPage() {
   const params = useParams<{ id: string }>();
@@ -15,7 +19,6 @@ export default function PostDetailPage() {
   const router = useRouter();
   const { user } = useAuth();
   const [post, setPost] = useState<Post | null>(null);
-  const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [commentText, setCommentText] = useState("");
@@ -24,30 +27,41 @@ export default function PostDetailPage() {
   const [sending, setSending] = useState(false);
   const commentFileRef = useRef<HTMLInputElement>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const postRes = await api.posts.get(id);
-      setPost(postRes.post);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to load post");
-      setLoading(false);
-      return;
-    }
-    setLoading(false);
-
-    try {
-      const commentsRes = await api.comments.list(id);
-      setComments(commentsRes.comments ?? []);
-    } catch {
-      // comments are non-critical — leave the post visible
-    }
-  }, [id]);
-
   useEffect(() => {
     if (!Number.isFinite(id)) return;
-    void load();
-  }, [id, load]);
+    let cancelled = false;
+    setLoading(true);
+    api.posts
+      .get(id)
+      .then((res) => {
+        if (!cancelled) setPost(res.post);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err instanceof ApiError ? err.message : "Failed to load post");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  const commentsFetcher = useCallback(
+    async ({ limit, offset }: { limit: number; offset: number }) => {
+      if (!Number.isFinite(id)) return { items: [], hasMore: false };
+      const res = await api.comments.list(id, { limit, offset });
+      return { items: res.comments ?? [], hasMore: res.has_more };
+    },
+    [id],
+  );
+  const {
+    items: comments,
+    hasMore: hasMoreComments,
+    loading: loadingComments,
+    loadMore: loadMoreComments,
+    setItems: setComments,
+  } = usePaginatedList<Comment>(commentsFetcher, COMMENTS_PAGE_SIZE);
 
   const onCommentFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -79,7 +93,7 @@ export default function PostDetailPage() {
         content: commentText,
         media_url: commentMediaUrl || undefined,
       });
-      setComments((prev) => [...prev, res.comment]);
+      setComments((prev: Comment[]) => [...prev, res.comment]);
       setCommentText("");
       clearCommentImage();
       if (post) setPost({ ...post, comment_count: post.comment_count + 1 });
@@ -104,7 +118,7 @@ export default function PostDetailPage() {
     if (!confirm("Delete this comment?")) return;
     try {
       await api.comments.remove(id, commentId);
-      setComments((prev) => prev.filter((c) => c.id !== commentId));
+      setComments((prev: Comment[]) => prev.filter((c) => c.id !== commentId));
       if (post) setPost({ ...post, comment_count: Math.max(0, post.comment_count - 1) });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to delete comment");
@@ -196,7 +210,7 @@ export default function PostDetailPage() {
           </div>
         </form>
 
-        {comments.length === 0 ? (
+        {comments.length === 0 && !loadingComments ? (
           <p className="text-sm text-slate-500">No comments yet.</p>
         ) : (
           <ul className="space-y-3">
@@ -235,6 +249,13 @@ export default function PostDetailPage() {
             ))}
           </ul>
         )}
+
+        {comments.length > 0 && hasMoreComments ? (
+          <InfiniteScrollSentinel onIntersect={loadMoreComments} enabled={!loadingComments} />
+        ) : null}
+        {loadingComments && comments.length > 0 ? (
+          <p className="text-center text-xs text-slate-400">Loading more comments…</p>
+        ) : null}
       </section>
 
       {error ? (

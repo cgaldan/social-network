@@ -3,32 +3,28 @@
 import { useCallback, useEffect, useState } from "react";
 import { useWebSocket } from "@/components/WebSocketProvider";
 import { useNotificationCount } from "@/components/NotificationCountProvider";
+import { InfiniteScrollSentinel } from "@/components/InfiniteScrollSentinel";
+import { usePaginatedList } from "@/hooks/usePaginatedList";
 import { api, ApiError } from "@/lib/api";
 import { formatRelative } from "@/lib/format";
 import type { Notification } from "@/types/api";
 
+const PAGE_SIZE = 20;
+
 export default function NotificationsPage() {
   const { on } = useWebSocket();
-  const { decrement, reset } = useNotificationCount();
-  const [items, setItems] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { decrement, reset: resetUnreadCount } = useNotificationCount();
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await api.notifications.list({ limit: 50 });
-      setItems(res.notifications ?? []);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to load notifications");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
+  const fetcher = useCallback(
+    async ({ limit, offset }: { limit: number; offset: number }) => {
+      const res = await api.notifications.list({ limit, offset });
+      return { items: res.notifications ?? [], hasMore: res.has_more };
+    },
+    [],
+  );
+  const { items, hasMore, loading, error: fetchError, loadMore, setItems } =
+    usePaginatedList<Notification>(fetcher, PAGE_SIZE, (n) => n.id);
 
   useEffect(() => {
     return on((msg) => {
@@ -37,7 +33,7 @@ export default function NotificationsPage() {
         setItems((prev) => [payload.notification, ...prev]);
       }
     });
-  }, [on]);
+  }, [on, setItems]);
 
   const markRead = async (id: number) => {
     const target = items.find((n) => n.id === id);
@@ -58,7 +54,7 @@ export default function NotificationsPage() {
       await api.notifications.markAllRead();
       const now = new Date().toISOString();
       setItems((prev) => prev.map((n) => ({ ...n, read_at: n.read_at ?? now })));
-      reset();
+      resetUnreadCount();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to mark all as read");
     }
@@ -118,11 +114,11 @@ export default function NotificationsPage() {
         ) : null}
       </header>
 
-      {error ? (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+      {(error || fetchError) ? (
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error ?? fetchError}</p>
       ) : null}
 
-      {loading ? (
+      {loading && items.length === 0 ? (
         <p className="text-sm text-slate-500">Loading…</p>
       ) : items.length === 0 ? (
         <p className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">
@@ -179,6 +175,13 @@ export default function NotificationsPage() {
           })}
         </ul>
       )}
+
+      {items.length > 0 && hasMore ? (
+        <InfiniteScrollSentinel onIntersect={loadMore} enabled={!loading} />
+      ) : null}
+      {loading && items.length > 0 ? (
+        <p className="text-center text-xs text-slate-400">Loading more…</p>
+      ) : null}
     </div>
   );
 }

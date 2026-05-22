@@ -6,12 +6,16 @@ import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { PostCard } from "@/components/PostCard";
+import { InfiniteScrollSentinel } from "@/components/InfiniteScrollSentinel";
 import { useAuth } from "@/components/AuthProvider";
+import { usePaginatedList } from "@/hooks/usePaginatedList";
 import { api, ApiError } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import type { FollowStatus, Post, RegisterPayload, UserProfile, UserSummary } from "@/types/api";
 
 type Tab = "posts" | "followers" | "following";
+
+const PAGE_SIZE = 20;
 
 export default function UserProfilePage() {
   const params = useParams<{ id: string }>();
@@ -25,12 +29,6 @@ export default function UserProfilePage() {
   const [acting, setActing] = useState(false);
 
   const [tab, setTab] = useState<Tab>("posts");
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [followers, setFollowers] = useState<UserSummary[]>([]);
-  const [following, setFollowing] = useState<UserSummary[]>([]);
-  const [tabLoading, setTabLoading] = useState(false);
-  const [tabError, setTabError] = useState<string | null>(null);
-
   const [editing, setEditing] = useState(false);
 
   const loadProfile = useCallback(async () => {
@@ -51,37 +49,52 @@ export default function UserProfilePage() {
     void loadProfile();
   }, [loadProfile]);
 
-  useEffect(() => {
-    if (!profile?.can_view) return;
-    let cancelled = false;
-    setTabLoading(true);
-    setTabError(null);
+  const canView = profile?.can_view === true;
 
-    const fetcher = (() => {
-      if (tab === "posts") return api.users.posts(id, { limit: 50 });
-      if (tab === "followers") return api.users.followers(id, { limit: 100 });
-      return api.users.following(id, { limit: 100 });
-    })();
+  const postsFetcher = useCallback(
+    async ({ limit, offset }: { limit: number; offset: number }) => {
+      if (!Number.isFinite(id) || !canView) return { items: [], hasMore: false };
+      const res = await api.users.posts(id, { limit, offset });
+      return { items: res.posts ?? [], hasMore: res.has_more };
+    },
+    [id, canView],
+  );
+  const {
+    items: posts,
+    hasMore: hasMorePosts,
+    loading: loadingPosts,
+    loadMore: loadMorePosts,
+  } = usePaginatedList<Post>(postsFetcher, PAGE_SIZE);
 
-    fetcher
-      .then((res) => {
-        if (cancelled) return;
-        if (tab === "posts") setPosts((res as { posts: Post[] }).posts ?? []);
-        else if (tab === "followers") setFollowers((res as { users: UserSummary[] }).users ?? []);
-        else setFollowing((res as { users: UserSummary[] }).users ?? []);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        setTabError(err instanceof ApiError ? err.message : "Failed to load");
-      })
-      .finally(() => {
-        if (!cancelled) setTabLoading(false);
-      });
+  const followersFetcher = useCallback(
+    async ({ limit, offset }: { limit: number; offset: number }) => {
+      if (!Number.isFinite(id) || !canView) return { items: [], hasMore: false };
+      const res = await api.users.followers(id, { limit, offset });
+      return { items: res.users ?? [], hasMore: res.has_more };
+    },
+    [id, canView],
+  );
+  const {
+    items: followers,
+    hasMore: hasMoreFollowers,
+    loading: loadingFollowers,
+    loadMore: loadMoreFollowers,
+  } = usePaginatedList<UserSummary>(followersFetcher, PAGE_SIZE);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [tab, id, profile?.can_view]);
+  const followingFetcher = useCallback(
+    async ({ limit, offset }: { limit: number; offset: number }) => {
+      if (!Number.isFinite(id) || !canView) return { items: [], hasMore: false };
+      const res = await api.users.following(id, { limit, offset });
+      return { items: res.users ?? [], hasMore: res.has_more };
+    },
+    [id, canView],
+  );
+  const {
+    items: following,
+    hasMore: hasMoreFollowing,
+    loading: loadingFollowing,
+    loadMore: loadMoreFollowing,
+  } = usePaginatedList<UserSummary>(followingFetcher, PAGE_SIZE);
 
   const updateFollowState = (status: FollowStatus, deltaFollowers = 0) => {
     setProfile((prev) =>
@@ -351,26 +364,40 @@ export default function UserProfilePage() {
             </TabButton>
           </div>
 
-          {tabError ? (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{tabError}</p>
-          ) : null}
-
-          {tabLoading ? (
-            <p className="text-sm text-slate-500">Loading…</p>
-          ) : tab === "posts" ? (
-            posts.length === 0 ? (
-              <p className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">
-                No posts yet.
-              </p>
-            ) : (
+          {tab === "posts" ? (
+            <ListSection
+              loading={loadingPosts}
+              empty={posts.length === 0}
+              emptyText="No posts yet."
+              hasMore={hasMorePosts}
+              onLoadMore={loadMorePosts}
+            >
               <div className="space-y-4">
                 {posts.map((p) => (
                   <PostCard key={p.id} post={p} />
                 ))}
               </div>
-            )
+            </ListSection>
+          ) : tab === "followers" ? (
+            <ListSection
+              loading={loadingFollowers}
+              empty={followers.length === 0}
+              emptyText="No followers yet."
+              hasMore={hasMoreFollowers}
+              onLoadMore={loadMoreFollowers}
+            >
+              <UserList users={followers} />
+            </ListSection>
           ) : (
-            <UserList users={tab === "followers" ? followers : following} emptyText={tab === "followers" ? "No followers yet." : "Not following anyone yet."} />
+            <ListSection
+              loading={loadingFollowing}
+              empty={following.length === 0}
+              emptyText="Not following anyone yet."
+              hasMore={hasMoreFollowing}
+              onLoadMore={loadMoreFollowing}
+            >
+              <UserList users={following} />
+            </ListSection>
           )}
         </>
       ) : (
@@ -429,14 +456,41 @@ function TabButton({
   );
 }
 
-function UserList({ users, emptyText }: { users: UserSummary[]; emptyText: string }) {
-  if (users.length === 0) {
+function ListSection({
+  loading,
+  empty,
+  emptyText,
+  hasMore,
+  onLoadMore,
+  children,
+}: {
+  loading: boolean;
+  empty: boolean;
+  emptyText: string;
+  hasMore: boolean;
+  onLoadMore: () => void;
+  children: React.ReactNode;
+}) {
+  if (loading && empty) {
+    return <p className="text-sm text-slate-500">Loading…</p>;
+  }
+  if (empty) {
     return (
       <p className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">
         {emptyText}
       </p>
     );
   }
+  return (
+    <>
+      {children}
+      {hasMore ? <InfiniteScrollSentinel onIntersect={onLoadMore} enabled={!loading} /> : null}
+      {loading ? <p className="text-center text-xs text-slate-400">Loading more…</p> : null}
+    </>
+  );
+}
+
+function UserList({ users }: { users: UserSummary[] }) {
   return (
     <ul className="space-y-2">
       {users.map((u) => (

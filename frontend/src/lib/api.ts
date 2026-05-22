@@ -47,9 +47,20 @@ export class ApiError extends Error {
 interface RequestOptions {
   method?: string;
   body?: unknown;
-  query?: Record<string, string | number | undefined>;
+  query?: object;
   auth?: boolean;
 }
+
+export interface PageOptions {
+  limit?: number;
+  offset?: number;
+}
+
+export type Paginated<K extends string, T> = {
+  success: boolean;
+  message: string;
+  has_more: boolean;
+} & { [P in K]: T[] };
 
 async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
   const { method = "GET", body, query, auth = true } = opts;
@@ -157,10 +168,8 @@ export const api = {
     remove: () => request<{ success: boolean; message: string }>("/api/auth/me", { method: "DELETE" }),
   },
   posts: {
-    list: (params: { category?: string; limit?: number; offset?: number } = {}) =>
-      request<{ success: boolean; message: string; posts: Post[] }>("/api/posts", {
-        query: params,
-      }),
+    list: (params: { category?: string } & PageOptions = {}) =>
+      request<Paginated<"posts", Post>>("/api/posts", { query: params }),
     create: (payload: CreatePostPayload) =>
       request<{ success: boolean; message: string; post: Post }>("/api/posts", {
         method: "POST",
@@ -177,10 +186,10 @@ export const api = {
       request<{ success: boolean; message: string }>(`/api/posts/${id}`, { method: "DELETE" }),
   },
   comments: {
-    list: (postId: number) =>
-      request<{ success: boolean; message: string; comments: Comment[] }>(
-        `/api/posts/${postId}/comments`,
-      ),
+    list: (postId: number, params: PageOptions = {}) =>
+      request<Paginated<"comments", Comment>>(`/api/posts/${postId}/comments`, {
+        query: params,
+      }),
     create: (postId: number, payload: CreateCommentPayload) =>
       request<{ success: boolean; message: string; comment: Comment }>(
         `/api/posts/${postId}/comments`,
@@ -198,11 +207,10 @@ export const api = {
       ),
   },
   follow: {
-    requests: (direction: "incoming" | "outgoing" = "incoming", params: { limit?: number; offset?: number } = {}) =>
-      request<{ success: boolean; message: string; requests: FollowRequestSummary[] }>(
-        "/api/follow/requests",
-        { query: { direction, ...params } },
-      ),
+    requests: (direction: "incoming" | "outgoing" = "incoming", params: PageOptions = {}) =>
+      request<Paginated<"requests", FollowRequestSummary>>("/api/follow/requests", {
+        query: { direction, ...params },
+      }),
     follow: (userId: number) =>
       request<{ success: boolean; message: string; status: string }>(`/api/follow/${userId}`, {
         method: "POST",
@@ -229,36 +237,25 @@ export const api = {
       ),
   },
   users: {
-    list: (params: { q?: string; limit?: number; offset?: number } = {}) =>
-      request<{ success: boolean; message: string; users: UserSummary[] }>("/api/users", {
-        query: params,
-      }),
+    list: (params: { q?: string } & PageOptions = {}) =>
+      request<Paginated<"users", UserSummary>>("/api/users", { query: params }),
     get: (id: number) =>
       request<{ success: boolean; message: string; user: UserProfile }>(`/api/users/${id}`),
-    posts: (id: number, params: { limit?: number; offset?: number } = {}) =>
-      request<{ success: boolean; message: string; posts: Post[] }>(`/api/users/${id}/posts`, {
-        query: params,
-      }),
-    followers: (id: number, params: { limit?: number; offset?: number } = {}) =>
-      request<{ success: boolean; message: string; users: UserSummary[] }>(
-        `/api/users/${id}/followers`,
-        { query: params },
-      ),
-    following: (id: number, params: { limit?: number; offset?: number } = {}) =>
-      request<{ success: boolean; message: string; users: UserSummary[] }>(
-        `/api/users/${id}/following`,
-        { query: params },
-      ),
+    posts: (id: number, params: PageOptions = {}) =>
+      request<Paginated<"posts", Post>>(`/api/users/${id}/posts`, { query: params }),
+    followers: (id: number, params: PageOptions = {}) =>
+      request<Paginated<"users", UserSummary>>(`/api/users/${id}/followers`, { query: params }),
+    following: (id: number, params: PageOptions = {}) =>
+      request<Paginated<"users", UserSummary>>(`/api/users/${id}/following`, { query: params }),
   },
   uploads: {
     create: (file: File) => uploadFile(file),
   },
   conversations: {
-    list: (params: { limit?: number; offset?: number } = {}) =>
-      request<{ success: boolean; message: string; conversations: ConversationSummary[] }>(
-        "/api/conversations",
-        { query: params },
-      ),
+    list: (params: PageOptions = {}) =>
+      request<Paginated<"conversations", ConversationSummary>>("/api/conversations", {
+        query: params,
+      }),
     direct: (receiverId: number) =>
       request<{ success: boolean; message: string; conversation: Conversation }>(
         "/api/conversations/direct",
@@ -266,9 +263,9 @@ export const api = {
       ),
     messages: (
       conversationId: number,
-      params: { limit?: number; offset?: number } = {},
+      params: { limit?: number; before_id?: number } = {},
     ) =>
-      request<{ success: boolean; message: string; messages: Message[] }>(
+      request<Paginated<"messages", Message>>(
         `/api/conversations/${conversationId}/messages`,
         { query: params },
       ),
@@ -286,10 +283,8 @@ export const api = {
       }),
   },
   groups: {
-    list: (params: { limit?: number; offset?: number } = {}) =>
-      request<{ success: boolean; message: string; groups: Group[] }>("/api/groups", {
-        query: params,
-      }),
+    list: (params: PageOptions = {}) =>
+      request<Paginated<"groups", Group>>("/api/groups", { query: params }),
     create: (payload: CreateGroupPayload) =>
       request<{ success: boolean; message: string; group: Group }>("/api/groups", {
         method: "POST",
@@ -323,21 +318,17 @@ export const api = {
       request<{ success: boolean; message: string }>(`/api/groups/invitations/${id}/decline`, {
         method: "POST",
       }),
-    posts: (groupId: number, params: { limit?: number; offset?: number } = {}) =>
-      request<{ success: boolean; message: string; posts: Post[] }>(
-        `/api/groups/${groupId}/posts`,
-        { query: params },
-      ),
+    posts: (groupId: number, params: PageOptions = {}) =>
+      request<Paginated<"posts", Post>>(`/api/groups/${groupId}/posts`, { query: params }),
     createPost: (groupId: number, payload: CreatePostPayload) =>
       request<{ success: boolean; message: string; post: Post }>(`/api/groups/${groupId}/posts`, {
         method: "POST",
         body: payload,
       }),
-    events: (groupId: number, params: { limit?: number; offset?: number } = {}) =>
-      request<{ success: boolean; message: string; events: GroupEvent[] }>(
-        `/api/groups/${groupId}/events`,
-        { query: params },
-      ),
+    events: (groupId: number, params: PageOptions = {}) =>
+      request<Paginated<"events", GroupEvent>>(`/api/groups/${groupId}/events`, {
+        query: params,
+      }),
     createEvent: (groupId: number, payload: CreateEventPayload) =>
       request<{ success: boolean; message: string; event: GroupEvent }>(
         `/api/groups/${groupId}/events`,
@@ -350,11 +341,8 @@ export const api = {
       ),
   },
   notifications: {
-    list: (params: { limit?: number; offset?: number } = {}) =>
-      request<{ success: boolean; message: string; notifications: Notification[] }>(
-        "/api/notifications",
-        { query: params },
-      ),
+    list: (params: PageOptions = {}) =>
+      request<Paginated<"notifications", Notification>>("/api/notifications", { query: params }),
     unreadCount: () =>
       request<{ success: boolean; message: string; unread_count: number }>(
         "/api/notifications/unread-count",
