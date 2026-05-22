@@ -115,6 +115,7 @@ type GroupRepositoryInterface interface {
 	GetGroupByID(groupID int) (*domain.Group, error)
 	GetGroupByIDForViewer(groupID, viewerID int) (*domain.Group, error)
 	ListGroups(viewerID, limit, offset int) ([]domain.Group, error)
+	UpdateGroupAvatar(groupID int, avatarPath string) error
 
 	AddMember(groupID, userID int, role string) error
 	RemoveMember(groupID, userID int) error

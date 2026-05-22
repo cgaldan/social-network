@@ -98,6 +98,7 @@ type ConversationSummary struct {
 	ID           int                       `json:"id"`
 	Type         string                    `json:"type"`
 	Name         string                    `json:"name"`
+	AvatarPath   string                    `json:"avatar_path,omitempty"`
 	Participants []ConversationParticipant `json:"participants"`
 	LastMessage  *Message                  `json:"last_message,omitempty"`
 	UnreadCount  int                       `json:"unread_count"`
@@ -175,6 +176,7 @@ type Group struct {
 	Title          string    `json:"name"`
 	Description    string    `json:"description"`
 	ConversationID int       `json:"conversation_id"`
+	AvatarPath     string    `json:"avatar_path,omitempty"`
 	CreatedAt      time.Time `json:"created_at"`
 	IsMember       bool      `json:"is_member"`
 	IsPending      bool      `json:"is_pending"`

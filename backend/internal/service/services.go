@@ -110,6 +110,7 @@ type GroupServiceInterface interface {
 	CreateGroup(group *domain.Group) (*domain.Group, error)
 	ListGroups(viewerID, limit, offset int) ([]domain.Group, error)
 	GetGroupByID(groupID, viewerID int) (*domain.Group, error)
+	UpdateGroupAvatar(groupID, userID int, avatarPath string) (*domain.Group, error)
 	GetMembersByGroupID(groupID int) ([]domain.GroupMember, error)
 	AddMember(convID, groupID, userID int, role string) error
 	RemoveMember(convID, groupID, userID int) error

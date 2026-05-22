@@ -559,6 +559,54 @@ func (h *GroupHandler) SetGroupEventRSVP(w http.ResponseWriter, r *http.Request)
 	})
 }
 
+func (h *GroupHandler) UpdateGroupAvatar(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	token := r.Header.Get("Authorization")
+	user, err := h.authService.ValidateSession(token)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.GroupResponse{
+			Success: false,
+			Message: "Unauthorized",
+		})
+		return
+	}
+
+	vars := mux.Vars(r)
+	groupID, err := strconv.Atoi(vars["id"])
+	if err != nil || groupID <= 0 {
+		json.NewEncoder(w).Encode(domain.GroupResponse{
+			Success: false,
+			Message: "Invalid group ID",
+		})
+		return
+	}
+
+	var req domain.UpdateGroupAvatarRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		json.NewEncoder(w).Encode(domain.GroupResponse{
+			Success: false,
+			Message: "Invalid JSON",
+		})
+		return
+	}
+
+	group, err := h.groupService.UpdateGroupAvatar(groupID, user.ID, req.AvatarPath)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.GroupResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	json.NewEncoder(w).Encode(domain.GroupResponse{
+		Success: true,
+		Message: "Group avatar updated successfully",
+		Group:   group,
+	})
+}
+
 func (h *GroupHandler) GetGroup(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
