@@ -12,6 +12,12 @@ import type { Notification } from "@/types/api";
 
 const PAGE_SIZE = 20;
 
+const LEGACY_DEAD_URLS = new Set([
+  "/groups/invitations",
+  "/groups/join",
+  "/followers/requests",
+]);
+
 export default function NotificationsPage() {
   const { on } = useWebSocket();
   const { decrement, reset: resetUnreadCount } = useNotificationCount();
@@ -139,7 +145,7 @@ export default function NotificationsPage() {
             const actionable =
               !n.read_at &&
               (n.entity_type === "group_invitation" || n.entity_type === "group_join_request");
-            const linkable = !actionable && !!n.action_url;
+            const linkable = !actionable && !!n.action_url && !LEGACY_DEAD_URLS.has(n.action_url);
             const cardClass = `flex items-start justify-between gap-3 rounded-xl border p-4 shadow-sm transition ${
               n.read_at
                 ? "border-slate-200 bg-white"

@@ -75,7 +75,7 @@ func (c *NotificationConsumer) handleGroupInvitationCreated(e event.Event) error
 	actorID := evt.InviterID
 	entityType := "group_invitation"
 	entityID := evt.InvitationID
-	actionURL := "/groups/invitations"
+	actionURL := fmt.Sprintf("/groups/%d", evt.GroupID)
 
 	_, err := c.notificationService.CreateNotification(domain.CreateNotificationRequest{
 		RecipientID: evt.InviteeID,
@@ -100,7 +100,7 @@ func (c *NotificationConsumer) handleGroupJoinRequested(e event.Event) error {
 	actorID := evt.RequesterID
 	entityType := "group_join_request"
 	entityID := evt.RequestID
-	actionURL := "/groups/join"
+	actionURL := fmt.Sprintf("/groups/%d", evt.GroupID)
 
 	_, err := c.notificationService.CreateNotification(domain.CreateNotificationRequest{
 		RecipientID: evt.RecipientID,
