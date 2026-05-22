@@ -54,10 +54,17 @@ func (r *NotificationRepository) CreateNotification(notification *domain.Notific
 
 func (r *NotificationRepository) ListNotifications(recipientID, limit, offset int) ([]domain.Notification, error) {
 	rows, err := r.db.Query(`
-		SELECT id, recipient_id, actor_id, type, title, body, entity_type, entity_id, action_url, metadata, read_at, created_at
-		FROM notifications
-		WHERE recipient_id = ?
-		ORDER BY created_at DESC, id DESC
+		SELECT
+			n.id, n.recipient_id, n.actor_id, n.type, n.title, n.body,
+			n.entity_type, n.entity_id,
+			CASE n.entity_type
+				WHEN 'group_invitation'   THEN (SELECT status FROM group_invitations    WHERE id = n.entity_id)
+				WHEN 'group_join_request' THEN (SELECT status FROM group_join_requests  WHERE id = n.entity_id)
+			END AS entity_status,
+			n.action_url, n.metadata, n.read_at, n.created_at
+		FROM notifications n
+		WHERE n.recipient_id = ?
+		ORDER BY n.created_at DESC, n.id DESC
 		LIMIT ? OFFSET ?`,
 		recipientID,
 		limit,
@@ -134,9 +141,16 @@ func (r *NotificationRepository) MarkAllNotificationsRead(recipientID int) error
 
 func (r *NotificationRepository) GetNotificationByID(notificationID, recipientID int) (*domain.Notification, error) {
 	row := r.db.QueryRow(`
-		SELECT id, recipient_id, actor_id, type, title, body, entity_type, entity_id, action_url, metadata, read_at, created_at
-		FROM notifications
-		WHERE id = ? AND recipient_id = ?`,
+		SELECT
+			n.id, n.recipient_id, n.actor_id, n.type, n.title, n.body,
+			n.entity_type, n.entity_id,
+			CASE n.entity_type
+				WHEN 'group_invitation'   THEN (SELECT status FROM group_invitations    WHERE id = n.entity_id)
+				WHEN 'group_join_request' THEN (SELECT status FROM group_join_requests  WHERE id = n.entity_id)
+			END AS entity_status,
+			n.action_url, n.metadata, n.read_at, n.created_at
+		FROM notifications n
+		WHERE n.id = ? AND n.recipient_id = ?`,
 		notificationID,
 		recipientID,
 	)
@@ -161,6 +175,7 @@ func scanNotification(scanner notificationScanner) (*domain.Notification, error)
 	var actorID sql.NullInt64
 	var entityType sql.NullString
 	var entityID sql.NullInt64
+	var entityStatus sql.NullString
 	var actionURL sql.NullString
 	var metadata sql.NullString
 	var readAt sql.NullTime
@@ -174,6 +189,7 @@ func scanNotification(scanner notificationScanner) (*domain.Notification, error)
 		&notification.Body,
 		&entityType,
 		&entityID,
+		&entityStatus,
 		&actionURL,
 		&metadata,
 		&readAt,
@@ -193,6 +209,9 @@ func scanNotification(scanner notificationScanner) (*domain.Notification, error)
 	if entityID.Valid {
 		value := int(entityID.Int64)
 		notification.EntityID = &value
+	}
+	if entityStatus.Valid {
+		notification.EntityStatus = &entityStatus.String
 	}
 	if actionURL.Valid {
 		notification.ActionURL = &actionURL.String
