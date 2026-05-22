@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useWebSocket } from "@/components/WebSocketProvider";
 import { useNotificationCount } from "@/components/NotificationCountProvider";
@@ -130,6 +131,14 @@ export default function NotificationsPage() {
             const actionable =
               !n.read_at &&
               (n.entity_type === "group_invitation" || n.entity_type === "group_join_request");
+            const linkable = !actionable && !!n.action_url;
+            const body = (
+              <>
+                <p className="text-sm font-medium text-slate-900">{n.title}</p>
+                <p className="mt-1 text-sm text-slate-600">{n.body}</p>
+                <p className="mt-1 text-xs text-slate-400">{formatRelative(n.created_at)}</p>
+              </>
+            );
             return (
               <li
                 key={n.id}
@@ -139,11 +148,17 @@ export default function NotificationsPage() {
                     : "border-indigo-200 bg-indigo-50/50"
                 }`}
               >
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-slate-900">{n.title}</p>
-                  <p className="mt-1 text-sm text-slate-600">{n.body}</p>
-                  <p className="mt-1 text-xs text-slate-400">{formatRelative(n.created_at)}</p>
-                </div>
+                {linkable ? (
+                  <Link
+                    href={n.action_url!}
+                    onClick={() => !n.read_at && markRead(n.id)}
+                    className="min-w-0 flex-1 rounded-md hover:bg-slate-50"
+                  >
+                    {body}
+                  </Link>
+                ) : (
+                  <div className="min-w-0 flex-1">{body}</div>
+                )}
                 <div className="flex shrink-0 flex-col items-end gap-2">
                   {actionable ? (
                     <div className="flex gap-2">
