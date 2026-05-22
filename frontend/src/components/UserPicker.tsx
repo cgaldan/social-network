@@ -96,7 +96,7 @@ export function UserPicker({ onSelect, placeholder = "Search users…", clearOnS
                       </div>
                       <div className="truncate text-xs text-slate-500">
                         @{u.nickname}
-                        {u.is_online ? " · online" : ""}
+                        {u.is_online ? " · online" : " · offline"}
                       </div>
                     </div>
                   </button>
