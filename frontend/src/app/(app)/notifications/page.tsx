@@ -22,7 +22,6 @@ export default function NotificationsPage() {
   const { on } = useWebSocket();
   const { decrement, reset: resetUnreadCount } = useNotificationCount();
   const [error, setError] = useState<string | null>(null);
-  const [actedIds, setActedIds] = useState<Set<number>>(new Set());
 
   const fetcher = useCallback(
     async ({ limit, offset }: { limit: number; offset: number }) => {
@@ -88,16 +87,14 @@ export default function NotificationsPage() {
       } catch {
         // best-effort; if it was already read this errors silently
       }
+      const resolvedStatus = kind === "accept" ? "accepted" : "declined";
       setItems((prev) =>
         prev.map((n) =>
-          n.id === notification.id ? { ...n, read_at: new Date().toISOString() } : n,
+          n.id === notification.id
+            ? { ...n, read_at: new Date().toISOString(), entity_status: resolvedStatus }
+            : n,
         ),
       );
-      setActedIds((prev) => {
-        const next = new Set(prev);
-        next.add(notification.id);
-        return next;
-      });
       if (!notification.read_at) decrement();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : `Failed to ${kind}`);
@@ -148,9 +145,13 @@ export default function NotificationsPage() {
       ) : (
         <ul className="space-y-2">
           {items.map((n) => {
+            const isInviteOrRequest =
+              n.entity_type === "group_invitation" || n.entity_type === "group_join_request";
+            // Treat a missing entity_status as still actionable: brand-new notifications
+            // delivered via WebSocket may arrive without it, and they're always pending
+            // at creation time.
             const actionable =
-              !actedIds.has(n.id) &&
-              (n.entity_type === "group_invitation" || n.entity_type === "group_join_request");
+              isInviteOrRequest && (n.entity_status ?? "pending") === "pending";
             const linkable = !actionable && !!n.action_url && !LEGACY_DEAD_URLS.has(n.action_url);
             const cardClass = `flex items-start justify-between gap-3 rounded-xl border p-4 shadow-sm transition ${
               n.read_at
