@@ -140,33 +140,18 @@ export default function NotificationsPage() {
               !n.read_at &&
               (n.entity_type === "group_invitation" || n.entity_type === "group_join_request");
             const linkable = !actionable && !!n.action_url;
-            const body = (
+            const cardClass = `flex items-start justify-between gap-3 rounded-xl border p-4 shadow-sm transition ${
+              n.read_at
+                ? "border-slate-200 bg-white"
+                : "border-indigo-200 bg-indigo-50/50"
+            } ${linkable ? "hover:bg-slate-50" : ""}`;
+            const inner = (
               <>
-                <p className="text-sm font-medium text-slate-900">{n.title}</p>
-                <p className="mt-1 text-sm text-slate-600">{renderBody(n)}</p>
-                <p className="mt-1 text-xs text-slate-400">{formatRelative(n.created_at)}</p>
-              </>
-            );
-            return (
-              <li
-                key={n.id}
-                className={`flex items-start justify-between gap-3 rounded-xl border p-4 shadow-sm transition ${
-                  n.read_at
-                    ? "border-slate-200 bg-white"
-                    : "border-indigo-200 bg-indigo-50/50"
-                }`}
-              >
-                {linkable ? (
-                  <Link
-                    href={n.action_url!}
-                    onClick={() => !n.read_at && markRead(n.id)}
-                    className="min-w-0 flex-1 rounded-md hover:bg-slate-50"
-                  >
-                    {body}
-                  </Link>
-                ) : (
-                  <div className="min-w-0 flex-1">{body}</div>
-                )}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-slate-900">{n.title}</p>
+                  <p className="mt-1 text-sm text-slate-600">{renderBody(n)}</p>
+                  <p className="mt-1 text-xs text-slate-400">{formatRelative(n.created_at)}</p>
+                </div>
                 <div className="flex shrink-0 flex-col items-end gap-2">
                   {actionable ? (
                     <div className="flex gap-2">
@@ -184,7 +169,7 @@ export default function NotificationsPage() {
                       </button>
                     </div>
                   ) : null}
-                  {!n.read_at && !actionable ? (
+                  {!n.read_at && !actionable && !linkable ? (
                     <button
                       onClick={() => markRead(n.id)}
                       className="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
@@ -193,6 +178,21 @@ export default function NotificationsPage() {
                     </button>
                   ) : null}
                 </div>
+              </>
+            );
+            return linkable ? (
+              <li key={n.id}>
+                <Link
+                  href={n.action_url!}
+                  onClick={() => !n.read_at && markRead(n.id)}
+                  className={cardClass}
+                >
+                  {inner}
+                </Link>
+              </li>
+            ) : (
+              <li key={n.id} className={cardClass}>
+                {inner}
               </li>
             );
           })}
