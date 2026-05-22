@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { PostCard } from "@/components/PostCard";
 import { PostForm } from "@/components/PostForm";
 import { InfiniteScrollSentinel } from "@/components/InfiniteScrollSentinel";
@@ -12,13 +12,19 @@ const PAGE_SIZE = 20;
 
 export default function FeedPage() {
   const [category, setCategory] = useState("");
+  const [debouncedCategory, setDebouncedCategory] = useState("");
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedCategory(category.trim()), 250);
+    return () => clearTimeout(t);
+  }, [category]);
 
   const fetcher = useCallback(
     async ({ limit, offset }: { limit: number; offset: number }) => {
-      const res = await api.posts.list({ category: category || undefined, limit, offset });
+      const res = await api.posts.list({ category: debouncedCategory || undefined, limit, offset });
       return { items: res.posts ?? [], hasMore: res.has_more };
     },
-    [category],
+    [debouncedCategory],
   );
   const { items: posts, hasMore, loading, error, loadMore, setItems } =
     usePaginatedList<Post>(fetcher, PAGE_SIZE);
@@ -36,7 +42,7 @@ export default function FeedPage() {
           type="text"
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          placeholder="Filter by category…"
+          placeholder="Search by category…"
           className="w-48 rounded-lg border border-slate-300 px-3 py-1.5 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
         />
       </header>
