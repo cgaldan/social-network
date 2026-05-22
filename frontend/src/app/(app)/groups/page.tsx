@@ -1,35 +1,31 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
+import { InfiniteScrollSentinel } from "@/components/InfiniteScrollSentinel";
+import { usePaginatedList } from "@/hooks/usePaginatedList";
 import { api, ApiError } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import type { Group } from "@/types/api";
 
+const PAGE_SIZE = 20;
+
 export default function GroupsPage() {
-  const [groups, setGroups] = useState<Group[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [creating, setCreating] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await api.groups.list({ limit: 50 });
-      setGroups(res.groups ?? []);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to load groups");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
+  const fetcher = useCallback(
+    async ({ limit, offset }: { limit: number; offset: number }) => {
+      const res = await api.groups.list({ limit, offset });
+      return { items: res.groups ?? [], hasMore: res.has_more };
+    },
+    [],
+  );
+  const { items: groups, hasMore, loading, error: fetchError, loadMore, setItems } =
+    usePaginatedList<Group>(fetcher, PAGE_SIZE);
 
   const onCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +33,7 @@ export default function GroupsPage() {
     setCreating(true);
     try {
       const res = await api.groups.create({ title, description, conversation_id: 0 });
-      setGroups((prev) => [res.group, ...prev]);
+      setItems((prev) => [res.group, ...prev]);
       setTitle("");
       setDescription("");
     } catch (err) {
@@ -50,7 +46,7 @@ export default function GroupsPage() {
   const onJoin = async (id: number) => {
     try {
       await api.groups.join(id);
-      setGroups((prev) =>
+      setItems((prev) =>
         prev.map((g) => (g.id === id ? { ...g, is_pending: true } : g)),
       );
     } catch (err) {
@@ -91,11 +87,11 @@ export default function GroupsPage() {
         </div>
       </form>
 
-      {error ? (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+      {(error || fetchError) ? (
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error ?? fetchError}</p>
       ) : null}
 
-      {loading ? (
+      {loading && groups.length === 0 ? (
         <p className="text-sm text-slate-500">Loading…</p>
       ) : groups.length === 0 ? (
         <p className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">
@@ -147,6 +143,13 @@ export default function GroupsPage() {
           ))}
         </ul>
       )}
+
+      {groups.length > 0 && hasMore ? (
+        <InfiniteScrollSentinel onIntersect={loadMore} enabled={!loading} />
+      ) : null}
+      {loading && groups.length > 0 ? (
+        <p className="text-center text-xs text-slate-400">Loading more…</p>
+      ) : null}
     </div>
   );
 }

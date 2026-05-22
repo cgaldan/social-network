@@ -48,7 +48,8 @@ func (h *CommentHandler) ListComments(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	comments, err := h.commentService.GetCommentsByPostID(user.ID, postID)
+	limit, offset := parsePagination(r)
+	comments, err := h.commentService.GetCommentsByPostID(user.ID, postID, limit+1, offset)
 	if err != nil {
 		h.logger.Error("Failed to list comments", "error", err, "postID", postID, "userID", user.ID)
 		json.NewEncoder(w).Encode(domain.CommentsResponse{
@@ -58,10 +59,12 @@ func (h *CommentHandler) ListComments(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	items, hasMore := trimPage(comments, limit)
 	json.NewEncoder(w).Encode(domain.CommentsResponse{
 		Success:  true,
 		Message:  "Comments retrieved successfully",
-		Comments: comments,
+		Comments: items,
+		HasMore:  hasMore,
 	})
 }
 

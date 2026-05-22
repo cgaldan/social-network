@@ -88,24 +88,9 @@ func (h *PostHandler) GetPosts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	category := r.URL.Query().Get("category")
-	limitStr := r.URL.Query().Get("limit")
-	offsetStr := r.URL.Query().Get("offset")
+	limit, offset := parsePagination(r)
 
-	limit := 20
-	if limitStr != "" {
-		if limitNum, err := strconv.Atoi(limitStr); err == nil && limitNum > 0 && limitNum <= 100 {
-			limit = limitNum
-		}
-	}
-
-	offset := 0
-	if offsetStr != "" {
-		if offsetNum, err := strconv.Atoi(offsetStr); err == nil && offsetNum >= 0 {
-			offset = offsetNum
-		}
-	}
-
-	posts, err := h.postService.ListPosts(user.ID, category, limit, offset)
+	posts, err := h.postService.ListPosts(user.ID, category, limit+1, offset)
 	if err != nil {
 		h.logger.Error("Failed to list posts", "error", err)
 		json.NewEncoder(w).Encode(domain.PostsResponse{
@@ -115,10 +100,12 @@ func (h *PostHandler) GetPosts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	items, hasMore := trimPage(posts, limit)
 	json.NewEncoder(w).Encode(domain.PostsResponse{
 		Success: true,
 		Message: "Posts retrieved successfully",
-		Posts:   posts,
+		Posts:   items,
+		HasMore: hasMore,
 	})
 }
 
@@ -348,24 +335,8 @@ func (h *PostHandler) GetGroupPosts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	limitStr := r.URL.Query().Get("limit")
-	offsetStr := r.URL.Query().Get("offset")
-
-	limit := 20
-	if limitStr != "" {
-		if limitNum, err := strconv.Atoi(limitStr); err == nil && limitNum > 0 && limitNum <= 100 {
-			limit = limitNum
-		}
-	}
-
-	offset := 0
-	if offsetStr != "" {
-		if offsetNum, err := strconv.Atoi(offsetStr); err == nil && offsetNum >= 0 {
-			offset = offsetNum
-		}
-	}
-
-	posts, err := h.postService.ListPostsByGroupID(user.ID, groupID, limit, offset)
+	limit, offset := parsePagination(r)
+	posts, err := h.postService.ListPostsByGroupID(user.ID, groupID, limit+1, offset)
 	if err != nil {
 		h.logger.Error("Failed to list group posts", "error", err, "userID", user.ID, "groupID", groupID)
 		json.NewEncoder(w).Encode(domain.PostsResponse{
@@ -375,9 +346,11 @@ func (h *PostHandler) GetGroupPosts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	items, hasMore := trimPage(posts, limit)
 	json.NewEncoder(w).Encode(domain.PostsResponse{
 		Success: true,
 		Message: "Posts retrieved successfully",
-		Posts:   posts,
+		Posts:   items,
+		HasMore: hasMore,
 	})
 }

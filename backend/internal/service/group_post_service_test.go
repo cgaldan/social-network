@@ -294,7 +294,7 @@ func TestCommentService_GroupPostMembership(t *testing.T) {
 	})
 
 	t.Run("member can read group post comments", func(t *testing.T) {
-		comments, err := services.Comment.GetCommentsByPostID(creatorID, groupPost.ID)
+		comments, err := services.Comment.GetCommentsByPostID(creatorID, groupPost.ID, 100, 0)
 		if err != nil {
 			t.Fatalf("Failed to get comments as member: %v", err)
 		}
@@ -304,7 +304,7 @@ func TestCommentService_GroupPostMembership(t *testing.T) {
 	})
 
 	t.Run("non-member cannot read group post comments", func(t *testing.T) {
-		_, err := services.Comment.GetCommentsByPostID(outsiderID, groupPost.ID)
+		_, err := services.Comment.GetCommentsByPostID(outsiderID, groupPost.ID, 100, 0)
 		if err == nil {
 			t.Error("Expected error when non-member reads group post comments")
 		}

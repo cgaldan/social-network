@@ -6,18 +6,20 @@ import { useParams } from "next/navigation";
 import { PostCard } from "@/components/PostCard";
 import { PostForm } from "@/components/PostForm";
 import { UserPicker } from "@/components/UserPicker";
+import { InfiniteScrollSentinel } from "@/components/InfiniteScrollSentinel";
+import { usePaginatedList } from "@/hooks/usePaginatedList";
 import { api, ApiError } from "@/lib/api";
 import { formatDateTime } from "@/lib/format";
 import type { CreatePostPayload, Group, GroupEvent, Post, RsvpResponse, UserSummary } from "@/types/api";
+
+const PAGE_SIZE = 20;
 
 export default function GroupDetailPage() {
   const params = useParams<{ id: string }>();
   const groupId = Number(params.id);
 
   const [group, setGroup] = useState<Group | null>(null);
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [events, setEvents] = useState<GroupEvent[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [groupLoading, setGroupLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<"posts" | "events">("posts");
   const [joining, setJoining] = useState(false);
@@ -28,34 +30,60 @@ export default function GroupDetailPage() {
 
   const [inviteStatus, setInviteStatus] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
+  useEffect(() => {
     if (!Number.isFinite(groupId)) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const groupRes = await api.groups.get(groupId);
-      setGroup(groupRes.group);
-      if (!groupRes.group.is_member) {
-        setPosts([]);
-        setEvents([]);
-        return;
-      }
-      const [postsRes, eventsRes] = await Promise.all([
-        api.groups.posts(groupId, { limit: 50 }),
-        api.groups.events(groupId, { limit: 50 }),
-      ]);
-      setPosts(postsRes.posts ?? []);
-      setEvents(eventsRes.events ?? []);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to load group");
-    } finally {
-      setLoading(false);
-    }
+    let cancelled = false;
+    setGroupLoading(true);
+    api.groups
+      .get(groupId)
+      .then((res) => {
+        if (!cancelled) setGroup(res.group);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err instanceof ApiError ? err.message : "Failed to load group");
+      })
+      .finally(() => {
+        if (!cancelled) setGroupLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [groupId]);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  const isMember = group?.is_member === true;
+
+  const postsFetcher = useCallback(
+    async ({ limit, offset }: { limit: number; offset: number }) => {
+      if (!Number.isFinite(groupId) || !isMember) return { items: [], hasMore: false };
+      const res = await api.groups.posts(groupId, { limit, offset });
+      return { items: res.posts ?? [], hasMore: res.has_more };
+    },
+    [groupId, isMember],
+  );
+  const {
+    items: posts,
+    hasMore: hasMorePosts,
+    loading: loadingPosts,
+    loadMore: loadMorePosts,
+    setItems: setPosts,
+  } = usePaginatedList<Post>(postsFetcher, PAGE_SIZE);
+
+  const eventsFetcher = useCallback(
+    async ({ limit, offset }: { limit: number; offset: number }) => {
+      if (!Number.isFinite(groupId) || !isMember) return { items: [], hasMore: false };
+      const res = await api.groups.events(groupId, { limit, offset });
+      return { items: res.events ?? [], hasMore: res.has_more };
+    },
+    [groupId, isMember],
+  );
+  const {
+    items: events,
+    hasMore: hasMoreEvents,
+    loading: loadingEvents,
+    loadMore: loadMoreEvents,
+    setItems: setEvents,
+    reset: resetEvents,
+  } = usePaginatedList<GroupEvent>(eventsFetcher, PAGE_SIZE);
 
   const onJoinFromDetail = async () => {
     if (!group) return;
@@ -114,7 +142,7 @@ export default function GroupDetailPage() {
       await api.groups.rsvp(groupId, eventId, response);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to RSVP");
-      void load();
+      resetEvents();
     }
   };
 
@@ -128,7 +156,7 @@ export default function GroupDetailPage() {
     }
   };
 
-  if (loading) {
+  if (groupLoading) {
     return <p className="text-sm text-slate-500">Loading…</p>;
   }
 
@@ -213,13 +241,21 @@ export default function GroupDetailPage() {
       {tab === "posts" ? (
         <div className="space-y-4">
           <PostForm onSubmit={onCreatePost} submitLabel="Post to group" inGroup />
-          {posts.length === 0 ? (
+          {loadingPosts && posts.length === 0 ? (
+            <p className="text-sm text-slate-500">Loading…</p>
+          ) : posts.length === 0 ? (
             <p className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">
               No posts in this group yet.
             </p>
           ) : (
             posts.map((p) => <PostCard key={p.id} post={p} />)
           )}
+          {posts.length > 0 && hasMorePosts ? (
+            <InfiniteScrollSentinel onIntersect={loadMorePosts} enabled={!loadingPosts} />
+          ) : null}
+          {loadingPosts && posts.length > 0 ? (
+            <p className="text-center text-xs text-slate-400">Loading more…</p>
+          ) : null}
         </div>
       ) : null}
 
@@ -263,7 +299,9 @@ export default function GroupDetailPage() {
             </div>
           </form>
 
-          {events.length === 0 ? (
+          {loadingEvents && events.length === 0 ? (
+            <p className="text-sm text-slate-500">Loading…</p>
+          ) : events.length === 0 ? (
             <p className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">
               No events scheduled.
             </p>
@@ -318,6 +356,12 @@ export default function GroupDetailPage() {
               ))}
             </ul>
           )}
+          {events.length > 0 && hasMoreEvents ? (
+            <InfiniteScrollSentinel onIntersect={loadMoreEvents} enabled={!loadingEvents} />
+          ) : null}
+          {loadingEvents && events.length > 0 ? (
+            <p className="text-center text-xs text-slate-400">Loading more…</p>
+          ) : null}
         </div>
       ) : null}
     </div>

@@ -8,6 +8,8 @@ import { Avatar } from "@/components/Avatar";
 import { EmojiPicker } from "@/components/EmojiPicker";
 import { useMessageCount } from "@/components/MessageCountProvider";
 import { UserPicker } from "@/components/UserPicker";
+import { InfiniteScrollSentinel } from "@/components/InfiniteScrollSentinel";
+import { usePaginatedList } from "@/hooks/usePaginatedList";
 import { api, ApiError } from "@/lib/api";
 import { formatRelative } from "@/lib/format";
 import type {
@@ -18,51 +20,81 @@ import type {
   UserSummary,
 } from "@/types/api";
 
+const CONVERSATIONS_PAGE_SIZE = 20;
+const MESSAGES_PAGE_SIZE = 30;
+
 export default function MessagesPage() {
   const { user } = useAuth();
   const { on, connected } = useWebSocket();
   const { decrement: decrementMessages } = useMessageCount();
-  const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [activeId, setActiveId] = useState<number | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [loadingList, setLoadingList] = useState(true);
-  const [loadingMessages, setLoadingMessages] = useState(false);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const scrollerRef = useRef<HTMLDivElement>(null);
 
-  const loadConversations = useCallback(async () => {
-    setLoadingList(true);
-    try {
-      const res = await api.conversations.list({ limit: 50 });
-      setConversations(res.conversations ?? []);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to load conversations");
-    } finally {
-      setLoadingList(false);
-    }
-  }, []);
+  // --- Conversations sidebar (standard top-to-bottom infinite scroll) ---
+  const conversationsFetcher = useCallback(
+    async ({ limit, offset }: { limit: number; offset: number }) => {
+      const res = await api.conversations.list({ limit, offset });
+      return { items: res.conversations ?? [], hasMore: res.has_more };
+    },
+    [],
+  );
+  const {
+    items: conversations,
+    hasMore: hasMoreConversations,
+    loading: loadingList,
+    loadMore: loadMoreConversations,
+    setItems: setConversations,
+    reset: resetConversations,
+  } = usePaginatedList<ConversationSummary>(
+    conversationsFetcher,
+    CONVERSATIONS_PAGE_SIZE,
+    (c) => c.id,
+  );
 
-  useEffect(() => {
-    void loadConversations();
-  }, [loadConversations]);
+  // --- Messages inside the active conversation ---
+  // Cursor-based pagination (before_id), not offset, because new messages
+  // are inserted at the head all the time and offset would drift. We store
+  // messages in chronological order (ASC: oldest first, newest last) so the
+  // render is a plain .map() with no reversal anywhere.
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [hasOlder, setHasOlder] = useState(false);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const messagesRef = useRef<Message[]>([]);
+  messagesRef.current = messages;
 
+  // Scroll bookkeeping:
+  //  - preLoadScrollRef captures pre-prepend scroll metrics so we can restore
+  //    the visual position after older messages slot in at the top.
+  //  - stuckToBottomRef tracks whether the user is reading the latest message
+  //    (so we auto-scroll on new messages) or has scrolled up (so we leave
+  //    them alone).
+  const preLoadScrollRef = useRef<{ height: number; top: number } | null>(null);
+  const stuckToBottomRef = useRef(true);
+
+  // Initial load for the active conversation (or reset when switching).
   useEffect(() => {
-    if (!activeId) {
+    if (activeId == null) {
       setMessages([]);
+      setHasOlder(false);
       return;
     }
     let cancelled = false;
+    stuckToBottomRef.current = true;
     setLoadingMessages(true);
     api.conversations
-      .messages(activeId, { limit: 100 })
+      .messages(activeId, { limit: MESSAGES_PAGE_SIZE })
       .then((res) => {
-        if (!cancelled) setMessages(res.messages ?? []);
+        if (cancelled) return;
+        // Backend returns DESC (newest first); flip to ASC for chronological render.
+        const asc = [...(res.messages ?? [])].reverse();
+        setMessages(asc);
+        setHasOlder(res.has_more);
       })
       .catch((err) => {
-        if (!cancelled)
-          setError(err instanceof ApiError ? err.message : "Failed to load messages");
+        if (!cancelled) setError(err instanceof ApiError ? err.message : "Failed to load messages");
       })
       .finally(() => {
         if (!cancelled) setLoadingMessages(false);
@@ -72,11 +104,55 @@ export default function MessagesPage() {
     };
   }, [activeId]);
 
+  // After messages change, manage scroll position.
   useEffect(() => {
-    if (scrollerRef.current) {
-      scrollerRef.current.scrollTop = scrollerRef.current.scrollHeight;
+    const el = scrollerRef.current;
+    if (!el) return;
+    const snap = preLoadScrollRef.current;
+    if (snap) {
+      el.scrollTop = el.scrollHeight - snap.height + snap.top;
+      preLoadScrollRef.current = null;
+      return;
+    }
+    if (stuckToBottomRef.current) {
+      el.scrollTop = el.scrollHeight;
     }
   }, [messages]);
+
+  const onMessagesScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    stuckToBottomRef.current = nearBottom;
+  };
+
+  const loadOlderMessages = useCallback(() => {
+    if (!scrollerRef.current || loadingMessages || !hasOlder || activeId == null) return;
+    const oldest = messagesRef.current[0];
+    if (!oldest) return;
+    preLoadScrollRef.current = {
+      height: scrollerRef.current.scrollHeight,
+      top: scrollerRef.current.scrollTop,
+    };
+    setLoadingMessages(true);
+    api.conversations
+      .messages(activeId, { limit: MESSAGES_PAGE_SIZE, before_id: oldest.id })
+      .then((res) => {
+        const olderAsc = [...(res.messages ?? [])].reverse();
+        setMessages((prev) => {
+          // Defensive: drop any rows we already have (shouldn't happen with
+          // cursor pagination, but bulletproof against duplicate-key crashes).
+          const seen = new Set(prev.map((m) => m.id));
+          const novel = olderAsc.filter((m) => !seen.has(m.id));
+          return [...novel, ...prev];
+        });
+        setHasOlder(res.has_more);
+      })
+      .catch((err) => {
+        preLoadScrollRef.current = null;
+        setError(err instanceof ApiError ? err.message : "Failed to load older messages");
+      })
+      .finally(() => setLoadingMessages(false));
+  }, [activeId, hasOlder, loadingMessages]);
 
   useEffect(() => {
     return on((msg) => {
@@ -85,6 +161,7 @@ export default function MessagesPage() {
       const incoming = payload.message;
 
       if (incoming.conversation_id === activeId) {
+        // ASC: newest goes at the end.
         setMessages((prev) => {
           if (prev.some((m) => m.id === incoming.id)) return prev;
           return [...prev, incoming];
@@ -98,7 +175,7 @@ export default function MessagesPage() {
       setConversations((prev) => {
         const idx = prev.findIndex((c) => c.id === incoming.conversation_id);
         if (idx === -1) {
-          void loadConversations();
+          resetConversations();
           return prev;
         }
         const updated: ConversationSummary = {
@@ -113,7 +190,7 @@ export default function MessagesPage() {
         return next;
       });
     });
-  }, [on, activeId, user?.id, loadConversations]);
+  }, [on, activeId, user?.id, resetConversations, setMessages, setConversations, decrementMessages]);
 
   const onSelectConversation = (id: number) => {
     setActiveId(id);
@@ -130,7 +207,33 @@ export default function MessagesPage() {
     setError(null);
     try {
       const res = await api.conversations.direct(target.id);
-      await loadConversations();
+      // Insert (or move-to-top) optimistically using what we already know
+      // from the picker, so the sidebar and chat header render immediately
+      // instead of flashing empty while a refetch runs.
+      setConversations((prev) => {
+        const existing = prev.find((c) => c.id === res.conversation.id);
+        if (existing) {
+          return [existing, ...prev.filter((c) => c.id !== res.conversation.id)];
+        }
+        const summary: ConversationSummary = {
+          id: res.conversation.id,
+          type: res.conversation.type || "private",
+          name: res.conversation.name || "",
+          participants: [
+            {
+              user_id: target.id,
+              nickname: target.nickname,
+              first_name: target.first_name,
+              last_name: target.last_name,
+              avatar_path: target.avatar_path,
+              is_online: target.is_online,
+            },
+          ],
+          unread_count: 0,
+          created_at: res.conversation.created_at ?? new Date().toISOString(),
+        };
+        return [summary, ...prev];
+      });
       setActiveId(res.conversation.id);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to open conversation");
@@ -143,6 +246,7 @@ export default function MessagesPage() {
     setSending(true);
     try {
       const res = await api.messages.send(activeId, draft);
+      stuckToBottomRef.current = true;
       setMessages((prev) =>
         prev.some((m) => m.id === res.msg.id) ? prev : [...prev, res.msg],
       );
@@ -182,7 +286,7 @@ export default function MessagesPage() {
           <header className="border-b border-slate-200 px-4 py-2 text-xs font-medium uppercase tracking-wide text-slate-500">
             Inbox
           </header>
-          {loadingList ? (
+          {loadingList && conversations.length === 0 ? (
             <p className="px-4 py-3 text-sm text-slate-500">Loading…</p>
           ) : conversations.length === 0 ? (
             <p className="px-4 py-3 text-sm text-slate-500">No conversations yet.</p>
@@ -233,6 +337,14 @@ export default function MessagesPage() {
                   </li>
                 );
               })}
+              {hasMoreConversations ? (
+                <li>
+                  <InfiniteScrollSentinel
+                    onIntersect={loadMoreConversations}
+                    enabled={!loadingList}
+                  />
+                </li>
+              ) : null}
             </ul>
           )}
         </aside>
@@ -243,6 +355,9 @@ export default function MessagesPage() {
               conversation={active}
               messages={messages}
               loading={loadingMessages}
+              hasMoreOlder={hasOlder}
+              onLoadOlder={loadOlderMessages}
+              onScroll={onMessagesScroll}
               draft={draft}
               sending={sending}
               currentUserId={user?.id}
@@ -265,6 +380,9 @@ function ConversationPane({
   conversation,
   messages,
   loading,
+  hasMoreOlder,
+  onLoadOlder,
+  onScroll,
   draft,
   sending,
   currentUserId,
@@ -275,6 +393,9 @@ function ConversationPane({
   conversation: ConversationSummary;
   messages: Message[];
   loading: boolean;
+  hasMoreOlder: boolean;
+  onLoadOlder: () => void;
+  onScroll: (e: React.UIEvent<HTMLDivElement>) => void;
   draft: string;
   sending: boolean;
   currentUserId?: number;
@@ -328,31 +449,43 @@ function ConversationPane({
         </header>
       )}
 
-      <div ref={scrollerRef} className="flex-1 space-y-2 overflow-y-auto p-4">
-        {loading ? (
+      <div
+        ref={scrollerRef}
+        onScroll={onScroll}
+        className="flex-1 space-y-2 overflow-y-auto p-4"
+      >
+        {loading && messages.length === 0 ? (
           <p className="text-center text-sm text-slate-500">Loading messages…</p>
         ) : messages.length === 0 ? (
           <p className="text-center text-sm text-slate-500">No messages yet. Say hello.</p>
         ) : (
-          messages.map((m) => {
-            const mine = m.sender_id === currentUserId;
-            return (
-              <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
-                <div
-                  className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm shadow-sm ${
-                    mine ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-900"
-                  }`}
-                >
-                  <p className="whitespace-pre-wrap">{m.content}</p>
-                  <p
-                    className={`mt-1 text-[10px] ${mine ? "text-indigo-200" : "text-slate-500"}`}
+          <>
+            {hasMoreOlder ? (
+              <InfiniteScrollSentinel onIntersect={onLoadOlder} enabled={!loading} />
+            ) : null}
+            {loading && messages.length > 0 ? (
+              <p className="text-center text-xs text-slate-400">Loading older messages…</p>
+            ) : null}
+            {messages.map((m) => {
+              const mine = m.sender_id === currentUserId;
+              return (
+                <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+                  <div
+                    className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm shadow-sm ${
+                      mine ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-900"
+                    }`}
                   >
-                    {formatRelative(m.created_at)}
-                  </p>
+                    <p className="whitespace-pre-wrap">{m.content}</p>
+                    <p
+                      className={`mt-1 text-[10px] ${mine ? "text-indigo-200" : "text-slate-500"}`}
+                    >
+                      {formatRelative(m.created_at)}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            );
-          })
+              );
+            })}
+          </>
         )}
       </div>
 

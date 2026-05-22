@@ -10,7 +10,8 @@ type AuthResponse struct {
 type PostsResponse struct {
 	Success bool   `json:"success"`
 	Message string `json:"message,omitempty"`
-	Posts   []Post `json:"posts,omitempty"`
+	Posts   []Post `json:"posts"`
+	HasMore bool   `json:"has_more"`
 }
 
 type PostResponse struct {
@@ -35,6 +36,7 @@ type CommentsResponse struct {
 	Success  bool      `json:"success"`
 	Message  string    `json:"message,omitempty"`
 	Comments []Comment `json:"comments"`
+	HasMore  bool      `json:"has_more"`
 }
 
 type FollowResponse struct {
@@ -47,6 +49,7 @@ type FollowRequestsResponse struct {
 	Success  bool                   `json:"success"`
 	Message  string                 `json:"message,omitempty"`
 	Requests []FollowRequestSummary `json:"requests"`
+	HasMore  bool                   `json:"has_more"`
 }
 
 type MessageResponse struct {
@@ -59,6 +62,7 @@ type MessagesResponse struct {
 	Success  bool      `json:"success"`
 	Message  string    `json:"message,omitempty"`
 	Messages []Message `json:"messages"`
+	HasMore  bool      `json:"has_more"`
 }
 
 type ConversationResponse struct {
@@ -71,12 +75,14 @@ type ConversationsResponse struct {
 	Success       bool                  `json:"success"`
 	Message       string                `json:"message,omitempty"`
 	Conversations []ConversationSummary `json:"conversations"`
+	HasMore       bool                  `json:"has_more"`
 }
 
 type UsersResponse struct {
 	Success bool          `json:"success"`
 	Message string        `json:"message,omitempty"`
 	Users   []UserSummary `json:"users"`
+	HasMore bool          `json:"has_more"`
 }
 
 type UserResponse struct {
@@ -94,7 +100,8 @@ type GroupResponse struct {
 type GroupsResponse struct {
 	Success bool    `json:"success"`
 	Message string  `json:"message,omitempty"`
-	Groups  []Group `json:"groups,omitempty"`
+	Groups  []Group `json:"groups"`
+	HasMore bool    `json:"has_more"`
 }
 
 type HealthResponse struct {
@@ -130,7 +137,8 @@ type GroupEventResponse struct {
 type GroupEventsResponse struct {
 	Success bool         `json:"success"`
 	Message string       `json:"message,omitempty"`
-	Events  []GroupEvent `json:"events,omitempty"`
+	Events  []GroupEvent `json:"events"`
+	HasMore bool         `json:"has_more"`
 }
 
 type GroupEventRSVPResponse struct {
@@ -142,7 +150,8 @@ type GroupEventRSVPResponse struct {
 type NotificationsResponse struct {
 	Success       bool           `json:"success"`
 	Message       string         `json:"message,omitempty"`
-	Notifications []Notification `json:"notifications,omitempty"`
+	Notifications []Notification `json:"notifications"`
+	HasMore       bool           `json:"has_more"`
 }
 
 type NotificationResponse struct {
