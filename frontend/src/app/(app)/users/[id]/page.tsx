@@ -530,6 +530,7 @@ function EditForm({
     email: string;
     first_name: string;
     last_name: string;
+    date_of_birth: string;
     nickname: string;
     gender: string;
     avatar_path: string;
@@ -542,6 +543,9 @@ function EditForm({
   const [last_name, setLast] = useState(initial.last_name);
   const [nickname, setNickname] = useState(initial.nickname);
   const [email, setEmail] = useState(initial.email);
+  const [date_of_birth, setDateOfBirth] = useState(
+    initial.date_of_birth ? initial.date_of_birth.slice(0, 10) : "",
+  );
   const [avatar_path, setAvatar] = useState(initial.avatar_path);
   const [about_me, setAbout] = useState(initial.about_me);
   const [saving, setSaving] = useState(false);
@@ -550,7 +554,18 @@ function EditForm({
     e.preventDefault();
     setSaving(true);
     try {
-      await onSave({ first_name, last_name, nickname, email, avatar_path, about_me });
+      const payload: Partial<RegisterPayload> = {
+        first_name,
+        last_name,
+        nickname,
+        email,
+        avatar_path,
+        about_me,
+      };
+      if (date_of_birth) {
+        payload.date_of_birth = new Date(date_of_birth).toISOString();
+      }
+      await onSave(payload);
     } finally {
       setSaving(false);
     }
@@ -567,6 +582,7 @@ function EditForm({
       </div>
       <Input label="Nickname" value={nickname} onChange={setNickname} />
       <Input label="Email" type="email" value={email} onChange={setEmail} />
+      <Input label="Date of birth" type="date" value={date_of_birth} onChange={setDateOfBirth} />
       <AvatarUpload
         value={avatar_path}
         onChange={setAvatar}
