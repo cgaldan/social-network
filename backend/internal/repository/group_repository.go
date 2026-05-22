@@ -39,7 +39,7 @@ func (r *GroupRepository) CreateGroup(group *domain.Group) (int64, error) {
 func (r *GroupRepository) GetGroupByID(groupID int) (*domain.Group, error) {
 	group := &domain.Group{}
 	err := r.db.QueryRow(`
-		SELECT id, creator_id, title, description, conversation_id, created_at
+		SELECT id, creator_id, title, description, conversation_id, avatar_path, created_at
 		FROM groups
 		WHERE id = ?`,
 		groupID,
@@ -48,6 +48,7 @@ func (r *GroupRepository) GetGroupByID(groupID int) (*domain.Group, error) {
 		&group.CreatorID,
 		&group.Title,
 		&group.Description,
+		&group.AvatarPath,
 		&group.ConversationID,
 		&group.CreatedAt,
 	)
@@ -62,14 +63,36 @@ func (r *GroupRepository) GetGroupByID(groupID int) (*domain.Group, error) {
 	return group, nil
 }
 
+func (r *GroupRepository) UpdateGroupAvatar(groupID int, avatarPath string) error {
+	res, err := r.db.Exec(`
+		UPDATE groups
+		SET avatar_path = ?
+		WHERE id = ?`,
+		avatarPath,
+		groupID,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to update group avatar: %w", err)
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to update group avatar: %w", err)
+	}
+	if n == 0 {
+		return fmt.Errorf("group not found")
+	}
+	return nil
+}
+
 func (r *GroupRepository) ListGroups(viewerID, limit, offset int) ([]domain.Group, error) {
 	rows, err := r.db.Query(`
 		SELECT
 			g.id,
-			g.creator_id, 
-			g.title, 
-			g.description, 
-			g.conversation_id, 
+			g.creator_id,
+			g.title,
+			g.description,
+			g.avatar_path,
+			g.conversation_id,
 			g.created_at,
 			EXISTS(
 				SELECT 1 FROM group_members WHERE group_id = g.id AND user_id = ?) AS is_member,
@@ -96,6 +119,7 @@ func (r *GroupRepository) ListGroups(viewerID, limit, offset int) ([]domain.Grou
 			&group.CreatorID,
 			&group.Title,
 			&group.Description,
+			&group.AvatarPath,
 			&group.ConversationID,
 			&group.CreatedAt,
 			&group.IsMember,
@@ -114,10 +138,11 @@ func (r *GroupRepository) GetGroupByIDForViewer(groupID, viewerID int) (*domain.
 	err := r.db.QueryRow(`
 		SELECT
 			g.id,
-			g.creator_id, 
-			g.title, 
-			g.description, 
-			g.conversation_id, 
+			g.creator_id,
+			g.title,
+			g.description,
+			g.avatar_path,
+			g.conversation_id,
 			g.created_at,
 			EXISTS(
 				SELECT 1 FROM group_members WHERE group_id = g.id AND user_id = ?) AS is_member,
@@ -134,6 +159,7 @@ func (r *GroupRepository) GetGroupByIDForViewer(groupID, viewerID int) (*domain.
 		&group.CreatorID,
 		&group.Title,
 		&group.Description,
+		&group.AvatarPath,
 		&group.ConversationID,
 		&group.CreatedAt,
 		&group.IsMember,

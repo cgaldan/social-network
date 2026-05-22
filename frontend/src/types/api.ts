@@ -112,6 +112,7 @@ export interface ConversationSummary {
   id: number;
   type: string;
   name: string;
+  avatar_path?: string;
   participants: ConversationParticipant[];
   last_message?: Message;
   unread_count: number;
@@ -176,6 +177,7 @@ export interface Group {
   name: string;
   description: string;
   conversation_id: number;
+  avatar_path?: string;
   created_at: string;
   is_member: boolean;
   is_pending: boolean;

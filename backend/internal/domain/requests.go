@@ -103,6 +103,10 @@ type JoinGroupRequest struct {
 	UserID  int `json:"user_id"`
 }
 
+type UpdateGroupAvatarRequest struct {
+	AvatarPath string `json:"avatar_path"`
+}
+
 type CreateGroupEventRequest struct {
 	Title       string    `json:"title"`
 	Description string    `json:"description"`

@@ -196,6 +196,7 @@ func (r *ConversationRepository) ListConversationsByUserID(userID, limit, offset
 			c.id,
 			c.name,
 			c.type,
+			COALESCE(g.avatar_path, ''),
 			c.created_at,
 			(SELECT m.id FROM messages m WHERE m.conversation_id = c.id ORDER BY m.created_at DESC, m.id DESC LIMIT 1),
 			(SELECT m.sender_id FROM messages m WHERE m.conversation_id = c.id ORDER BY m.created_at DESC, m.id DESC LIMIT 1),
@@ -204,6 +205,7 @@ func (r *ConversationRepository) ListConversationsByUserID(userID, limit, offset
 			(SELECT COUNT(*) FROM messages m WHERE m.conversation_id = c.id AND m.sender_id != ? AND (cp.last_read_at IS NULL OR m.created_at > cp.last_read_at))
 		FROM conversations c
 		JOIN conversation_participants cp ON cp.conversation_id = c.id
+		LEFT JOIN groups g ON g.conversation_id = c.id
 		WHERE cp.user_id = ?
 		ORDER BY COALESCE(
 			(SELECT m.created_at FROM messages m WHERE m.conversation_id = c.id ORDER BY m.created_at DESC LIMIT 1),
@@ -227,7 +229,7 @@ func (r *ConversationRepository) ListConversationsByUserID(userID, limit, offset
 			msgCreatedAt sql.NullTime
 		)
 		if err := rows.Scan(
-			&c.ID, &c.Name, &c.Type, &c.CreatedAt,
+			&c.ID, &c.Name, &c.Type, &c.AvatarPath, &c.CreatedAt,
 			&msgID, &msgSenderID, &msgContent, &msgCreatedAt,
 			&c.UnreadCount,
 		); err != nil {

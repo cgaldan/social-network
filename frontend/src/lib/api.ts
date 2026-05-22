@@ -292,6 +292,11 @@ export const api = {
       }),
     get: (id: number) =>
       request<{ success: boolean; message: string; group: Group }>(`/api/groups/${id}`),
+    updateAvatar: (id: number, avatarPath: string) =>
+      request<{ success: boolean; message: string; group: Group }>(
+        `/api/groups/${id}/avatar`,
+        { method: "PUT", body: { avatar_path: avatarPath } },
+      ),
     join: (groupId: number) =>
       request<{ success: boolean; message: string }>("/api/groups/join", {
         method: "POST",

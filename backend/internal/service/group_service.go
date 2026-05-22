@@ -73,6 +73,21 @@ func (s *GroupService) GetGroupByID(groupID, viewerID int) (*domain.Group, error
 	return s.groupRepo.GetGroupByIDForViewer(groupID, viewerID)
 }
 
+func (s *GroupService) UpdateGroupAvatar(groupID, userID int, avatarPath string) (*domain.Group, error) {
+	group, err := s.groupRepo.GetGroupByID(groupID)
+	if err != nil {
+		return nil, err
+	}
+	if group.CreatorID != userID {
+		return nil, fmt.Errorf("only the group creator can update the avatar")
+	}
+	if err := s.groupRepo.UpdateGroupAvatar(groupID, avatarPath); err != nil {
+		s.logger.Error("Failed to update group avatar", "error", err, "groupID", groupID)
+		return nil, fmt.Errorf("failed to update group avatar")
+	}
+	return s.groupRepo.GetGroupByIDForViewer(groupID, userID)
+}
+
 func (s *GroupService) validateLimitAndOffset(limit, offset int) (int, int) {
 	if limit <= 0 || limit > 100 {
 		limit = 20
