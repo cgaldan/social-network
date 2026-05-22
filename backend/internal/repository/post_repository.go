@@ -132,9 +132,9 @@ func (r *PostRepository) ListPosts(category string, viewerID, limit, offset int)
 				u.nickname
 			FROM posts p
 			JOIN users u ON p.user_id = u.id
-			WHERE p.category = ? AND p.group_id IS NULL AND `+visibilityClause+`
+			WHERE LOWER(p.category) LIKE LOWER(?) AND p.group_id IS NULL AND `+visibilityClause+`
 			ORDER BY p.created_at DESC
-			LIMIT ? OFFSET ?`, category, viewerID, viewerID, viewerID, limit, offset)
+			LIMIT ? OFFSET ?`, "%"+category+"%", viewerID, viewerID, viewerID, limit, offset)
 	} else {
 		rows, err = r.db.Query(`
 			SELECT
