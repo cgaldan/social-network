@@ -294,10 +294,17 @@ export default function MessagesPage() {
             <ul className="max-h-[480px] overflow-y-auto">
               {conversations.map((c) => {
                 const isActive = c.id === activeId;
-                const other = c.participants.find((p) => p.user_id !== user?.id);
-                const title = c.type === "group" ? c.name || "Group" : other
-                  ? `${other.first_name} ${other.last_name}`
-                  : "Direct chat";
+                const isGroup = c.type === "group";
+                const other = isGroup
+                  ? undefined
+                  : c.participants.find((p) => p.user_id !== user?.id);
+                const title = isGroup
+                  ? c.name || "Group"
+                  : other
+                    ? `${other.first_name} ${other.last_name}`
+                    : "Direct chat";
+                const avatarSrc = isGroup ? c.avatar_path : other?.avatar_path;
+                const avatarNickname = isGroup ? c.name || "Group" : other?.nickname;
                 return (
                   <li key={c.id}>
                     <button
@@ -307,10 +314,10 @@ export default function MessagesPage() {
                       }`}
                     >
                       <Avatar
-                        src={other?.avatar_path}
-                        firstName={other?.first_name}
-                        lastName={other?.last_name}
-                        nickname={other?.nickname ?? c.name}
+                        src={avatarSrc}
+                        firstName={isGroup ? undefined : other?.first_name}
+                        lastName={isGroup ? undefined : other?.last_name}
+                        nickname={avatarNickname}
                         size={36}
                       />
                       <div className="min-w-0 flex-1">
@@ -403,28 +410,33 @@ function ConversationPane({
   onSend: (e: React.FormEvent) => void;
   scrollerRef: React.RefObject<HTMLDivElement | null>;
 }) {
-  const other: ConversationParticipant | undefined = conversation.participants.find(
-    (p) => p.user_id !== currentUserId,
-  );
-  const title =
-    conversation.type === "group"
-      ? conversation.name || "Group"
-      : other
-        ? `${other.first_name} ${other.last_name}`
-        : "Direct chat";
+  const isGroup = conversation.type === "group";
+  const other: ConversationParticipant | undefined = isGroup
+    ? undefined
+    : conversation.participants.find((p) => p.user_id !== currentUserId);
+  const title = isGroup
+    ? conversation.name || "Group"
+    : other
+      ? `${other.first_name} ${other.last_name}`
+      : "Direct chat";
+  const memberCount = isGroup ? conversation.participants.length : 0;
 
   const headerInner = (
     <>
       <Avatar
-        src={other?.avatar_path}
-        firstName={other?.first_name}
-        lastName={other?.last_name}
-        nickname={other?.nickname ?? conversation.name}
+        src={isGroup ? conversation.avatar_path : other?.avatar_path}
+        firstName={isGroup ? undefined : other?.first_name}
+        lastName={isGroup ? undefined : other?.last_name}
+        nickname={isGroup ? conversation.name || "Group" : other?.nickname}
         size={36}
       />
       <div>
         <p className="text-sm font-medium text-slate-900">{title}</p>
-        {other ? (
+        {isGroup ? (
+          <p className="text-xs text-slate-500">
+            {memberCount} {memberCount === 1 ? "member" : "members"}
+          </p>
+        ) : other ? (
           <p className="text-xs text-slate-500">
             @{other.nickname}
             {other.is_online ? " · online" : " · offline"}

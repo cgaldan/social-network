@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
+import { useAuth } from "@/components/AuthProvider";
+import { Avatar } from "@/components/Avatar";
 import { PostCard } from "@/components/PostCard";
 import { PostForm } from "@/components/PostForm";
 import { UserPicker } from "@/components/UserPicker";
@@ -17,6 +19,7 @@ const PAGE_SIZE = 20;
 export default function GroupDetailPage() {
   const params = useParams<{ id: string }>();
   const groupId = Number(params.id);
+  const { user } = useAuth();
 
   const [group, setGroup] = useState<Group | null>(null);
   const [groupLoading, setGroupLoading] = useState(true);
@@ -29,6 +32,25 @@ export default function GroupDetailPage() {
   const [eventDate, setEventDate] = useState("");
 
   const [inviteStatus, setInviteStatus] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  const onPickGroupAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !group) return;
+    setError(null);
+    setUploadingAvatar(true);
+    try {
+      const uploaded = await api.uploads.create(file);
+      const res = await api.groups.updateAvatar(group.id, uploaded.url);
+      setGroup(res.group);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to update group avatar");
+    } finally {
+      setUploadingAvatar(false);
+      if (avatarInputRef.current) avatarInputRef.current.value = "";
+    }
+  };
 
   useEffect(() => {
     if (!Number.isFinite(groupId)) return;
@@ -208,14 +230,44 @@ export default function GroupDetailPage() {
     );
   }
 
+  const isCreator = user?.id === group.creator_id;
+
   return (
     <div className="space-y-6">
       <Link href="/groups" className="text-sm text-indigo-600 hover:underline">
         ← All groups
       </Link>
 
-      <h1 className="text-2xl font-semibold text-slate-900">{group.name}</h1>
-      <p className="text-sm text-slate-600">{group.description}</p>
+      <div className="flex items-start gap-4">
+        <Avatar
+          src={group.avatar_path}
+          nickname={group.name}
+          size={64}
+        />
+        <div className="flex-1">
+          <h1 className="text-2xl font-semibold text-slate-900">{group.name}</h1>
+          <p className="text-sm text-slate-600">{group.description}</p>
+          {isCreator ? (
+            <div className="mt-2">
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                onChange={onPickGroupAvatar}
+                disabled={uploadingAvatar}
+                className="block text-xs text-slate-600 file:mr-2 file:rounded-md file:border-0 file:bg-indigo-50 file:px-2 file:py-1 file:text-xs file:font-medium file:text-indigo-700 hover:file:bg-indigo-100"
+              />
+              <p className="mt-1 text-[11px] text-slate-400">
+                {uploadingAvatar
+                  ? "Uploading…"
+                  : group.avatar_path
+                    ? "Pick a new image to replace the group avatar."
+                    : "Add a group avatar so members can recognize this chat."}
+              </p>
+            </div>
+          ) : null}
+        </div>
+      </div>
 
       <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
