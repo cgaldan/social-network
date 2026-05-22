@@ -94,6 +94,14 @@ export default function NotificationsPage() {
 
   const unread = items.filter((n) => !n.read_at).length;
 
+  const renderBody = (n: Notification) => {
+    if (n.entity_type === "follow_request") {
+      const actor = parseActorName(n.metadata);
+      if (actor) return `${actor} requested to follow you.`;
+    }
+    return n.body;
+  };
+
   return (
     <div className="space-y-6">
       <header className="flex items-center justify-between">
@@ -135,7 +143,7 @@ export default function NotificationsPage() {
             const body = (
               <>
                 <p className="text-sm font-medium text-slate-900">{n.title}</p>
-                <p className="mt-1 text-sm text-slate-600">{n.body}</p>
+                <p className="mt-1 text-sm text-slate-600">{renderBody(n)}</p>
                 <p className="mt-1 text-xs text-slate-400">{formatRelative(n.created_at)}</p>
               </>
             );
@@ -199,4 +207,14 @@ export default function NotificationsPage() {
       ) : null}
     </div>
   );
+}
+
+function parseActorName(metadata: string | null | undefined): string | null {
+  if (!metadata) return null;
+  try {
+    const parsed = JSON.parse(metadata) as { actor_name?: string };
+    return parsed.actor_name?.trim() || null;
+  } catch {
+    return null;
+  }
 }
