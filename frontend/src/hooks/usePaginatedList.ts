@@ -80,6 +80,11 @@ export function usePaginatedList<T>(
     }
   }, [fetcher, pageSize]);
 
+  // reset rewinds to page 1 AND kicks off a fresh fetch. It's safe to call
+  // from any callsite that wants to refresh the list after an external
+  // mutation (e.g. just created a new row that should appear on the first
+  // page). Refs are updated synchronously above the loadMore() call so its
+  // guards see the cleared state correctly.
   const reset = useCallback(() => {
     abortRef.current?.abort();
     abortRef.current = null;
@@ -90,13 +95,13 @@ export function usePaginatedList<T>(
     setHasMore(true);
     setLoading(false);
     setError(null);
-  }, []);
+    loadMore();
+  }, [loadMore]);
 
   useEffect(() => {
     reset();
-    loadMore();
     return () => abortRef.current?.abort();
-  }, [fetcher, reset, loadMore]);
+  }, [fetcher, reset]);
 
   return { items, hasMore, loading, error, loadMore, reset, setItems };
 }

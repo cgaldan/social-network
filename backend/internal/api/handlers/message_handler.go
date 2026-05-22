@@ -102,9 +102,15 @@ func (h *MessageHandler) ListMessages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	limit, offset := parsePagination(r)
+	limit, _ := parsePagination(r)
+	beforeID := 0
+	if v := r.URL.Query().Get("before_id"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			beforeID = n
+		}
+	}
 
-	messages, err := h.messageService.ListMessages(convID, user.ID, limit, offset)
+	messages, err := h.messageService.ListMessages(convID, user.ID, limit+1, beforeID)
 	if err != nil {
 		h.logger.Error("Failed to list messages", "error", err, "convID", convID, "userID", user.ID)
 		json.NewEncoder(w).Encode(domain.MessagesResponse{
@@ -114,9 +120,11 @@ func (h *MessageHandler) ListMessages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	items, hasMore := trimPage(messages, limit)
 	json.NewEncoder(w).Encode(domain.MessagesResponse{
 		Success:  true,
 		Message:  "Messages retrieved successfully",
-		Messages: messages,
+		Messages: items,
+		HasMore:  hasMore,
 	})
 }

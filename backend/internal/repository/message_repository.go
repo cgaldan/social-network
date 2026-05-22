@@ -26,15 +26,20 @@ func (r *MessageRepository) CreateMessage(message *domain.Message) (int64, error
 	return result.LastInsertId()
 }
 
-func (r *MessageRepository) ListMessagesByConversationID(conversationID, limit, offset int) ([]domain.Message, error) {
-	rows, err := r.db.Query(`
+// ListMessagesByConversationID returns messages newest-first (DESC).
+// Pagination is cursor-based: pass beforeID=0 for the newest page, or pass the
+// smallest id you currently hold to fetch the next older page. Offset-based
+// pagination is wrong for chat — new messages get inserted at the head between
+// fetches, shifting offsets and producing duplicates or gaps.
+func (r *MessageRepository) ListMessagesByConversationID(conversationID, limit, beforeID int) ([]domain.Message, error) {
+	const query = `
 		SELECT id, conversation_id, sender_id, content, created_at
 		FROM messages
 		WHERE conversation_id = ?
-		ORDER BY created_at DESC, id DESC
-		LIMIT ? OFFSET ?`,
-		conversationID, limit, offset,
-	)
+		  AND (? = 0 OR id < ?)
+		ORDER BY id DESC
+		LIMIT ?`
+	rows, err := r.db.Query(query, conversationID, beforeID, beforeID, limit)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list messages: %w", err)
 	}
@@ -48,14 +53,7 @@ func (r *MessageRepository) ListMessagesByConversationID(conversationID, limit, 
 		}
 		out = append(out, m)
 	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	for i, j := 0, len(out)-1; i < j; i, j = i+1, j-1 {
-		out[i], out[j] = out[j], out[i]
-	}
-	return out, nil
+	return out, rows.Err()
 }
 
 func (r *MessageRepository) GetMessageByID(messageID int) (*domain.Message, error) {
