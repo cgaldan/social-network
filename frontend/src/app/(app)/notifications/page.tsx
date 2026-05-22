@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useWebSocket } from "@/components/WebSocketProvider";
 import { useNotificationCount } from "@/components/NotificationCountProvider";
@@ -10,6 +11,12 @@ import { formatRelative } from "@/lib/format";
 import type { Notification } from "@/types/api";
 
 const PAGE_SIZE = 20;
+
+const LEGACY_DEAD_URLS = new Set([
+  "/groups/invitations",
+  "/groups/join",
+  "/followers/requests",
+]);
 
 export default function NotificationsPage() {
   const { on } = useWebSocket();
@@ -80,9 +87,12 @@ export default function NotificationsPage() {
       } catch {
         // best-effort; if it was already read this errors silently
       }
+      const resolvedStatus = kind === "accept" ? "accepted" : "declined";
       setItems((prev) =>
         prev.map((n) =>
-          n.id === notification.id ? { ...n, read_at: new Date().toISOString() } : n,
+          n.id === notification.id
+            ? { ...n, read_at: new Date().toISOString(), entity_status: resolvedStatus }
+            : n,
         ),
       );
       if (!notification.read_at) decrement();
@@ -92,6 +102,14 @@ export default function NotificationsPage() {
   };
 
   const unread = items.filter((n) => !n.read_at).length;
+
+  const renderBody = (n: Notification) => {
+    if (n.entity_type === "follow_request") {
+      const actor = parseActorName(n.metadata);
+      if (actor) return `${actor} requested to follow you.`;
+    }
+    return n.body;
+  };
 
   return (
     <div className="space-y-6">
@@ -127,21 +145,24 @@ export default function NotificationsPage() {
       ) : (
         <ul className="space-y-2">
           {items.map((n) => {
+            const isInviteOrRequest =
+              n.entity_type === "group_invitation" || n.entity_type === "group_join_request";
+            // Treat a missing entity_status as still actionable: brand-new notifications
+            // delivered via WebSocket may arrive without it, and they're always pending
+            // at creation time.
             const actionable =
-              !n.read_at &&
-              (n.entity_type === "group_invitation" || n.entity_type === "group_join_request");
-            return (
-              <li
-                key={n.id}
-                className={`flex items-start justify-between gap-3 rounded-xl border p-4 shadow-sm transition ${
-                  n.read_at
-                    ? "border-slate-200 bg-white"
-                    : "border-indigo-200 bg-indigo-50/50"
-                }`}
-              >
+              isInviteOrRequest && (n.entity_status ?? "pending") === "pending";
+            const linkable = !actionable && !!n.action_url && !LEGACY_DEAD_URLS.has(n.action_url);
+            const cardClass = `flex items-start justify-between gap-3 rounded-xl border p-4 shadow-sm transition ${
+              n.read_at
+                ? "border-slate-200 bg-white"
+                : "border-indigo-200 bg-indigo-50/50"
+            } ${linkable ? "hover:bg-slate-50" : ""}`;
+            const inner = (
+              <>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-slate-900">{n.title}</p>
-                  <p className="mt-1 text-sm text-slate-600">{n.body}</p>
+                  <p className="mt-1 text-sm text-slate-600">{renderBody(n)}</p>
                   <p className="mt-1 text-xs text-slate-400">{formatRelative(n.created_at)}</p>
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-2">
@@ -161,7 +182,7 @@ export default function NotificationsPage() {
                       </button>
                     </div>
                   ) : null}
-                  {!n.read_at && !actionable ? (
+                  {!n.read_at && !actionable && !linkable ? (
                     <button
                       onClick={() => markRead(n.id)}
                       className="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
@@ -170,6 +191,21 @@ export default function NotificationsPage() {
                     </button>
                   ) : null}
                 </div>
+              </>
+            );
+            return linkable ? (
+              <li key={n.id}>
+                <Link
+                  href={n.action_url!}
+                  onClick={() => !n.read_at && markRead(n.id)}
+                  className={cardClass}
+                >
+                  {inner}
+                </Link>
+              </li>
+            ) : (
+              <li key={n.id} className={cardClass}>
+                {inner}
               </li>
             );
           })}
@@ -184,4 +220,14 @@ export default function NotificationsPage() {
       ) : null}
     </div>
   );
+}
+
+function parseActorName(metadata: string | null | undefined): string | null {
+  if (!metadata) return null;
+  try {
+    const parsed = JSON.parse(metadata) as { actor_name?: string };
+    return parsed.actor_name?.trim() || null;
+  } catch {
+    return null;
+  }
 }
