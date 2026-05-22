@@ -22,6 +22,7 @@ export default function NotificationsPage() {
   const { on } = useWebSocket();
   const { decrement, reset: resetUnreadCount } = useNotificationCount();
   const [error, setError] = useState<string | null>(null);
+  const [actedIds, setActedIds] = useState<Set<number>>(new Set());
 
   const fetcher = useCallback(
     async ({ limit, offset }: { limit: number; offset: number }) => {
@@ -92,6 +93,11 @@ export default function NotificationsPage() {
           n.id === notification.id ? { ...n, read_at: new Date().toISOString() } : n,
         ),
       );
+      setActedIds((prev) => {
+        const next = new Set(prev);
+        next.add(notification.id);
+        return next;
+      });
       if (!notification.read_at) decrement();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : `Failed to ${kind}`);
@@ -143,7 +149,7 @@ export default function NotificationsPage() {
         <ul className="space-y-2">
           {items.map((n) => {
             const actionable =
-              !n.read_at &&
+              !actedIds.has(n.id) &&
               (n.entity_type === "group_invitation" || n.entity_type === "group_join_request");
             const linkable = !actionable && !!n.action_url && !LEGACY_DEAD_URLS.has(n.action_url);
             const cardClass = `flex items-start justify-between gap-3 rounded-xl border p-4 shadow-sm transition ${
