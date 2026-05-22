@@ -229,6 +229,7 @@ export interface Notification {
   body: string;
   entity_type?: string;
   entity_id?: number;
+  entity_status?: string;
   action_url?: string;
   metadata?: string | null;
   read_at?: string | null;
