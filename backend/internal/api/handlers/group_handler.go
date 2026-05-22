@@ -83,24 +83,8 @@ func (h *GroupHandler) ListGroups(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	limitStr := r.URL.Query().Get("limit")
-	offsetStr := r.URL.Query().Get("offset")
-
-	limit := 20
-	if limitStr != "" {
-		if limitNum, err := strconv.Atoi(limitStr); err == nil && limitNum > 0 && limitNum <= 100 {
-			limit = limitNum
-		}
-	}
-
-	offset := 0
-	if offsetStr != "" {
-		if offsetNum, err := strconv.Atoi(offsetStr); err == nil && offsetNum >= 0 {
-			offset = offsetNum
-		}
-	}
-
-	groups, err := h.groupService.ListGroups(user.ID, limit, offset)
+	limit, offset := parsePagination(r)
+	groups, err := h.groupService.ListGroups(user.ID, limit+1, offset)
 	if err != nil {
 		h.logger.Error("Failed to list groups", "error", err)
 		json.NewEncoder(w).Encode(domain.GroupsResponse{
@@ -110,10 +94,12 @@ func (h *GroupHandler) ListGroups(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	items, hasMore := trimPage(groups, limit)
 	json.NewEncoder(w).Encode(domain.GroupsResponse{
 		Success: true,
 		Message: "Groups retrieved successfully",
-		Groups:  groups,
+		Groups:  items,
+		HasMore: hasMore,
 	})
 }
 
@@ -495,24 +481,8 @@ func (h *GroupHandler) ListGroupEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	limitStr := r.URL.Query().Get("limit")
-	offsetStr := r.URL.Query().Get("offset")
-
-	limit := 20
-	if limitStr != "" {
-		if limitNum, err := strconv.Atoi(limitStr); err == nil && limitNum > 0 && limitNum <= 100 {
-			limit = limitNum
-		}
-	}
-
-	offset := 0
-	if offsetStr != "" {
-		if offsetNum, err := strconv.Atoi(offsetStr); err == nil && offsetNum >= 0 {
-			offset = offsetNum
-		}
-	}
-
-	events, err := h.groupService.ListGroupEvents(user.ID, groupID, limit, offset)
+	limit, offset := parsePagination(r)
+	events, err := h.groupService.ListGroupEvents(user.ID, groupID, limit+1, offset)
 	if err != nil {
 		h.logger.Error("Failed to list group events", "error", err, "userID", user.ID, "groupID", groupID)
 		json.NewEncoder(w).Encode(domain.GroupEventsResponse{
@@ -522,10 +492,12 @@ func (h *GroupHandler) ListGroupEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	items, hasMore := trimPage(events, limit)
 	json.NewEncoder(w).Encode(domain.GroupEventsResponse{
 		Success: true,
 		Message: "Group events retrieved successfully",
-		Events:  events,
+		Events:  items,
+		HasMore: hasMore,
 	})
 }
 

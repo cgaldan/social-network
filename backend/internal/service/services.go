@@ -73,7 +73,7 @@ type PostServiceInterface interface {
 
 type CommentServiceInterface interface {
 	CreateComment(userID int, postID int, commentData domain.CreateCommentRequest) (*domain.Comment, error)
-	GetCommentsByPostID(userID, postID int) ([]domain.Comment, error)
+	GetCommentsByPostID(userID, postID, limit, offset int) ([]domain.Comment, error)
 	GetCommentsByUserID(userID, limit, offset int) ([]domain.Comment, error)
 	UpdateComment(userID, postID, commentID int, data domain.UpdateCommentRequest) (*domain.Comment, error)
 	DeleteComment(userID, postID, commentID int) error
@@ -94,7 +94,7 @@ type FollowServiceInterface interface {
 
 type MessageServiceInterface interface {
 	SendMessage(convID, senderID int, content string) (*domain.Message, error)
-	ListMessages(convID, userID, limit, offset int) ([]domain.Message, error)
+	ListMessages(convID, userID, limit, beforeID int) ([]domain.Message, error)
 }
 
 type ConversationServiceInterface interface {

@@ -36,21 +36,22 @@ func (r *CommentRepository) CreateComment(userID, postID int, content, mediaURL 
 	return result.LastInsertId()
 }
 
-func (r *CommentRepository) GetCommentsByPostID(postID int) ([]domain.Comment, error) {
+func (r *CommentRepository) GetCommentsByPostID(postID, limit, offset int) ([]domain.Comment, error) {
 	rows, err := r.db.Query(`
-		SELECT 
-			c.id, 
-			c.post_id, 
-			c.user_id, 
-			c.content, 
-			c.media_url, 
-			c.created_at, 
-			c.updated_at, 
+		SELECT
+			c.id,
+			c.post_id,
+			c.user_id,
+			c.content,
+			c.media_url,
+			c.created_at,
+			c.updated_at,
 			u.nickname
 		FROM comments c
 		JOIN users u ON c.user_id = u.id
 		WHERE c.post_id = ?
-		ORDER BY c.created_at ASC`, postID)
+		ORDER BY c.created_at ASC
+		LIMIT ? OFFSET ?`, postID, limit, offset)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get comments: %w", err)

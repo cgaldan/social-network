@@ -88,7 +88,7 @@ func (h *ConversationHandler) ListConversations(w http.ResponseWriter, r *http.R
 
 	limit, offset := parsePagination(r)
 
-	conversations, err := h.convService.ListConversations(user.ID, limit, offset)
+	conversations, err := h.convService.ListConversations(user.ID, limit+1, offset)
 	if err != nil {
 		h.logger.Error("Failed to list conversations", "error", err, "userID", user.ID)
 		json.NewEncoder(w).Encode(domain.ConversationsResponse{
@@ -98,10 +98,12 @@ func (h *ConversationHandler) ListConversations(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	items, hasMore := trimPage(conversations, limit)
 	json.NewEncoder(w).Encode(domain.ConversationsResponse{
 		Success:       true,
 		Message:       "Conversations retrieved successfully",
-		Conversations: conversations,
+		Conversations: items,
+		HasMore:       hasMore,
 	})
 }
 

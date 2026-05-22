@@ -61,7 +61,7 @@ func (s *CommentService) CreateComment(userID int, postID int, commentData domai
 	return comment, nil
 }
 
-func (s *CommentService) GetCommentsByPostID(userID, postID int) ([]domain.Comment, error) {
+func (s *CommentService) GetCommentsByPostID(userID, postID, limit, offset int) ([]domain.Comment, error) {
 	exists, err := s.postRepo.PostExists(postID)
 	if err != nil {
 		s.logger.Error("Failed to check if post exists", "error", err, "postID", postID)
@@ -87,7 +87,7 @@ func (s *CommentService) GetCommentsByPostID(userID, postID int) ([]domain.Comme
 		}
 	}
 
-	comments, err := s.commentRepo.GetCommentsByPostID(postID)
+	comments, err := s.commentRepo.GetCommentsByPostID(postID, limit, offset)
 	if err != nil {
 		s.logger.Error("Failed to get comments by post ID", "error", err, "postID", postID)
 		return nil, fmt.Errorf("failed to get comments for post")

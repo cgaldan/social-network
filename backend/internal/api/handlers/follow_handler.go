@@ -298,9 +298,9 @@ func (h *FollowHandler) ListFollowRequests(w http.ResponseWriter, r *http.Reques
 	var requests []domain.FollowRequestSummary
 	switch direction {
 	case "outgoing":
-		requests, err = h.followService.ListOutgoingPending(user.ID, limit, offset)
+		requests, err = h.followService.ListOutgoingPending(user.ID, limit+1, offset)
 	case "incoming":
-		requests, err = h.followService.ListIncomingPending(user.ID, limit, offset)
+		requests, err = h.followService.ListIncomingPending(user.ID, limit+1, offset)
 	default:
 		json.NewEncoder(w).Encode(domain.FollowRequestsResponse{
 			Success: false,
@@ -318,9 +318,11 @@ func (h *FollowHandler) ListFollowRequests(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	items, hasMore := trimPage(requests, limit)
 	json.NewEncoder(w).Encode(domain.FollowRequestsResponse{
 		Success:  true,
 		Message:  "Follow requests retrieved successfully",
-		Requests: requests,
+		Requests: items,
+		HasMore:  hasMore,
 	})
 }

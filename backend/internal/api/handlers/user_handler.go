@@ -43,7 +43,7 @@ func (h *UserHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query().Get("q")
 	limit, offset := parsePagination(r)
 
-	users, err := h.authService.ListUsers(query, user.ID, limit, offset)
+	users, err := h.authService.ListUsers(query, user.ID, limit+1, offset)
 	if err != nil {
 		h.logger.Error("Failed to list users", "error", err)
 		json.NewEncoder(w).Encode(domain.UsersResponse{
@@ -53,10 +53,12 @@ func (h *UserHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	items, hasMore := trimPage(users, limit)
 	json.NewEncoder(w).Encode(domain.UsersResponse{
 		Success: true,
 		Message: "Users retrieved successfully",
-		Users:   users,
+		Users:   items,
+		HasMore: hasMore,
 	})
 }
 
@@ -139,7 +141,7 @@ func (h *UserHandler) ListUserPosts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	limit, offset := parsePagination(r)
-	posts, err := h.postService.GetPostsByUserID(targetID, viewer.ID, limit, offset)
+	posts, err := h.postService.GetPostsByUserID(targetID, viewer.ID, limit+1, offset)
 	if err != nil {
 		h.logger.Error("Failed to list user posts", "error", err, "targetID", targetID)
 		json.NewEncoder(w).Encode(domain.PostsResponse{
@@ -149,10 +151,12 @@ func (h *UserHandler) ListUserPosts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	items, hasMore := trimPage(posts, limit)
 	json.NewEncoder(w).Encode(domain.PostsResponse{
 		Success: true,
 		Message: "Posts retrieved successfully",
-		Posts:   posts,
+		Posts:   items,
+		HasMore: hasMore,
 	})
 }
 
@@ -196,7 +200,7 @@ func (h *UserHandler) ListUserFollowers(w http.ResponseWriter, r *http.Request) 
 	}
 
 	limit, offset := parsePagination(r)
-	users, err := h.followService.ListFollowersOfUser(targetID, limit, offset)
+	users, err := h.followService.ListFollowersOfUser(targetID, limit+1, offset)
 	if err != nil {
 		h.logger.Error("Failed to list followers", "error", err, "targetID", targetID)
 		json.NewEncoder(w).Encode(domain.UsersResponse{
@@ -206,10 +210,12 @@ func (h *UserHandler) ListUserFollowers(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	items, hasMore := trimPage(users, limit)
 	json.NewEncoder(w).Encode(domain.UsersResponse{
 		Success: true,
 		Message: "Followers retrieved successfully",
-		Users:   users,
+		Users:   items,
+		HasMore: hasMore,
 	})
 }
 
@@ -253,7 +259,7 @@ func (h *UserHandler) ListUserFollowing(w http.ResponseWriter, r *http.Request) 
 	}
 
 	limit, offset := parsePagination(r)
-	users, err := h.followService.ListFollowingByUser(targetID, limit, offset)
+	users, err := h.followService.ListFollowingByUser(targetID, limit+1, offset)
 	if err != nil {
 		h.logger.Error("Failed to list following", "error", err, "targetID", targetID)
 		json.NewEncoder(w).Encode(domain.UsersResponse{
@@ -263,9 +269,11 @@ func (h *UserHandler) ListUserFollowing(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	items, hasMore := trimPage(users, limit)
 	json.NewEncoder(w).Encode(domain.UsersResponse{
 		Success: true,
 		Message: "Following retrieved successfully",
-		Users:   users,
+		Users:   items,
+		HasMore: hasMore,
 	})
 }

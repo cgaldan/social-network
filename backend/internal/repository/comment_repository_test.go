@@ -35,7 +35,7 @@ func TestCommentRepository_GetCommentsByPostID(t *testing.T) {
 
 	commentRepo.CreateComment(int(userID), int(postID), "This is a test comment.", "")
 
-	comments, err := commentRepo.GetCommentsByPostID(int(postID))
+	comments, err := commentRepo.GetCommentsByPostID(int(postID), 100, 0)
 	if err != nil {
 		t.Fatalf("Failed to get comments: %v", err)
 	}

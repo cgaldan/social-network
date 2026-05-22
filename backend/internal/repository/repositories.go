@@ -65,7 +65,7 @@ type PostRepositoryInterface interface {
 
 type CommentRepositoryInterface interface {
 	CreateComment(userID, postID int, content, mediaURL string) (int64, error)
-	GetCommentsByPostID(postID int) ([]domain.Comment, error)
+	GetCommentsByPostID(postID, limit, offset int) ([]domain.Comment, error)
 	GetCommentByID(commentID int) (*domain.Comment, error)
 	GetCommentsByUserID(userID int, limit, offset int) ([]domain.Comment, error)
 	UpdateComment(userID, commentID int, content, mediaURL string) error
@@ -107,7 +107,7 @@ type ConversationRepositoryInterface interface {
 type MessageRepositoryInterface interface {
 	CreateMessage(message *domain.Message) (int64, error)
 	GetMessageByID(messageID int) (*domain.Message, error)
-	ListMessagesByConversationID(conversationID, limit, offset int) ([]domain.Message, error)
+	ListMessagesByConversationID(conversationID, limit, beforeID int) ([]domain.Message, error)
 }
 
 type GroupRepositoryInterface interface {
