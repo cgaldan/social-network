@@ -1,0 +1,43 @@
+# syntax=docker/dockerfile:1.7
+
+FROM golang:1.24-alpine AS builder
+
+RUN apk add --no-cache build-base sqlite-dev
+
+WORKDIR /src
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+ENV CGO_ENABLED=1 \
+    GOOS=linux
+
+RUN go build -ldflags="-s -w" -o /out/server ./cmd/server
+
+
+FROM alpine:3.20 AS runtime
+
+RUN apk add --no-cache ca-certificates sqlite-libs tzdata \
+    && addgroup -S app && adduser -S -G app app
+
+WORKDIR /app
+
+COPY --from=builder /out/server /app/server
+
+# LoadConfig() opens ./.env unconditionally — provide an empty file so env
+# variables injected by the container runtime are the source of truth.
+RUN touch /app/.env \
+    && mkdir -p /app/data/database /app/data/uploads \
+    && chown -R app:app /app
+
+USER app
+
+EXPOSE 8000
+
+ENV SERVER_PORT=8000 \
+    DATABASE_PATH=/app/data/database/social.db \
+    UPLOAD_PATH=/app/data/uploads
+
+CMD ["/app/server"]
