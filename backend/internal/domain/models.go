@@ -78,11 +78,12 @@ type ConversationView struct {
 }
 
 type Message struct {
-	ID             int       `json:"id"`
-	ConversationID int       `json:"conversation_id"`
-	SenderID       int       `json:"sender_id"`
-	Content        string    `json:"content"`
-	CreatedAt      time.Time `json:"created_at"`
+	ID             int        `json:"id"`
+	ConversationID int        `json:"conversation_id"`
+	SenderID       int        `json:"sender_id"`
+	Content        string     `json:"content"`
+	CreatedAt      time.Time  `json:"created_at"`
+	UpdatedAt      *time.Time `json:"updated_at,omitempty"`
 }
 
 type ConversationParticipant struct {

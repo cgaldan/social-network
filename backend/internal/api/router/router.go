@@ -72,6 +72,8 @@ func NewRouter(services *service.Services, config *config.Config, hub *websocket
 	api.HandleFunc("/conversations/{id}/messages", messageHandler.ListMessages).Methods("GET")
 	api.HandleFunc("/conversations/{id}/read", conversationHandler.MarkRead).Methods("POST")
 	api.HandleFunc("/messages", messageHandler.SendMessage).Methods("POST")
+	api.HandleFunc("/messages/{id}", messageHandler.UpdateMessage).Methods("PUT")
+	api.HandleFunc("/messages/{id}", messageHandler.DeleteMessage).Methods("DELETE")
 
 	// Group routes
 	api.HandleFunc("/groups", groupHandler.ListGroups).Methods("GET")

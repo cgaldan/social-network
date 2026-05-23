@@ -108,6 +108,8 @@ type MessageRepositoryInterface interface {
 	CreateMessage(message *domain.Message) (int64, error)
 	GetMessageByID(messageID int) (*domain.Message, error)
 	ListMessagesByConversationID(conversationID, limit, beforeID int) ([]domain.Message, error)
+	UpdateMessage(messageID, senderID int, content string) error
+	DeleteMessage(messageID, senderID int) error
 }
 
 type GroupRepositoryInterface interface {

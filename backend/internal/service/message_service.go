@@ -11,6 +11,8 @@ import (
 
 type MessageBroadcaster interface {
 	BroadcastMessage(message *domain.Message, receiverIDs []int)
+	BroadcastMessageUpdated(message *domain.Message, receiverIDs []int)
+	BroadcastMessageDeleted(conversationID, messageID int, receiverIDs []int)
 }
 
 type MessageService struct {
@@ -119,6 +121,68 @@ func (s *MessageService) ListMessages(convID, userID, limit, beforeID int) ([]do
 	}
 
 	return s.messageRepo.ListMessagesByConversationID(convID, limit, beforeID)
+}
+
+func (s *MessageService) UpdateMessage(messageID, senderID int, content string) (*domain.Message, error) {
+	existing, err := s.messageRepo.GetMessageByID(messageID)
+	if err != nil {
+		return nil, fmt.Errorf("message not found")
+	}
+	if existing.SenderID != senderID {
+		return nil, fmt.Errorf("only the sender can edit this message")
+	}
+
+	if err := s.validateMessage(strings.TrimSpace(content)); err != nil {
+		return nil, err
+	}
+
+	if err := s.messageRepo.UpdateMessage(messageID, senderID, content); err != nil {
+		s.logger.Error("Failed to update message", "error", err, "messageID", messageID, "senderID", senderID)
+		return nil, fmt.Errorf("failed to update message")
+	}
+
+	updated, err := s.messageRepo.GetMessageByID(messageID)
+	if err != nil {
+		s.logger.Error("Failed to retrieve updated message", "error", err, "messageID", messageID)
+		return nil, fmt.Errorf("failed to retrieve updated message")
+	}
+
+	if s.broadcaster != nil {
+		participants, err := s.convRepo.GetParticipantIDs(existing.ConversationID)
+		if err != nil {
+			s.logger.Error("Failed to fetch participants for broadcast", "error", err, "convID", existing.ConversationID)
+		} else if len(participants) > 0 {
+			s.broadcaster.BroadcastMessageUpdated(updated, participants)
+		}
+	}
+
+	return updated, nil
+}
+
+func (s *MessageService) DeleteMessage(messageID, senderID int) error {
+	existing, err := s.messageRepo.GetMessageByID(messageID)
+	if err != nil {
+		return fmt.Errorf("message not found")
+	}
+	if existing.SenderID != senderID {
+		return fmt.Errorf("only the sender can delete this message")
+	}
+
+	if err := s.messageRepo.DeleteMessage(messageID, senderID); err != nil {
+		s.logger.Error("Failed to delete message", "error", err, "messageID", messageID, "senderID", senderID)
+		return fmt.Errorf("failed to delete message")
+	}
+
+	if s.broadcaster != nil {
+		participants, err := s.convRepo.GetParticipantIDs(existing.ConversationID)
+		if err != nil {
+			s.logger.Error("Failed to fetch participants for broadcast", "error", err, "convID", existing.ConversationID)
+		} else if len(participants) > 0 {
+			s.broadcaster.BroadcastMessageDeleted(existing.ConversationID, messageID, participants)
+		}
+	}
+
+	return nil
 }
 
 func (s *MessageService) validateMessage(content string) error {

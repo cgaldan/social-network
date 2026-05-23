@@ -85,6 +85,10 @@ type SendMessageRequest struct {
 	Content        string `json:"content"`
 }
 
+type UpdateMessageRequest struct {
+	Content string `json:"content"`
+}
+
 type CreateGroupRequest struct {
 	CreatorID      int    `json:"creator_id"`
 	Title          string `json:"title"`
