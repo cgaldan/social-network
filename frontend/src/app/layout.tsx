@@ -6,6 +6,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Social Network",
   description: "A small social network",
+  icons: {
+    icon: "/cyclops.png",
+    shortcut: "/cyclops.png",
+    apple: "/cyclops.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

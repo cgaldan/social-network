@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -73,11 +74,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           }`}
         >
           <Link href="/feed" className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-white">
-              ◈
-            </span>
+            <Image
+              src="/cyclops.png"
+              alt="Social"
+              width={32}
+              height={32}
+              className="h-8 w-8"
+              priority
+            />
             {!collapsed ? (
-              <span className="text-lg font-semibold text-slate-900">Social</span>
+              <span className="text-lg font-semibold text-slate-900">Femus</span>
             ) : null}
           </Link>
           <button
@@ -202,7 +208,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <div className="flex flex-1 flex-col">
         <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 md:hidden">
-          <Link href="/feed" className="text-lg font-semibold text-slate-900">
+          <Link href="/feed" className="flex items-center gap-2 text-lg font-semibold text-slate-900">
+            <Image
+              src="/cyclops.png"
+              alt=""
+              width={28}
+              height={28}
+              className="h-7 w-7"
+            />
             Social
           </Link>
           <div className="flex items-center gap-3">
