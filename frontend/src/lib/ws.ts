@@ -78,8 +78,15 @@ export function connectWs(token: string): WsClient {
         clearTimeout(reconnectTimer);
         reconnectTimer = null;
       }
-      socket?.close();
-      socket = null;
+      if (socket) {
+        const s = socket;
+        socket = null;
+        if (s.readyState === WebSocket.CONNECTING) {
+          s.addEventListener("open", () => s.close(), { once: true });
+        } else {
+          s.close();
+        }
+      }
     },
     send: (msg) => {
       if (socket && socket.readyState === WebSocket.OPEN) {
