@@ -51,6 +51,18 @@ Database migrations are applied automatically on backend startup.
 
 Run it detached with `docker compose up -d --build`, stop with `docker compose down`, and stop **and** wipe the SQLite volume with `docker compose down -v`.
 
+### 3. (Optional) Seed the database
+
+The backend ships with a seeder that loads a curated dataset (users, posts, follows, groups, events, conversations) and can optionally add thousands of procedural users with realistic activity distribution. From `backend/`:
+
+```bash
+make seed                     # apply curated dataset
+make seed-reset               # wipe DB then apply curated dataset
+make seed-scale SCALE=1000    # wipe + curated + 1000 procedural users
+```
+
+All seeded users share the password `password123`. See **[docs/seeding.md](docs/seeding.md)** for the full reference, including the procedural tier distribution and Docker-specific instructions.
+
 ---
 
 ## Features
@@ -260,6 +272,9 @@ social-network/
 | `make clean` | Remove build artifacts |
 | `make docker-build` | Build a Docker image |
 | `make docker-run` | Run the Docker container on port 8000 |
+| `make seed` | Apply the curated seed dataset (no reset) — see [docs/seeding.md](docs/seeding.md) |
+| `make seed-reset` | Wipe the DB and apply the curated seed dataset |
+| `make seed-scale [SCALE=N]` | Wipe, apply curated seed, then add N procedural users (default 1000) |
 
 ### Frontend (`frontend/package.json`)
 
