@@ -10,6 +10,7 @@ Built with a **Go** backend (Gorilla Mux, WebSockets, SQLite) and a modern **Nex
 ## Table of Contents
 
 - [Getting Started](#getting-started)
+- [Running with Docker](#running-with-docker)
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Architecture](#architecture)
@@ -58,6 +59,31 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+---
+
+## Running with Docker
+
+The repo ships with a multi-stage `Dockerfile` for each service and a root `docker-compose.yml` that wires them together. SQLite data and uploads are persisted in a named volume (`backend-data`), so they survive container restarts.
+
+### Prerequisites
+
+- **Docker** ≥ 24
+- **Docker Compose** v2 (bundled with modern Docker Desktop / Docker Engine)
+
+### Start everything
+
+From the repo root:
+
+```bash
+docker compose up --build
+```
+
+- Frontend: [http://localhost:3000](http://localhost:3000)
+- Backend:  [http://localhost:8000](http://localhost:8000)
+
+Run it detached with `docker compose up -d --build`, stop with `docker compose down`, and stop **and** wipe the SQLite volume with `docker compose down -v`.
+
 
 ---
 
@@ -299,3 +325,9 @@ The backend exposes a versioned REST API plus a single WebSocket endpoint. Authe
 | WebSocket | `GET /ws` (presence + live messages + notifications) |
 
 > Routes are defined in [`backend/internal/api/router`](backend/internal/api/router) and handlers in [`backend/internal/api/handlers`](backend/internal/api/handlers).
+
+## Authors
+- Christos Gkaldanidis
+- Christos Markos
+
+Creators and primary Developers
