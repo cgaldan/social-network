@@ -325,3 +325,9 @@ The backend exposes a versioned REST API plus a single WebSocket endpoint. Authe
 | WebSocket | `GET /ws` (presence + live messages + notifications) |
 
 > Routes are defined in [`backend/internal/api/router`](backend/internal/api/router) and handlers in [`backend/internal/api/handlers`](backend/internal/api/handlers).
+
+## Authors
+- Christos Gkaldanidis
+- Christos Markos
+
+Creators and primary Developers
