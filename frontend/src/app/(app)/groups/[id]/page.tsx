@@ -37,6 +37,12 @@ export default function GroupDetailPage() {
   const [eventDesc, setEventDesc] = useState("");
   const [eventDate, setEventDate] = useState("");
 
+  const [editingEventId, setEditingEventId] = useState<number | null>(null);
+  const [editEventTitle, setEditEventTitle] = useState("");
+  const [editEventDesc, setEditEventDesc] = useState("");
+  const [editEventDate, setEditEventDate] = useState("");
+  const [savingEvent, setSavingEvent] = useState(false);
+
   const [inviteStatus, setInviteStatus] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -146,6 +152,52 @@ export default function GroupDetailPage() {
       setEventDate("");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to create event");
+    }
+  };
+
+  const onStartEditEvent = (ev: GroupEvent) => {
+    setEditingEventId(ev.id);
+    setEditEventTitle(ev.title);
+    setEditEventDesc(ev.description);
+    const d = new Date(ev.starts_at);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    setEditEventDate(
+      `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`,
+    );
+  };
+
+  const onCancelEditEvent = () => {
+    setEditingEventId(null);
+    setEditEventTitle("");
+    setEditEventDesc("");
+    setEditEventDate("");
+  };
+
+  const onSaveEditEvent = async (eventId: number) => {
+    setSavingEvent(true);
+    try {
+      const startsAt = new Date(editEventDate).toISOString();
+      const res = await api.groups.updateEvent(groupId, eventId, {
+        title: editEventTitle,
+        description: editEventDesc,
+        starts_at: startsAt,
+      });
+      setEvents((prev) => prev.map((ev) => (ev.id === eventId ? res.event : ev)));
+      onCancelEditEvent();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to update event");
+    } finally {
+      setSavingEvent(false);
+    }
+  };
+
+  const onDeleteEvent = async (eventId: number) => {
+    if (!confirm("Delete this event?")) return;
+    try {
+      await api.groups.removeEvent(groupId, eventId);
+      setEvents((prev) => prev.filter((ev) => ev.id !== eventId));
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to delete event");
     }
   };
 
@@ -485,53 +537,124 @@ export default function GroupDetailPage() {
             </p>
           ) : (
             <ul className="space-y-3">
-              {events.map((ev) => (
-                <li
-                  key={ev.id}
-                  className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
-                >
-                  <h3 className="text-base font-semibold text-slate-900">{ev.title}</h3>
-                  <p className="text-xs text-slate-500">{formatDateTime(ev.starts_at)}</p>
-                  <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">
-                    {ev.description}
-                  </p>
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    {(
-                      [
-                        { value: "going" as RsvpResponse, label: "Going", count: ev.going_count },
-                        { value: "maybe" as RsvpResponse, label: "Maybe", count: ev.maybe_count },
-                        {
-                          value: "not_going" as RsvpResponse,
-                          label: "Not going",
-                          count: ev.not_going_count,
-                        },
-                      ]
-                    ).map(({ value, label, count }) => {
-                      const active = ev.my_response === value;
-                      return (
-                        <button
-                          key={value}
-                          onClick={() => onRsvp(ev.id, value)}
-                          className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
-                            active
-                              ? "border-indigo-600 bg-indigo-600 text-white shadow-sm"
-                              : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
-                          }`}
-                        >
-                          <span>{label}</span>
-                          <span
-                            className={`rounded-full px-1.5 text-[10px] font-semibold ${
-                              active ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
-                            }`}
+              {events.map((ev) => {
+                const isEditing = editingEventId === ev.id;
+                const isEventCreator = user?.id === ev.creator_id;
+                return (
+                  <li
+                    key={ev.id}
+                    className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+                  >
+                    {isEditing ? (
+                      <div className="space-y-3">
+                        <input
+                          type="text"
+                          value={editEventTitle}
+                          onChange={(e) => setEditEventTitle(e.target.value)}
+                          placeholder="Title"
+                          required
+                          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                        />
+                        <textarea
+                          value={editEventDesc}
+                          onChange={(e) => setEditEventDesc(e.target.value)}
+                          rows={2}
+                          placeholder="Description"
+                          required
+                          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                        />
+                        <input
+                          type="datetime-local"
+                          value={editEventDate}
+                          onChange={(e) => setEditEventDate(e.target.value)}
+                          required
+                          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                        />
+                        <div className="flex justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={onCancelEditEvent}
+                            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
                           >
-                            {count}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </li>
-              ))}
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onSaveEditEvent(ev.id)}
+                            disabled={savingEvent}
+                            className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700 disabled:opacity-60"
+                          >
+                            {savingEvent ? "Saving…" : "Save"}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <h3 className="text-base font-semibold text-slate-900">{ev.title}</h3>
+                            <p className="text-xs text-slate-500">{formatDateTime(ev.starts_at)}</p>
+                          </div>
+                          {isEventCreator ? (
+                            <div className="flex gap-3 text-xs">
+                              <button
+                                onClick={() => onStartEditEvent(ev)}
+                                className="text-indigo-600 hover:underline"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => onDeleteEvent(ev.id)}
+                                className="text-red-600 hover:underline"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          ) : null}
+                        </div>
+                        <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">
+                          {ev.description}
+                        </p>
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                          {(
+                            [
+                              { value: "going" as RsvpResponse, label: "Going", count: ev.going_count },
+                              { value: "maybe" as RsvpResponse, label: "Maybe", count: ev.maybe_count },
+                              {
+                                value: "not_going" as RsvpResponse,
+                                label: "Not going",
+                                count: ev.not_going_count,
+                              },
+                            ]
+                          ).map(({ value, label, count }) => {
+                            const active = ev.my_response === value;
+                            return (
+                              <button
+                                key={value}
+                                onClick={() => onRsvp(ev.id, value)}
+                                className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
+                                  active
+                                    ? "border-indigo-600 bg-indigo-600 text-white shadow-sm"
+                                    : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                                }`}
+                              >
+                                <span>{label}</span>
+                                <span
+                                  className={`rounded-full px-1.5 text-[10px] font-semibold ${
+                                    active ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
+                                  }`}
+                                >
+                                  {count}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
           {events.length > 0 && hasMoreEvents ? (

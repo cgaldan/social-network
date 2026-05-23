@@ -361,6 +361,16 @@ export const api = {
         `/api/groups/${groupId}/events`,
         { method: "POST", body: payload },
       ),
+    updateEvent: (groupId: number, eventId: number, payload: CreateEventPayload) =>
+      request<{ success: boolean; message: string; event: GroupEvent }>(
+        `/api/groups/${groupId}/events/${eventId}`,
+        { method: "PUT", body: payload },
+      ),
+    removeEvent: (groupId: number, eventId: number) =>
+      request<{ success: boolean; message: string }>(
+        `/api/groups/${groupId}/events/${eventId}`,
+        { method: "DELETE" },
+      ),
     rsvp: (groupId: number, eventId: number, response: RsvpResponse) =>
       request<{ success: boolean; message: string; rsvp: Rsvp }>(
         `/api/groups/${groupId}/events/${eventId}/rsvp`,
