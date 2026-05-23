@@ -147,6 +147,8 @@ type GroupRepositoryInterface interface {
 	CreateGroupEvent(event *domain.GroupEvent) (int64, error)
 	GetGroupEventByID(eventID int) (*domain.GroupEvent, error)
 	ListGroupEvents(groupID, viewerID, limit, offset int) ([]domain.GroupEvent, error)
+	UpdateGroupEvent(eventID int, title, description string, startsAt time.Time) error
+	DeleteGroupEvent(eventID int) error
 	SetGroupEventRSVP(eventID, userID int, response string) error
 	GetGroupEventRSVP(eventID, userID int) (*domain.GroupEventRSVP, error)
 }

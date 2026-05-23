@@ -135,6 +135,8 @@ type GroupServiceInterface interface {
 
 	CreateGroupEvent(userID, groupID int, eventData domain.CreateGroupEventRequest) (*domain.GroupEvent, error)
 	ListGroupEvents(userID, groupID, limit, offset int) ([]domain.GroupEvent, error)
+	UpdateGroupEvent(userID, groupID, eventID int, data domain.UpdateGroupEventRequest) (*domain.GroupEvent, error)
+	DeleteGroupEvent(userID, groupID, eventID int) error
 	SetGroupEventRSVP(userID, groupID, eventID int, response string) (*domain.GroupEventRSVP, error)
 }
 

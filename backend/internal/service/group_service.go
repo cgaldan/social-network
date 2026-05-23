@@ -618,6 +618,61 @@ func (s *GroupService) ListGroupEvents(userID, groupID, limit, offset int) ([]do
 	return events, nil
 }
 
+func (s *GroupService) UpdateGroupEvent(userID, groupID, eventID int, data domain.UpdateGroupEventRequest) (*domain.GroupEvent, error) {
+	event, err := s.groupRepo.GetGroupEventByID(eventID)
+	if err != nil {
+		return nil, fmt.Errorf("group event not found")
+	}
+	if event.GroupID != groupID {
+		return nil, fmt.Errorf("event does not belong to this group")
+	}
+	if event.CreatorID != userID {
+		return nil, fmt.Errorf("only the event creator can update the event")
+	}
+
+	createData := domain.CreateGroupEventRequest{
+		Title:       data.Title,
+		Description: data.Description,
+		StartsAt:    data.StartsAt,
+	}
+	if err := s.validateGroupEvent(createData); err != nil {
+		return nil, err
+	}
+
+	if err := s.groupRepo.UpdateGroupEvent(eventID, data.Title, data.Description, data.StartsAt); err != nil {
+		s.logger.Error("Failed to update group event", "error", err, "eventID", eventID)
+		return nil, fmt.Errorf("failed to update group event")
+	}
+
+	updated, err := s.groupRepo.GetGroupEventByID(eventID)
+	if err != nil {
+		s.logger.Error("Failed to retrieve updated group event", "error", err, "eventID", eventID)
+		return nil, fmt.Errorf("failed to retrieve updated group event")
+	}
+
+	return updated, nil
+}
+
+func (s *GroupService) DeleteGroupEvent(userID, groupID, eventID int) error {
+	event, err := s.groupRepo.GetGroupEventByID(eventID)
+	if err != nil {
+		return fmt.Errorf("group event not found")
+	}
+	if event.GroupID != groupID {
+		return fmt.Errorf("event does not belong to this group")
+	}
+	if event.CreatorID != userID {
+		return fmt.Errorf("only the event creator can delete the event")
+	}
+
+	if err := s.groupRepo.DeleteGroupEvent(eventID); err != nil {
+		s.logger.Error("Failed to delete group event", "error", err, "eventID", eventID)
+		return fmt.Errorf("failed to delete group event")
+	}
+
+	return nil
+}
+
 func (s *GroupService) SetGroupEventRSVP(userID, groupID, eventID int, response string) (*domain.GroupEventRSVP, error) {
 	isMember, err := s.groupRepo.IsUserInGroup(groupID, userID)
 	if err != nil {

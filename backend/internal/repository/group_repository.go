@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"social-network/internal/domain"
+	"time"
 )
 
 type GroupRepository struct {
@@ -566,6 +567,41 @@ func (r *GroupRepository) ListGroupEvents(groupID, viewerID, limit, offset int) 
 	}
 
 	return events, nil
+}
+
+func (r *GroupRepository) UpdateGroupEvent(eventID int, title, description string, startsAt time.Time) error {
+	result, err := r.db.Exec(`
+		UPDATE group_events
+		SET title = ?, description = ?, starts_at = ?
+		WHERE id = ?`,
+		title, description, startsAt, eventID,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to update group event: %w", err)
+	}
+	n, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to update group event: %w", err)
+	}
+	if n == 0 {
+		return fmt.Errorf("group event not found")
+	}
+	return nil
+}
+
+func (r *GroupRepository) DeleteGroupEvent(eventID int) error {
+	result, err := r.db.Exec(`DELETE FROM group_events WHERE id = ?`, eventID)
+	if err != nil {
+		return fmt.Errorf("failed to delete group event: %w", err)
+	}
+	n, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to delete group event: %w", err)
+	}
+	if n == 0 {
+		return fmt.Errorf("group event not found")
+	}
+	return nil
 }
 
 func (r *GroupRepository) SetGroupEventRSVP(eventID, userID int, response string) error {

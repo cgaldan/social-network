@@ -122,6 +122,12 @@ type CreateGroupEventRequest struct {
 	StartsAt    time.Time `json:"starts_at"`
 }
 
+type UpdateGroupEventRequest struct {
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	StartsAt    time.Time `json:"starts_at"`
+}
+
 type GroupEventRSVPRequest struct {
 	Response string `json:"response"`
 }
