@@ -59,7 +59,7 @@ func TestPostRepository_ListPosts(t *testing.T) {
 	postRepo.CreatePost(int(userID), "Test Post 1", "Content 1", "General", "public", "", 0)
 	postRepo.CreatePost(int(userID), "Test Post 2", "Content 2", "General", "public", "", 0)
 	postRepo.CreatePost(int(userID), "Test Post 3", "Content 3", "General", "private", "", 0)
-	postRepo.CreatePost(int(userID), "Test Post 4", "Content 4", "General", "almost-private", "", 0)
+	postRepo.CreatePost(int(userID), "Test Post 4", "Content 4", "General", "almost_private", "", 0)
 
 	posts, err := postRepo.ListPosts("", 0, 10, 0)
 	if err != nil {
