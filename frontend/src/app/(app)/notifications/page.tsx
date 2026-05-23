@@ -108,6 +108,13 @@ export default function NotificationsPage() {
       const actor = parseActorName(n.metadata);
       if (actor) return `${actor} requested to follow you.`;
     }
+    if (n.entity_type === "group_join_request") {
+      const meta = parseMetadata(n.metadata);
+      if (meta.actor_name) {
+        const group = meta.group_title || "your group";
+        return `${meta.actor_name} requested to join ${group}.`;
+      }
+    }
     return n.body;
   };
 
@@ -222,12 +229,21 @@ export default function NotificationsPage() {
   );
 }
 
-function parseActorName(metadata: string | null | undefined): string | null {
-  if (!metadata) return null;
+function parseMetadata(
+  metadata: string | null | undefined,
+): { actor_name?: string; group_title?: string } {
+  if (!metadata) return {};
   try {
-    const parsed = JSON.parse(metadata) as { actor_name?: string };
-    return parsed.actor_name?.trim() || null;
+    const parsed = JSON.parse(metadata) as { actor_name?: string; group_title?: string };
+    return {
+      actor_name: parsed.actor_name?.trim() || undefined,
+      group_title: parsed.group_title?.trim() || undefined,
+    };
   } catch {
-    return null;
+    return {};
   }
+}
+
+function parseActorName(metadata: string | null | undefined): string | null {
+  return parseMetadata(metadata).actor_name ?? null;
 }
