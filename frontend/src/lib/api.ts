@@ -281,6 +281,15 @@ export const api = {
         method: "POST",
         body: { conversation_id: conversationId, content },
       }),
+    update: (messageId: number, content: string) =>
+      request<{ success: boolean; message: string; msg: Message }>(
+        `/api/messages/${messageId}`,
+        { method: "PUT", body: { content } },
+      ),
+    remove: (messageId: number) =>
+      request<{ success: boolean; message: string }>(`/api/messages/${messageId}`, {
+        method: "DELETE",
+      }),
   },
   groups: {
     list: (params: PageOptions = {}) =>
