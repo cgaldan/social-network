@@ -559,6 +559,131 @@ func (h *GroupHandler) SetGroupEventRSVP(w http.ResponseWriter, r *http.Request)
 	})
 }
 
+func (h *GroupHandler) UpdateGroup(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	token := r.Header.Get("Authorization")
+	user, err := h.authService.ValidateSession(token)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.GroupResponse{
+			Success: false,
+			Message: "Unauthorized",
+		})
+		return
+	}
+
+	vars := mux.Vars(r)
+	groupID, err := strconv.Atoi(vars["id"])
+	if err != nil || groupID <= 0 {
+		json.NewEncoder(w).Encode(domain.GroupResponse{
+			Success: false,
+			Message: "Invalid group ID",
+		})
+		return
+	}
+
+	var req domain.UpdateGroupRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		json.NewEncoder(w).Encode(domain.GroupResponse{
+			Success: false,
+			Message: "Invalid JSON",
+		})
+		return
+	}
+
+	group, err := h.groupService.UpdateGroup(groupID, user.ID, req)
+	if err != nil {
+		h.logger.Error("Failed to update group", "error", err, "groupID", groupID, "userID", user.ID)
+		json.NewEncoder(w).Encode(domain.GroupResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	json.NewEncoder(w).Encode(domain.GroupResponse{
+		Success: true,
+		Message: "Group updated successfully",
+		Group:   group,
+	})
+}
+
+func (h *GroupHandler) DeleteGroup(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	token := r.Header.Get("Authorization")
+	user, err := h.authService.ValidateSession(token)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.GroupResponse{
+			Success: false,
+			Message: "Unauthorized",
+		})
+		return
+	}
+
+	vars := mux.Vars(r)
+	groupID, err := strconv.Atoi(vars["id"])
+	if err != nil || groupID <= 0 {
+		json.NewEncoder(w).Encode(domain.GroupResponse{
+			Success: false,
+			Message: "Invalid group ID",
+		})
+		return
+	}
+
+	if err := h.groupService.DeleteGroup(groupID, user.ID); err != nil {
+		h.logger.Error("Failed to delete group", "error", err, "groupID", groupID, "userID", user.ID)
+		json.NewEncoder(w).Encode(domain.GroupResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	json.NewEncoder(w).Encode(domain.GroupResponse{
+		Success: true,
+		Message: "Group deleted successfully",
+	})
+}
+
+func (h *GroupHandler) LeaveGroup(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	token := r.Header.Get("Authorization")
+	user, err := h.authService.ValidateSession(token)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.GroupResponse{
+			Success: false,
+			Message: "Unauthorized",
+		})
+		return
+	}
+
+	vars := mux.Vars(r)
+	groupID, err := strconv.Atoi(vars["id"])
+	if err != nil || groupID <= 0 {
+		json.NewEncoder(w).Encode(domain.GroupResponse{
+			Success: false,
+			Message: "Invalid group ID",
+		})
+		return
+	}
+
+	if err := h.groupService.LeaveGroup(groupID, user.ID); err != nil {
+		h.logger.Error("Failed to leave group", "error", err, "groupID", groupID, "userID", user.ID)
+		json.NewEncoder(w).Encode(domain.GroupResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	json.NewEncoder(w).Encode(domain.GroupResponse{
+		Success: true,
+		Message: "Left group successfully",
+	})
+}
+
 func (h *GroupHandler) UpdateGroupAvatar(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 

@@ -111,6 +111,11 @@ type UpdateGroupAvatarRequest struct {
 	AvatarPath string `json:"avatar_path"`
 }
 
+type UpdateGroupRequest struct {
+	Title       string `json:"title"`
+	Description string `json:"description"`
+}
+
 type CreateGroupEventRequest struct {
 	Title       string    `json:"title"`
 	Description string    `json:"description"`

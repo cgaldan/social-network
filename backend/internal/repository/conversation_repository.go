@@ -153,6 +153,14 @@ func (r *ConversationRepository) RemoveConversationParticipant(conversationID, u
 	return nil
 }
 
+func (r *ConversationRepository) DeleteConversation(conversationID int) error {
+	_, err := r.db.Exec(`DELETE FROM conversations WHERE id = ?`, conversationID)
+	if err != nil {
+		return fmt.Errorf("failed to delete conversation: %w", err)
+	}
+	return nil
+}
+
 func (r *ConversationRepository) IsUserInConversation(conversationID, userID int) (bool, error) {
 	var count int
 	err := r.db.QueryRow(`

@@ -104,6 +104,7 @@ type ConversationServiceInterface interface {
 	CreateGroupConversation(name string, initialUserIDs ...int) (*domain.Conversation, error)
 	AddConversationParticipant(convID, userID int) error
 	RemoveConversationParticipant(convID, userID int) error
+	DeleteConversation(convID int) error
 	ListConversations(userID, limit, offset int) ([]domain.ConversationSummary, error)
 	MarkRead(userID, conversationID int) error
 }
@@ -112,6 +113,9 @@ type GroupServiceInterface interface {
 	CreateGroup(group *domain.Group) (*domain.Group, error)
 	ListGroups(viewerID, limit, offset int) ([]domain.Group, error)
 	GetGroupByID(groupID, viewerID int) (*domain.Group, error)
+	UpdateGroup(groupID, userID int, data domain.UpdateGroupRequest) (*domain.Group, error)
+	DeleteGroup(groupID, userID int) error
+	LeaveGroup(groupID, userID int) error
 	UpdateGroupAvatar(groupID, userID int, avatarPath string) (*domain.Group, error)
 	GetMembersByGroupID(groupID int) ([]domain.GroupMember, error)
 	AddMember(convID, groupID, userID int, role string) error

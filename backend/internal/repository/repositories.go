@@ -99,6 +99,7 @@ type ConversationRepositoryInterface interface {
 	MarkConversationRead(conversationID, userID int) error
 	AddConversationParticipant(conversationID, userID int) error
 	RemoveConversationParticipant(conversationID, userID int) error
+	DeleteConversation(conversationID int) error
 	GetParticipantIDs(conversationID int) ([]int, error)
 	GetParticipants(conversationID int) ([]domain.ConversationParticipant, error)
 	ListConversationsByUserID(userID, limit, offset int) ([]domain.ConversationSummary, error)
@@ -117,6 +118,8 @@ type GroupRepositoryInterface interface {
 	GetGroupByID(groupID int) (*domain.Group, error)
 	GetGroupByIDForViewer(groupID, viewerID int) (*domain.Group, error)
 	ListGroups(viewerID, limit, offset int) ([]domain.Group, error)
+	UpdateGroup(groupID int, title, description string) error
+	DeleteGroup(groupID int) error
 	UpdateGroupAvatar(groupID int, avatarPath string) error
 
 	AddMember(groupID, userID int, role string) error
