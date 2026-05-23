@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { Avatar } from "@/components/Avatar";
 import { api, ApiError, resolveMediaUrl } from "@/lib/api";
@@ -23,6 +23,7 @@ export function PostForm({ onSubmit, submitLabel = "Post", inGroup = false }: Pr
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputId = useId();
 
   const [followers, setFollowers] = useState<UserSummary[]>([]);
   const [audience, setAudience] = useState<Set<number>>(new Set());
@@ -131,8 +132,9 @@ export function PostForm({ onSubmit, submitLabel = "Post", inGroup = false }: Pr
       />
 
       <div className="mt-3">
-        <label className="block text-xs font-medium text-slate-600">Image (optional, max 5MB)</label>
+        <label htmlFor={fileInputId} className="block text-xs font-medium text-slate-600">Image (optional, max 5MB)</label>
         <input
+          id={fileInputId}
           ref={fileInputRef}
           type="file"
           accept="image/jpeg,image/png,image/gif,image/webp"

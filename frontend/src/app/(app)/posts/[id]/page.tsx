@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
@@ -36,6 +36,7 @@ export default function PostDetailPage() {
   const [savingPost, setSavingPost] = useState(false);
   const [uploadingEdit, setUploadingEdit] = useState(false);
   const editFileRef = useRef<HTMLInputElement>(null);
+  const editFileId = useId();
 
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   const [editCommentText, setEditCommentText] = useState("");
@@ -309,8 +310,9 @@ export default function PostDetailPage() {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-600">Image (optional)</label>
+            <label htmlFor={editFileId} className="block text-xs font-medium text-slate-600">Image (optional)</label>
             <input
+              id={editFileId}
               ref={editFileRef}
               type="file"
               accept="image/jpeg,image/png,image/gif,image/webp"
