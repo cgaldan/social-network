@@ -16,7 +16,7 @@ RUN go build -ldflags="-s -w" -o /out/server ./cmd/server
 
 FROM alpine:3.20 AS runtime
 
-RUN apk add --no-cache ca-certificates sqlite-libs tzdata \
+RUN apk add --no-cache sqlite-libs \
     && addgroup -S app && adduser -S -G app app
 
 WORKDIR /app
@@ -34,5 +34,8 @@ EXPOSE 8000
 ENV SERVER_PORT=8000 \
     DATABASE_PATH=/app/data/database/social.db \
     UPLOAD_PATH=/app/data/uploads
+    
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8000/health || exit 1
 
 CMD ["/app/server"]

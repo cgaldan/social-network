@@ -8,10 +8,7 @@ help:
 	@echo "  make clean         - Clean build artifacts"
 	@echo "  make docker-build  - Build Docker image"
 	@echo "  make docker-run    - Run Docker container"
-	@echo "  make migrate       - Apply all pending migrations (also runs on server start)"
-	@echo "  make migrate-down  - Roll back the last migration"
-	@echo "  make lint          - Run linter"
-	@echo "  make fmt           - Format code"
+	@echo "  make deps          - Install dependencies"
 
 build:
 	@echo "Building..."
@@ -43,11 +40,3 @@ deps:
 	@echo "Installing dependencies..."
 	@go mod download
 	@go mod tidy
-
-migrate:
-	@echo "Applying all pending migrations..."
-	@go run ./cmd/migrate -direction=up
-
-migrate-down:
-	@echo "Rolling back last migration..."
-	@go run ./cmd/migrate -direction=down -steps=1

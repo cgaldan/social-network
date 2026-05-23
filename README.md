@@ -10,7 +10,6 @@ Built with a **Go** backend (Gorilla Mux, WebSockets, SQLite) and a modern **Nex
 ## Table of Contents
 
 - [Getting Started](#getting-started)
-- [Running with Docker](#running-with-docker)
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Architecture](#architecture)
@@ -23,11 +22,12 @@ Built with a **Go** backend (Gorilla Mux, WebSockets, SQLite) and a modern **Nex
 ---
 ## Getting Started
 
+The repo ships with a multi-stage `Dockerfile` for each service and a root `docker-compose.yml` that wires them together. SQLite data and uploads are persisted in a named volume (`backend-data`), so they survive container restarts.
+
 ### Prerequisites
 
-- **Go** ≥ 1.24
-- **Node.js** ≥ 20 and **npm**
-- **SQLite** (bundled via the Go driver — no system install required)
+- **Docker** ≥ 24
+- **Docker Compose** v2 (bundled with modern Docker Desktop / Docker Engine)
 
 ### 1. Clone
 
@@ -36,42 +36,7 @@ git clone https://platform.zone01.gr/git/cgkaldan/social-network
 cd social-network
 ```
 
-### 2. Backend
-
-```bash
-cd backend
-cp .env.example .env          # adjust values as needed
-go mod tidy
-go run cmd/server/main.go
-```
-
-The API server starts on `http://localhost:8000`. Database migrations are applied automatically on startup.
-
-### 3. Frontend
-
-In a separate terminal:
-
-```bash
-cd frontend
-cp .env.example .env          # adjust values as needed
-npm install
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000).
-
----
-
-## Running with Docker
-
-The repo ships with a multi-stage `Dockerfile` for each service and a root `docker-compose.yml` that wires them together. SQLite data and uploads are persisted in a named volume (`backend-data`), so they survive container restarts.
-
-### Prerequisites
-
-- **Docker** ≥ 24
-- **Docker Compose** v2 (bundled with modern Docker Desktop / Docker Engine)
-
-### Start everything
+### 2. Start everything
 
 From the repo root:
 
@@ -82,8 +47,9 @@ docker compose up --build
 - Frontend: [http://localhost:3000](http://localhost:3000)
 - Backend:  [http://localhost:8000](http://localhost:8000)
 
-Run it detached with `docker compose up -d --build`, stop with `docker compose down`, and stop **and** wipe the SQLite volume with `docker compose down -v`.
+Database migrations are applied automatically on backend startup.
 
+Run it detached with `docker compose up -d --build`, stop with `docker compose down`, and stop **and** wipe the SQLite volume with `docker compose down -v`.
 
 ---
 
@@ -321,7 +287,7 @@ The backend exposes a versioned REST API plus a single WebSocket endpoint. Authe
 | Messages | `GET /api/conversations`, `GET /api/conversations/{id}/messages` |
 | Notifications | `GET /api/notifications` |
 | Uploads | `POST /api/uploads` |
-| Health | `GET /api/health` |
+| Health | `GET /health` |
 | WebSocket | `GET /ws` (presence + live messages + notifications) |
 
 > Routes are defined in [`backend/internal/api/router`](backend/internal/api/router) and handlers in [`backend/internal/api/handlers`](backend/internal/api/handlers).
