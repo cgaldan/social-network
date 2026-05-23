@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/Avatar";
 import { UserPicker } from "@/components/UserPicker";
 import { InfiniteScrollSentinel } from "@/components/InfiniteScrollSentinel";
@@ -15,9 +16,9 @@ type Tab = "incoming" | "outgoing";
 const PAGE_SIZE = 20;
 
 export default function FollowPage() {
+  const router = useRouter();
   const [tab, setTab] = useState<Tab>("incoming");
   const [error, setError] = useState<string | null>(null);
-  const [followStatus, setFollowStatus] = useState<string | null>(null);
 
   const fetcher = useCallback(
     async ({ limit, offset }: { limit: number; offset: number }) => {
@@ -26,20 +27,11 @@ export default function FollowPage() {
     },
     [tab],
   );
-  const { items: requests, hasMore, loading, error: fetchError, loadMore, setItems, reset } =
+  const { items: requests, hasMore, loading, error: fetchError, loadMore, setItems } =
     usePaginatedList<FollowRequestSummary>(fetcher, PAGE_SIZE);
 
-  const onFollow = async (target: UserSummary) => {
-    setFollowStatus(null);
-    try {
-      const res = await api.follow.follow(target.id);
-      setFollowStatus(`Followed @${target.nickname} — ${res.status}`);
-      if (res.status === "pending" && tab === "outgoing") {
-        reset();
-      }
-    } catch (err) {
-      setFollowStatus(err instanceof ApiError ? err.message : "Follow failed");
-    }
+  const onOpenProfile = (target: UserSummary) => {
+    router.push(`/users/${target.id}`);
   };
 
   const act = async (requestId: number, kind: "accept" | "decline" | "cancel") => {
@@ -61,14 +53,13 @@ export default function FollowPage() {
       <h1 className="text-2xl font-semibold text-slate-900">Follow</h1>
 
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-base font-semibold text-slate-900">Follow a user</h2>
+        <h2 className="text-base font-semibold text-slate-900">Find a user</h2>
         <p className="mt-1 text-xs text-slate-500">
-          Search and pick a user. Public profiles auto-accept; private ones go to your outgoing list.
+          Search for someone and open their profile to send a follow request.
         </p>
         <div className="mt-3">
-          <UserPicker onSelect={onFollow} placeholder="Search users by name or @nickname…" />
+          <UserPicker onSelect={onOpenProfile} placeholder="Search users by name or @nickname…" />
         </div>
-        {followStatus ? <p className="mt-2 text-sm text-slate-600">{followStatus}</p> : null}
       </section>
 
       <div className="flex gap-2 border-b border-slate-200">
