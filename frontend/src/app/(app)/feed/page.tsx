@@ -40,9 +40,11 @@ export default function FeedPage() {
         <h1 className="text-2xl font-semibold text-slate-900">Feed</h1>
         <input
           type="text"
+          name="categoryFilter"
           value={category}
           onChange={(e) => setCategory(e.target.value)}
           placeholder="Search by category…"
+          autoComplete="off"
           className="w-48 rounded-lg border border-slate-300 px-3 py-1.5 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
         />
       </header>

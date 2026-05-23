@@ -93,24 +93,28 @@ export default function RegisterPage() {
 
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
-          <Field label="First name" value={form.first_name} onChange={(v) => update("first_name", v)} required />
-          <Field label="Last name" value={form.last_name} onChange={(v) => update("last_name", v)} required />
+          <Field label="First name" name="first_name" autoComplete="given-name" value={form.first_name} onChange={(v) => update("first_name", v)} required />
+          <Field label="Last name" name="last_name" autoComplete="family-name" value={form.last_name} onChange={(v) => update("last_name", v)} required />
         </div>
         <Field
           label="Nickname (optional)"
+          name="nickname"
+          autoComplete="username"
           value={form.nickname}
           onChange={(v) => update("nickname", v)}
           placeholder="Leave blank to use your name"
         />
-        <Field label="Email" type="email" value={form.email} onChange={(v) => update("email", v)} required />
-        <Field label="Password" type="password" value={form.password} onChange={(v) => update("password", v)} required />
-        <Field label="Date of birth" type="date" value={form.date_of_birth} onChange={(v) => update("date_of_birth", v)} required />
+        <Field label="Email" name="email" type="email" autoComplete="email" value={form.email} onChange={(v) => update("email", v)} required />
+        <Field label="Password" name="password" type="password" autoComplete="new-password" value={form.password} onChange={(v) => update("password", v)} required />
+        <Field label="Date of birth" name="date_of_birth" type="date" autoComplete="bday" value={form.date_of_birth} onChange={(v) => update("date_of_birth", v)} required />
         <label className="block">
           <span className="text-sm font-medium text-slate-700">Gender</span>
           <select
+            name="gender"
             value={form.gender}
             onChange={(e) => update("gender", e.target.value)}
             required
+            autoComplete="sex"
             className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
           >
             <option value="">Select…</option>
@@ -132,6 +136,7 @@ export default function RegisterPage() {
             <input
               ref={fileInputRef}
               type="file"
+              name="avatar"
               accept="image/jpeg,image/png,image/gif,image/webp"
               onChange={onPickAvatar}
               className="block text-sm text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-indigo-700 hover:file:bg-indigo-100"
@@ -153,6 +158,7 @@ export default function RegisterPage() {
         <label className="block">
           <span className="text-sm font-medium text-slate-700">About you</span>
           <textarea
+            name="about_me"
             value={form.about_me}
             onChange={(e) => update("about_me", e.target.value)}
             rows={3}
@@ -162,6 +168,7 @@ export default function RegisterPage() {
         <label className="flex items-center gap-2 text-sm text-slate-700">
           <input
             type="checkbox"
+            name="is_public"
             checked={form.is_public}
             onChange={(e) => update("is_public", e.target.checked)}
             className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
@@ -192,28 +199,34 @@ export default function RegisterPage() {
 
 function Field({
   label,
+  name,
   value,
   onChange,
   type = "text",
   required,
   placeholder,
+  autoComplete,
 }: {
   label: string;
+  name?: string;
   value: string;
   onChange: (v: string) => void;
   type?: string;
   required?: boolean;
   placeholder?: string;
+  autoComplete?: string;
 }) {
   return (
     <label className="block">
       <span className="text-sm font-medium text-slate-700">{label}</span>
       <input
         type={type}
+        name={name}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         required={required}
         placeholder={placeholder}
+        autoComplete={autoComplete}
         className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
       />
     </label>

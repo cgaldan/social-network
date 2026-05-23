@@ -4,7 +4,7 @@ import { ThemeProvider, themeInitScript } from "@/components/ThemeProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Social Network",
+  title: "Femus",
   description: "A small social network",
   icons: {
     icon: "/cyclops.png",

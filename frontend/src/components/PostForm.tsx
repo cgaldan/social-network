@@ -114,6 +114,7 @@ export function PostForm({ onSubmit, submitLabel = "Post", inGroup = false }: Pr
     <form onSubmit={handle} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
       <input
         type="text"
+        name="postTitle"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Title (min 3 characters)"
@@ -122,6 +123,7 @@ export function PostForm({ onSubmit, submitLabel = "Post", inGroup = false }: Pr
         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
       />
       <textarea
+        name="postContent"
         value={content}
         onChange={(e) => setContent(e.target.value)}
         placeholder="What's on your mind? (min 10 characters)"
@@ -162,6 +164,7 @@ export function PostForm({ onSubmit, submitLabel = "Post", inGroup = false }: Pr
       <div className="mt-3 grid grid-cols-2 gap-3">
         <input
           type="text"
+          name="postCategory"
           value={category}
           onChange={(e) => setCategory(e.target.value)}
           placeholder="Category"
@@ -169,6 +172,7 @@ export function PostForm({ onSubmit, submitLabel = "Post", inGroup = false }: Pr
           className="rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
         />
         <select
+          name="postPrivacy"
           value={privacy}
           onChange={(e) => setPrivacy(e.target.value as PrivacyLevel)}
           className="rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
@@ -202,6 +206,7 @@ export function PostForm({ onSubmit, submitLabel = "Post", inGroup = false }: Pr
                     <label className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-white">
                       <input
                         type="checkbox"
+                        name={`audience-${f.id}`}
                         checked={checked}
                         onChange={() => toggleAudience(f.id)}
                         className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"

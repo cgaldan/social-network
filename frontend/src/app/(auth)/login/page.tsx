@@ -40,6 +40,7 @@ export default function LoginPage() {
           <span className="text-sm font-medium text-slate-700">Email or nickname</span>
           <input
             type="text"
+            name="identifier"
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
             required
@@ -51,6 +52,7 @@ export default function LoginPage() {
           <span className="text-sm font-medium text-slate-700">Password</span>
           <input
             type="password"
+            name="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required

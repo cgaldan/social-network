@@ -60,6 +60,7 @@ export function AvatarUpload({
         <input
           ref={inputRef}
           type="file"
+          name="avatar"
           accept="image/jpeg,image/png,image/gif,image/webp"
           onChange={onFileChange}
           disabled={uploading}

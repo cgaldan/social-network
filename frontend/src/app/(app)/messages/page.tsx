@@ -600,6 +600,7 @@ function ConversationPane({
                       {isEditing ? (
                         <div className="flex flex-col gap-2">
                           <textarea
+                            name="editMessageBody"
                             value={editDraft}
                             onChange={(e) => onEditDraftChange(e.target.value)}
                             rows={2}
@@ -664,9 +665,11 @@ function ConversationPane({
       <form onSubmit={onSend} className="flex gap-2 border-t border-slate-200 p-3">
         <input
           type="text"
+          name="messageBody"
           value={draft}
           onChange={(e) => onDraftChange(e.target.value)}
           placeholder="Type a message…"
+          autoComplete="off"
           className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
         />
         <EmojiPicker onPick={(emoji) => onDraftChange(draft + emoji)} />

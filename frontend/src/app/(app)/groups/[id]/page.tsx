@@ -359,6 +359,7 @@ export default function GroupDetailPage() {
             <form onSubmit={onSaveGroup} className="space-y-3">
               <input
                 type="text"
+                name="editGroupTitle"
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
                 placeholder="Group name"
@@ -367,6 +368,7 @@ export default function GroupDetailPage() {
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
               />
               <textarea
+                name="editGroupDescription"
                 value={editDescription}
                 onChange={(e) => setEditDescription(e.target.value)}
                 placeholder="Description"
@@ -402,6 +404,7 @@ export default function GroupDetailPage() {
               <input
                 ref={avatarInputRef}
                 type="file"
+                name="groupAvatar"
                 accept="image/jpeg,image/png,image/gif,image/webp"
                 onChange={onPickGroupAvatar}
                 disabled={uploadingAvatar}
@@ -498,6 +501,7 @@ export default function GroupDetailPage() {
             <h2 className="text-base font-semibold text-slate-900">Create event</h2>
             <input
               type="text"
+              name="eventTitle"
               value={eventTitle}
               onChange={(e) => setEventTitle(e.target.value)}
               placeholder="Title"
@@ -505,6 +509,7 @@ export default function GroupDetailPage() {
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
             />
             <textarea
+              name="eventDescription"
               value={eventDesc}
               onChange={(e) => setEventDesc(e.target.value)}
               rows={2}
@@ -514,6 +519,7 @@ export default function GroupDetailPage() {
             />
             <input
               type="datetime-local"
+              name="eventStartsAt"
               value={eventDate}
               onChange={(e) => setEventDate(e.target.value)}
               required
@@ -549,6 +555,7 @@ export default function GroupDetailPage() {
                       <div className="space-y-3">
                         <input
                           type="text"
+                          name="editEventTitle"
                           value={editEventTitle}
                           onChange={(e) => setEditEventTitle(e.target.value)}
                           placeholder="Title"
@@ -556,6 +563,7 @@ export default function GroupDetailPage() {
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
                         />
                         <textarea
+                          name="editEventDescription"
                           value={editEventDesc}
                           onChange={(e) => setEditEventDesc(e.target.value)}
                           rows={2}
@@ -565,6 +573,7 @@ export default function GroupDetailPage() {
                         />
                         <input
                           type="datetime-local"
+                          name="editEventStartsAt"
                           value={editEventDate}
                           onChange={(e) => setEditEventDate(e.target.value)}
                           required

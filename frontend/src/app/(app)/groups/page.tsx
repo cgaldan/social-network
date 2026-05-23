@@ -62,6 +62,7 @@ export default function GroupsPage() {
         <h2 className="text-base font-semibold text-slate-900">Create a group</h2>
         <input
           type="text"
+          name="groupTitle"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Group name"
@@ -69,6 +70,7 @@ export default function GroupsPage() {
           className="mt-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
         />
         <textarea
+          name="groupDescription"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={2}

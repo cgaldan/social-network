@@ -274,6 +274,7 @@ export default function PostDetailPage() {
         >
           <input
             type="text"
+            name="editPostTitle"
             value={editTitle}
             onChange={(e) => setEditTitle(e.target.value)}
             placeholder="Title (min 3 characters)"
@@ -282,6 +283,7 @@ export default function PostDetailPage() {
             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
           />
           <textarea
+            name="editPostContent"
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
             rows={4}
@@ -293,6 +295,7 @@ export default function PostDetailPage() {
           <div className="grid grid-cols-2 gap-3">
             <input
               type="text"
+              name="editPostCategory"
               value={editCategory}
               onChange={(e) => setEditCategory(e.target.value)}
               placeholder="Category"
@@ -300,6 +303,7 @@ export default function PostDetailPage() {
               className="rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
             />
             <select
+              name="editPostPrivacy"
               value={editPrivacy}
               onChange={(e) => setEditPrivacy(e.target.value as PrivacyLevel)}
               className="rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
@@ -388,6 +392,7 @@ export default function PostDetailPage() {
           <div className="flex gap-2">
             <input
               type="text"
+              name="commentBody"
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
               placeholder="Add a comment…"
@@ -406,6 +411,7 @@ export default function PostDetailPage() {
             <input
               ref={commentFileRef}
               type="file"
+              name="commentImage"
               accept="image/jpeg,image/png,image/gif,image/webp"
               onChange={onCommentFileChange}
               disabled={uploadingComment}
@@ -458,6 +464,7 @@ export default function PostDetailPage() {
                     <div className="mt-2 space-y-2">
                       <input
                         type="text"
+                        name="editCommentBody"
                         value={editCommentText}
                         onChange={(e) => setEditCommentText(e.target.value)}
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
@@ -466,6 +473,7 @@ export default function PostDetailPage() {
                         <input
                           ref={editCommentFileRef}
                           type="file"
+                          name="editCommentImage"
                           accept="image/jpeg,image/png,image/gif,image/webp"
                           onChange={onEditCommentFileChange}
                           disabled={uploadingEditComment}
