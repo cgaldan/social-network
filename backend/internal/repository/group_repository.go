@@ -39,7 +39,7 @@ func (r *GroupRepository) CreateGroup(group *domain.Group) (int64, error) {
 func (r *GroupRepository) GetGroupByID(groupID int) (*domain.Group, error) {
 	group := &domain.Group{}
 	err := r.db.QueryRow(`
-		SELECT id, creator_id, title, description, conversation_id, avatar_path, created_at
+		SELECT id, creator_id, title, description, avatar_path, conversation_id, created_at
 		FROM groups
 		WHERE id = ?`,
 		groupID,
