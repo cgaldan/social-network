@@ -301,6 +301,19 @@ export const api = {
       }),
     get: (id: number) =>
       request<{ success: boolean; message: string; group: Group }>(`/api/groups/${id}`),
+    update: (id: number, payload: { title: string; description: string }) =>
+      request<{ success: boolean; message: string; group: Group }>(`/api/groups/${id}`, {
+        method: "PUT",
+        body: payload,
+      }),
+    remove: (id: number) =>
+      request<{ success: boolean; message: string }>(`/api/groups/${id}`, {
+        method: "DELETE",
+      }),
+    leave: (id: number) =>
+      request<{ success: boolean; message: string }>(`/api/groups/${id}/leave`, {
+        method: "POST",
+      }),
     updateAvatar: (id: number, avatarPath: string) =>
       request<{ success: boolean; message: string; group: Group }>(
         `/api/groups/${id}/avatar`,

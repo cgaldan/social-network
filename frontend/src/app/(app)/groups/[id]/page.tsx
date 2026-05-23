@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { Avatar } from "@/components/Avatar";
 import { PostCard } from "@/components/PostCard";
@@ -18,6 +18,7 @@ const PAGE_SIZE = 20;
 
 export default function GroupDetailPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const groupId = Number(params.id);
   const { user } = useAuth();
 
@@ -26,6 +27,11 @@ export default function GroupDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<"posts" | "events">("posts");
   const [joining, setJoining] = useState(false);
+
+  const [editingGroup, setEditingGroup] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [savingGroup, setSavingGroup] = useState(false);
 
   const [eventTitle, setEventTitle] = useState("");
   const [eventDesc, setEventDesc] = useState("");
@@ -178,6 +184,58 @@ export default function GroupDetailPage() {
     }
   };
 
+  const onStartEditGroup = () => {
+    if (!group) return;
+    setEditTitle(group.name);
+    setEditDescription(group.description);
+    setEditingGroup(true);
+  };
+
+  const onCancelEditGroup = () => {
+    setEditingGroup(false);
+    setError(null);
+  };
+
+  const onSaveGroup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!group) return;
+    setSavingGroup(true);
+    try {
+      const res = await api.groups.update(group.id, {
+        title: editTitle,
+        description: editDescription,
+      });
+      setGroup(res.group);
+      setEditingGroup(false);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to update group");
+    } finally {
+      setSavingGroup(false);
+    }
+  };
+
+  const onDeleteGroup = async () => {
+    if (!group) return;
+    if (!confirm("Delete this group? This cannot be undone.")) return;
+    try {
+      await api.groups.remove(group.id);
+      router.replace("/groups");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to delete group");
+    }
+  };
+
+  const onLeaveGroup = async () => {
+    if (!group) return;
+    if (!confirm("Leave this group?")) return;
+    try {
+      await api.groups.leave(group.id);
+      router.replace("/groups");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to leave group");
+    }
+  };
+
   if (groupLoading) {
     return <p className="text-sm text-slate-500">Loading…</p>;
   }
@@ -245,9 +303,49 @@ export default function GroupDetailPage() {
           size={64}
         />
         <div className="flex-1">
-          <h1 className="text-2xl font-semibold text-slate-900">{group.name}</h1>
-          <p className="text-sm text-slate-600">{group.description}</p>
-          {isCreator ? (
+          {editingGroup ? (
+            <form onSubmit={onSaveGroup} className="space-y-3">
+              <input
+                type="text"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                placeholder="Group name"
+                required
+                minLength={3}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              />
+              <textarea
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                placeholder="Description"
+                rows={3}
+                required
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={onCancelEditGroup}
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingGroup}
+                  className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700 disabled:opacity-60"
+                >
+                  {savingGroup ? "Saving…" : "Save"}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <>
+              <h1 className="text-2xl font-semibold text-slate-900">{group.name}</h1>
+              <p className="text-sm text-slate-600">{group.description}</p>
+            </>
+          )}
+          {isCreator && !editingGroup ? (
             <div className="mt-2">
               <input
                 ref={avatarInputRef}
@@ -268,6 +366,34 @@ export default function GroupDetailPage() {
           ) : null}
         </div>
       </div>
+
+      {!editingGroup ? (
+        <div className="flex flex-wrap gap-3 text-sm">
+          {isCreator ? (
+            <>
+              <button
+                onClick={onStartEditGroup}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Edit group
+              </button>
+              <button
+                onClick={onDeleteGroup}
+                className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
+              >
+                Delete group
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={onLeaveGroup}
+              className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
+            >
+              Leave group
+            </button>
+          )}
+        </div>
+      ) : null}
 
       <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
