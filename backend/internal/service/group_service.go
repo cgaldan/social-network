@@ -6,6 +6,7 @@ import (
 	"social-network/internal/event"
 	"social-network/internal/repository"
 	"social-network/packages/logger"
+	"strings"
 	"time"
 )
 
@@ -71,6 +72,78 @@ func (s *GroupService) ListGroups(viewerID, limit, offset int) ([]domain.Group, 
 
 func (s *GroupService) GetGroupByID(groupID, viewerID int) (*domain.Group, error) {
 	return s.groupRepo.GetGroupByIDForViewer(groupID, viewerID)
+}
+
+func (s *GroupService) UpdateGroup(groupID, userID int, data domain.UpdateGroupRequest) (*domain.Group, error) {
+	group, err := s.groupRepo.GetGroupByID(groupID)
+	if err != nil {
+		return nil, err
+	}
+	if group.CreatorID != userID {
+		return nil, fmt.Errorf("only the group creator can update the group")
+	}
+
+	title := strings.TrimSpace(data.Title)
+	description := strings.TrimSpace(data.Description)
+	if len(title) < 3 {
+		return nil, fmt.Errorf("title must be at least 3 characters")
+	}
+	if description == "" {
+		return nil, fmt.Errorf("description is required")
+	}
+
+	if err := s.groupRepo.UpdateGroup(groupID, title, description); err != nil {
+		s.logger.Error("Failed to update group", "error", err, "groupID", groupID)
+		return nil, fmt.Errorf("failed to update group")
+	}
+
+	return s.groupRepo.GetGroupByIDForViewer(groupID, userID)
+}
+
+func (s *GroupService) DeleteGroup(groupID, userID int) error {
+	group, err := s.groupRepo.GetGroupByID(groupID)
+	if err != nil {
+		return err
+	}
+	if group.CreatorID != userID {
+		return fmt.Errorf("only the group creator can delete the group")
+	}
+
+	if err := s.groupRepo.DeleteGroup(groupID); err != nil {
+		s.logger.Error("Failed to delete group", "error", err, "groupID", groupID)
+		return fmt.Errorf("failed to delete group")
+	}
+
+	if err := s.convService.DeleteConversation(group.ConversationID); err != nil {
+		s.logger.Error("Failed to delete group conversation", "error", err, "convID", group.ConversationID)
+	}
+
+	return nil
+}
+
+func (s *GroupService) LeaveGroup(groupID, userID int) error {
+	group, err := s.groupRepo.GetGroupByID(groupID)
+	if err != nil {
+		return err
+	}
+	if group.CreatorID == userID {
+		return fmt.Errorf("the group creator cannot leave the group; delete it instead")
+	}
+
+	isMember, err := s.groupRepo.IsUserInGroup(groupID, userID)
+	if err != nil {
+		return fmt.Errorf("failed to check group membership: %w", err)
+	}
+	if !isMember {
+		return fmt.Errorf("user is not a member of this group")
+	}
+
+	if err := s.RemoveMember(group.ConversationID, groupID, userID); err != nil {
+		s.logger.Error("Failed to leave group", "error", err, "groupID", groupID, "userID", userID)
+		return fmt.Errorf("failed to leave group")
+	}
+
+	return nil
 }
 
 func (s *GroupService) UpdateGroupAvatar(groupID, userID int, avatarPath string) (*domain.Group, error) {
@@ -543,6 +616,61 @@ func (s *GroupService) ListGroupEvents(userID, groupID, limit, offset int) ([]do
 	}
 
 	return events, nil
+}
+
+func (s *GroupService) UpdateGroupEvent(userID, groupID, eventID int, data domain.UpdateGroupEventRequest) (*domain.GroupEvent, error) {
+	event, err := s.groupRepo.GetGroupEventByID(eventID)
+	if err != nil {
+		return nil, fmt.Errorf("group event not found")
+	}
+	if event.GroupID != groupID {
+		return nil, fmt.Errorf("event does not belong to this group")
+	}
+	if event.CreatorID != userID {
+		return nil, fmt.Errorf("only the event creator can update the event")
+	}
+
+	createData := domain.CreateGroupEventRequest{
+		Title:       data.Title,
+		Description: data.Description,
+		StartsAt:    data.StartsAt,
+	}
+	if err := s.validateGroupEvent(createData); err != nil {
+		return nil, err
+	}
+
+	if err := s.groupRepo.UpdateGroupEvent(eventID, data.Title, data.Description, data.StartsAt); err != nil {
+		s.logger.Error("Failed to update group event", "error", err, "eventID", eventID)
+		return nil, fmt.Errorf("failed to update group event")
+	}
+
+	updated, err := s.groupRepo.GetGroupEventByID(eventID)
+	if err != nil {
+		s.logger.Error("Failed to retrieve updated group event", "error", err, "eventID", eventID)
+		return nil, fmt.Errorf("failed to retrieve updated group event")
+	}
+
+	return updated, nil
+}
+
+func (s *GroupService) DeleteGroupEvent(userID, groupID, eventID int) error {
+	event, err := s.groupRepo.GetGroupEventByID(eventID)
+	if err != nil {
+		return fmt.Errorf("group event not found")
+	}
+	if event.GroupID != groupID {
+		return fmt.Errorf("event does not belong to this group")
+	}
+	if event.CreatorID != userID {
+		return fmt.Errorf("only the event creator can delete the event")
+	}
+
+	if err := s.groupRepo.DeleteGroupEvent(eventID); err != nil {
+		s.logger.Error("Failed to delete group event", "error", err, "eventID", eventID)
+		return fmt.Errorf("failed to delete group event")
+	}
+
+	return nil
 }
 
 func (s *GroupService) SetGroupEventRSVP(userID, groupID, eventID int, response string) (*domain.GroupEventRSVP, error) {

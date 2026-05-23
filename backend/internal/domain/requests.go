@@ -85,6 +85,10 @@ type SendMessageRequest struct {
 	Content        string `json:"content"`
 }
 
+type UpdateMessageRequest struct {
+	Content string `json:"content"`
+}
+
 type CreateGroupRequest struct {
 	CreatorID      int    `json:"creator_id"`
 	Title          string `json:"title"`
@@ -107,7 +111,18 @@ type UpdateGroupAvatarRequest struct {
 	AvatarPath string `json:"avatar_path"`
 }
 
+type UpdateGroupRequest struct {
+	Title       string `json:"title"`
+	Description string `json:"description"`
+}
+
 type CreateGroupEventRequest struct {
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	StartsAt    time.Time `json:"starts_at"`
+}
+
+type UpdateGroupEventRequest struct {
 	Title       string    `json:"title"`
 	Description string    `json:"description"`
 	StartsAt    time.Time `json:"starts_at"`

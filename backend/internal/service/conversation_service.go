@@ -87,6 +87,13 @@ func (s *ConversationService) RemoveConversationParticipant(convID, userID int) 
 	return nil
 }
 
+func (s *ConversationService) DeleteConversation(convID int) error {
+	if err := s.convRepo.DeleteConversation(convID); err != nil {
+		return fmt.Errorf("failed to delete conversation: %w", err)
+	}
+	return nil
+}
+
 func (s *ConversationService) ListConversations(userID, limit, offset int) ([]domain.ConversationSummary, error) {
 	return s.convRepo.ListConversationsByUserID(userID, limit, offset)
 }

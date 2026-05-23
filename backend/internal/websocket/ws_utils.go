@@ -10,13 +10,34 @@ func (hub *Hub) RegisterClientToHub(client *Client) {
 }
 
 func (hub *Hub) BroadcastMessage(message *domain.Message, receiverIDs []int) {
-	wsMessage := WsMessage{
+	hub.broadcastToUsers(WsMessage{
 		Type: "message.created",
 		Payload: map[string]any{
 			"message": message,
 		},
-	}
+	}, receiverIDs)
+}
 
+func (hub *Hub) BroadcastMessageUpdated(message *domain.Message, receiverIDs []int) {
+	hub.broadcastToUsers(WsMessage{
+		Type: "message.updated",
+		Payload: map[string]any{
+			"message": message,
+		},
+	}, receiverIDs)
+}
+
+func (hub *Hub) BroadcastMessageDeleted(conversationID, messageID int, receiverIDs []int) {
+	hub.broadcastToUsers(WsMessage{
+		Type: "message.deleted",
+		Payload: map[string]any{
+			"conversation_id": conversationID,
+			"message_id":      messageID,
+		},
+	}, receiverIDs)
+}
+
+func (hub *Hub) broadcastToUsers(wsMessage WsMessage, receiverIDs []int) {
 	data, err := json.Marshal(wsMessage)
 	if err != nil {
 		hub.logger.Error("Failed to marshal message", "error", err)

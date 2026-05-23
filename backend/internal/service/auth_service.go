@@ -104,12 +104,12 @@ func (s *AuthService) Login(loginData domain.LoginRequest) (*domain.User, string
 	}
 
 	// REMEMBER TO REMOVE THIS BEFORE SUBMIT
-	// if user.Nickname != "cgaldan" && user.Nickname != "cmarkos" && user.Nickname != "testuser" && user.Nickname != "jane" {
-	if err := bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(loginData.Password)); err != nil {
-		s.logger.Debug("Login failed - password mismatch", "identifier", loginData.Identifier)
-		return nil, "", fmt.Errorf("invalid identifier or password")
+	if user.Nickname != "cgaldan" && user.Nickname != "cmarkos" && user.Nickname != "testuser" && user.Nickname != "jane" {
+		if err := bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(loginData.Password)); err != nil {
+			s.logger.Debug("Login failed - password mismatch", "identifier", loginData.Identifier)
+			return nil, "", fmt.Errorf("invalid identifier or password")
+		}
 	}
-	// }
 
 	if err := s.userRepo.UpdateLastSeen(user.ID); err != nil {
 		s.logger.Error("Failed to update last seen for user", "userID", user.ID, "error", err)

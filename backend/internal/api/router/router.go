@@ -72,6 +72,8 @@ func NewRouter(services *service.Services, config *config.Config, hub *websocket
 	api.HandleFunc("/conversations/{id}/messages", messageHandler.ListMessages).Methods("GET")
 	api.HandleFunc("/conversations/{id}/read", conversationHandler.MarkRead).Methods("POST")
 	api.HandleFunc("/messages", messageHandler.SendMessage).Methods("POST")
+	api.HandleFunc("/messages/{id}", messageHandler.UpdateMessage).Methods("PUT")
+	api.HandleFunc("/messages/{id}", messageHandler.DeleteMessage).Methods("DELETE")
 
 	// Group routes
 	api.HandleFunc("/groups", groupHandler.ListGroups).Methods("GET")
@@ -83,11 +85,16 @@ func NewRouter(services *service.Services, config *config.Config, hub *websocket
 	api.HandleFunc("/groups/invitations/{id}/accept", groupHandler.AcceptGroupInvitation).Methods("POST")
 	api.HandleFunc("/groups/invitations/{id}/decline", groupHandler.DeclineGroupInvitation).Methods("POST")
 	api.HandleFunc("/groups/{id}", groupHandler.GetGroup).Methods("GET")
+	api.HandleFunc("/groups/{id}", groupHandler.UpdateGroup).Methods("PUT")
+	api.HandleFunc("/groups/{id}", groupHandler.DeleteGroup).Methods("DELETE")
+	api.HandleFunc("/groups/{id}/leave", groupHandler.LeaveGroup).Methods("POST")
 	api.HandleFunc("/groups/{id}/avatar", groupHandler.UpdateGroupAvatar).Methods("PUT")
 	api.HandleFunc("/groups/{id}/posts", postHandler.GetGroupPosts).Methods("GET")
 	api.HandleFunc("/groups/{id}/posts", postHandler.CreateGroupPost).Methods("POST")
 	api.HandleFunc("/groups/{id}/events", groupHandler.ListGroupEvents).Methods("GET")
 	api.HandleFunc("/groups/{id}/events", groupHandler.CreateGroupEvent).Methods("POST")
+	api.HandleFunc("/groups/{id}/events/{eventId}", groupHandler.UpdateGroupEvent).Methods("PUT")
+	api.HandleFunc("/groups/{id}/events/{eventId}", groupHandler.DeleteGroupEvent).Methods("DELETE")
 	api.HandleFunc("/groups/{id}/events/{eventId}/rsvp", groupHandler.SetGroupEventRSVP).Methods("POST")
 
 	// Upload routes

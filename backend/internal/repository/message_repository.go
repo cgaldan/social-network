@@ -26,14 +26,9 @@ func (r *MessageRepository) CreateMessage(message *domain.Message) (int64, error
 	return result.LastInsertId()
 }
 
-// ListMessagesByConversationID returns messages newest-first (DESC).
-// Pagination is cursor-based: pass beforeID=0 for the newest page, or pass the
-// smallest id you currently hold to fetch the next older page. Offset-based
-// pagination is wrong for chat — new messages get inserted at the head between
-// fetches, shifting offsets and producing duplicates or gaps.
 func (r *MessageRepository) ListMessagesByConversationID(conversationID, limit, beforeID int) ([]domain.Message, error) {
 	const query = `
-		SELECT id, conversation_id, sender_id, content, created_at
+		SELECT id, conversation_id, sender_id, content, created_at, updated_at
 		FROM messages
 		WHERE conversation_id = ?
 		  AND (? = 0 OR id < ?)
@@ -48,8 +43,13 @@ func (r *MessageRepository) ListMessagesByConversationID(conversationID, limit, 
 	out := make([]domain.Message, 0)
 	for rows.Next() {
 		var m domain.Message
-		if err := rows.Scan(&m.ID, &m.ConversationID, &m.SenderID, &m.Content, &m.CreatedAt); err != nil {
+		var updatedAt sql.NullTime
+		if err := rows.Scan(&m.ID, &m.ConversationID, &m.SenderID, &m.Content, &m.CreatedAt, &updatedAt); err != nil {
 			return nil, fmt.Errorf("failed to scan message: %w", err)
+		}
+		if updatedAt.Valid {
+			t := updatedAt.Time
+			m.UpdatedAt = &t
 		}
 		out = append(out, m)
 	}
@@ -58,13 +58,15 @@ func (r *MessageRepository) ListMessagesByConversationID(conversationID, limit, 
 
 func (r *MessageRepository) GetMessageByID(messageID int) (*domain.Message, error) {
 	var message domain.Message
+	var updatedAt sql.NullTime
 	err := r.db.QueryRow(`
-		SELECT 
-			m.id, 
-			m.conversation_id, 
-			m.sender_id, 
-			m.content, 
-			m.created_at
+		SELECT
+			m.id,
+			m.conversation_id,
+			m.sender_id,
+			m.content,
+			m.created_at,
+			m.updated_at
 		FROM messages m
 		JOIN users u ON m.sender_id = u.id
 		WHERE m.id = ?`, messageID,
@@ -74,6 +76,7 @@ func (r *MessageRepository) GetMessageByID(messageID int) (*domain.Message, erro
 		&message.SenderID,
 		&message.Content,
 		&message.CreatedAt,
+		&updatedAt,
 	)
 
 	if err == sql.ErrNoRows {
@@ -83,5 +86,48 @@ func (r *MessageRepository) GetMessageByID(messageID int) (*domain.Message, erro
 		return nil, fmt.Errorf("failed to get message: %w", err)
 	}
 
+	if updatedAt.Valid {
+		t := updatedAt.Time
+		message.UpdatedAt = &t
+	}
+
 	return &message, nil
+}
+
+func (r *MessageRepository) UpdateMessage(messageID, senderID int, content string) error {
+	result, err := r.db.Exec(`
+		UPDATE messages
+		SET content = ?, updated_at = CURRENT_TIMESTAMP
+		WHERE id = ? AND sender_id = ?`,
+		content, messageID, senderID,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to update message: %w", err)
+	}
+	n, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to update message: %w", err)
+	}
+	if n == 0 {
+		return fmt.Errorf("message not found")
+	}
+	return nil
+}
+
+func (r *MessageRepository) DeleteMessage(messageID, senderID int) error {
+	result, err := r.db.Exec(`
+		DELETE FROM messages WHERE id = ? AND sender_id = ?`,
+		messageID, senderID,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to delete message: %w", err)
+	}
+	n, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to delete message: %w", err)
+	}
+	if n == 0 {
+		return fmt.Errorf("message not found")
+	}
+	return nil
 }

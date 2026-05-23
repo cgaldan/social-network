@@ -125,6 +125,16 @@ export interface Message {
   sender_id: number;
   content: string;
   created_at: string;
+  updated_at?: string;
+}
+
+export interface MessageUpdatedPayload {
+  message: Message;
+}
+
+export interface MessageDeletedPayload {
+  conversation_id: number;
+  message_id: number;
 }
 
 export interface UserSummary {

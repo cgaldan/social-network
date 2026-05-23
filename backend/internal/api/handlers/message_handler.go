@@ -79,6 +79,101 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h *MessageHandler) UpdateMessage(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	token := r.Header.Get("Authorization")
+	user, err := h.authService.ValidateSession(token)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.MessageResponse{
+			Success: false,
+			Message: "Unauthorized",
+		})
+		return
+	}
+
+	vars := mux.Vars(r)
+	messageID, err := strconv.Atoi(vars["id"])
+	if err != nil || messageID <= 0 {
+		json.NewEncoder(w).Encode(domain.MessageResponse{
+			Success: false,
+			Message: "Invalid message ID",
+		})
+		return
+	}
+
+	var req domain.UpdateMessageRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		json.NewEncoder(w).Encode(domain.MessageResponse{
+			Success: false,
+			Message: "Invalid JSON",
+		})
+		return
+	}
+
+	if req.Content == "" {
+		json.NewEncoder(w).Encode(domain.MessageResponse{
+			Success: false,
+			Message: "Content is required",
+		})
+		return
+	}
+
+	updated, err := h.messageService.UpdateMessage(messageID, user.ID, req.Content)
+	if err != nil {
+		h.logger.Error("Failed to update message", "error", err, "messageID", messageID, "userID", user.ID)
+		json.NewEncoder(w).Encode(domain.MessageResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	json.NewEncoder(w).Encode(domain.MessageResponse{
+		Success: true,
+		Message: "Message updated",
+		Msg:     updated,
+	})
+}
+
+func (h *MessageHandler) DeleteMessage(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	token := r.Header.Get("Authorization")
+	user, err := h.authService.ValidateSession(token)
+	if err != nil {
+		json.NewEncoder(w).Encode(domain.MessageResponse{
+			Success: false,
+			Message: "Unauthorized",
+		})
+		return
+	}
+
+	vars := mux.Vars(r)
+	messageID, err := strconv.Atoi(vars["id"])
+	if err != nil || messageID <= 0 {
+		json.NewEncoder(w).Encode(domain.MessageResponse{
+			Success: false,
+			Message: "Invalid message ID",
+		})
+		return
+	}
+
+	if err := h.messageService.DeleteMessage(messageID, user.ID); err != nil {
+		h.logger.Error("Failed to delete message", "error", err, "messageID", messageID, "userID", user.ID)
+		json.NewEncoder(w).Encode(domain.MessageResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	json.NewEncoder(w).Encode(domain.MessageResponse{
+		Success: true,
+		Message: "Message deleted",
+	})
+}
+
 func (h *MessageHandler) ListMessages(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 

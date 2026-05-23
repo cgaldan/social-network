@@ -99,6 +99,7 @@ type ConversationRepositoryInterface interface {
 	MarkConversationRead(conversationID, userID int) error
 	AddConversationParticipant(conversationID, userID int) error
 	RemoveConversationParticipant(conversationID, userID int) error
+	DeleteConversation(conversationID int) error
 	GetParticipantIDs(conversationID int) ([]int, error)
 	GetParticipants(conversationID int) ([]domain.ConversationParticipant, error)
 	ListConversationsByUserID(userID, limit, offset int) ([]domain.ConversationSummary, error)
@@ -108,6 +109,8 @@ type MessageRepositoryInterface interface {
 	CreateMessage(message *domain.Message) (int64, error)
 	GetMessageByID(messageID int) (*domain.Message, error)
 	ListMessagesByConversationID(conversationID, limit, beforeID int) ([]domain.Message, error)
+	UpdateMessage(messageID, senderID int, content string) error
+	DeleteMessage(messageID, senderID int) error
 }
 
 type GroupRepositoryInterface interface {
@@ -115,6 +118,8 @@ type GroupRepositoryInterface interface {
 	GetGroupByID(groupID int) (*domain.Group, error)
 	GetGroupByIDForViewer(groupID, viewerID int) (*domain.Group, error)
 	ListGroups(viewerID, limit, offset int) ([]domain.Group, error)
+	UpdateGroup(groupID int, title, description string) error
+	DeleteGroup(groupID int) error
 	UpdateGroupAvatar(groupID int, avatarPath string) error
 
 	AddMember(groupID, userID int, role string) error
@@ -142,6 +147,8 @@ type GroupRepositoryInterface interface {
 	CreateGroupEvent(event *domain.GroupEvent) (int64, error)
 	GetGroupEventByID(eventID int) (*domain.GroupEvent, error)
 	ListGroupEvents(groupID, viewerID, limit, offset int) ([]domain.GroupEvent, error)
+	UpdateGroupEvent(eventID int, title, description string, startsAt time.Time) error
+	DeleteGroupEvent(eventID int) error
 	SetGroupEventRSVP(eventID, userID int, response string) error
 	GetGroupEventRSVP(eventID, userID int) (*domain.GroupEventRSVP, error)
 }

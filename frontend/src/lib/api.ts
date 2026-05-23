@@ -281,6 +281,15 @@ export const api = {
         method: "POST",
         body: { conversation_id: conversationId, content },
       }),
+    update: (messageId: number, content: string) =>
+      request<{ success: boolean; message: string; msg: Message }>(
+        `/api/messages/${messageId}`,
+        { method: "PUT", body: { content } },
+      ),
+    remove: (messageId: number) =>
+      request<{ success: boolean; message: string }>(`/api/messages/${messageId}`, {
+        method: "DELETE",
+      }),
   },
   groups: {
     list: (params: PageOptions = {}) =>
@@ -292,6 +301,19 @@ export const api = {
       }),
     get: (id: number) =>
       request<{ success: boolean; message: string; group: Group }>(`/api/groups/${id}`),
+    update: (id: number, payload: { title: string; description: string }) =>
+      request<{ success: boolean; message: string; group: Group }>(`/api/groups/${id}`, {
+        method: "PUT",
+        body: payload,
+      }),
+    remove: (id: number) =>
+      request<{ success: boolean; message: string }>(`/api/groups/${id}`, {
+        method: "DELETE",
+      }),
+    leave: (id: number) =>
+      request<{ success: boolean; message: string }>(`/api/groups/${id}/leave`, {
+        method: "POST",
+      }),
     updateAvatar: (id: number, avatarPath: string) =>
       request<{ success: boolean; message: string; group: Group }>(
         `/api/groups/${id}/avatar`,
@@ -338,6 +360,16 @@ export const api = {
       request<{ success: boolean; message: string; event: GroupEvent }>(
         `/api/groups/${groupId}/events`,
         { method: "POST", body: payload },
+      ),
+    updateEvent: (groupId: number, eventId: number, payload: CreateEventPayload) =>
+      request<{ success: boolean; message: string; event: GroupEvent }>(
+        `/api/groups/${groupId}/events/${eventId}`,
+        { method: "PUT", body: payload },
+      ),
+    removeEvent: (groupId: number, eventId: number) =>
+      request<{ success: boolean; message: string }>(
+        `/api/groups/${groupId}/events/${eventId}`,
+        { method: "DELETE" },
       ),
     rsvp: (groupId: number, eventId: number, response: RsvpResponse) =>
       request<{ success: boolean; message: string; rsvp: Rsvp }>(
