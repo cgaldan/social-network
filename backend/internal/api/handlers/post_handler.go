@@ -7,8 +7,8 @@ import (
 	"social-network/internal/service"
 	"social-network/packages/logger"
 	"strconv"
-
-	"github.com/gorilla/mux"
+	// WITH GORILLA PKG IMPLEMENTATION
+	// "github.com/gorilla/mux"
 )
 
 type PostHandler struct {
@@ -122,9 +122,13 @@ func (h *PostHandler) GetPostByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	postIDStr := r.PathValue("id")
+	postID, err := strconv.Atoi(postIDStr)
+
 	// WITH GORILLA PKG IMPLEMENTATION
-	vars := mux.Vars(r)
-	postID, err := strconv.Atoi(vars["id"])
+	// vars := mux.Vars(r)
+	// postID, err := strconv.Atoi(vars["id"])
 
 	if err != nil || postID <= 0 {
 		json.NewEncoder(w).Encode(domain.PostDetailResponse{
@@ -172,8 +176,14 @@ func (h *PostHandler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vars := mux.Vars(r)
-	postID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	postIDStr := r.PathValue("id")
+	postID, err := strconv.Atoi(postIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// postID, err := strconv.Atoi(vars["id"])
+
 	if err != nil || postID <= 0 {
 		json.NewEncoder(w).Encode(domain.PostDetailResponse{
 			Success: false,
@@ -229,8 +239,14 @@ func (h *PostHandler) DeletePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vars := mux.Vars(r)
-	postID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	postIDStr := r.PathValue("id")
+	postID, err := strconv.Atoi(postIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// postID, err := strconv.Atoi(vars["id"])
+
 	if err != nil || postID <= 0 {
 		json.NewEncoder(w).Encode(domain.PostDetailResponse{
 			Success: false,
@@ -275,8 +291,13 @@ func (h *PostHandler) CreateGroupPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vars := mux.Vars(r)
-	groupID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	groupIDStr := r.PathValue("id")
+	groupID, err := strconv.Atoi(groupIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// groupID, err := strconv.Atoi(vars["id"])
 
 	if err != nil || groupID <= 0 {
 		json.NewEncoder(w).Encode(domain.PostDetailResponse{
@@ -325,8 +346,14 @@ func (h *PostHandler) GetGroupPosts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vars := mux.Vars(r)
-	groupID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	groupIDStr := r.PathValue("id")
+	groupID, err := strconv.Atoi(groupIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// groupID, err := strconv.Atoi(vars["id"])
+
 	if err != nil || groupID <= 0 {
 		json.NewEncoder(w).Encode(domain.PostsResponse{
 			Success: false,

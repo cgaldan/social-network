@@ -7,8 +7,8 @@ import (
 	"social-network/internal/service"
 	"social-network/packages/logger"
 	"strconv"
-
-	"github.com/gorilla/mux"
+	// WITH GORILLA PKG IMPLEMENTATION
+	// "github.com/gorilla/mux"
 )
 
 type GroupHandler struct {
@@ -155,8 +155,13 @@ func (h *GroupHandler) AcceptGroupInvitation(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	vars := mux.Vars(r)
-	invitationID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	invitationIDStr := r.PathValue("id")
+	invitationID, err := strconv.Atoi(invitationIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// invitationID, err := strconv.Atoi(vars["id"])
 
 	if err != nil || invitationID <= 0 {
 		json.NewEncoder(w).Encode(domain.GroupInvitationResponse{
@@ -213,8 +218,13 @@ func (h *GroupHandler) DeclineGroupInvitation(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	vars := mux.Vars(r)
-	invitationID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	invitationIDStr := r.PathValue("id")
+	invitationID, err := strconv.Atoi(invitationIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// invitationID, err := strconv.Atoi(vars["id"])
 
 	if err != nil || invitationID <= 0 {
 		json.NewEncoder(w).Encode(domain.GroupInvitationResponse{
@@ -308,8 +318,14 @@ func (h *GroupHandler) AcceptGroupJoinRequest(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	vars := mux.Vars(r)
-	requestID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	requestIDStr := r.PathValue("id")
+	requestID, err := strconv.Atoi(requestIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// requestID, err := strconv.Atoi(vars["id"])
+
 	if err != nil || requestID <= 0 {
 		json.NewEncoder(w).Encode(domain.GroupJoinRequestResponse{
 			Success: false,
@@ -365,8 +381,14 @@ func (h *GroupHandler) DeclineGroupJoinRequest(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	vars := mux.Vars(r)
-	requestID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	requestIDStr := r.PathValue("id")
+	requestID, err := strconv.Atoi(requestIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// requestID, err := strconv.Atoi(vars["id"])
+
 	if err != nil || requestID <= 0 {
 		json.NewEncoder(w).Encode(domain.GroupJoinRequestResponse{
 			Success: false,
@@ -422,8 +444,14 @@ func (h *GroupHandler) CreateGroupEvent(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	vars := mux.Vars(r)
-	groupID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	groupIDStr := r.PathValue("id")
+	groupID, err := strconv.Atoi(groupIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// groupID, err := strconv.Atoi(vars["id"])
+
 	if err != nil || groupID <= 0 {
 		json.NewEncoder(w).Encode(domain.GroupEventResponse{
 			Success: false,
@@ -471,8 +499,14 @@ func (h *GroupHandler) ListGroupEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vars := mux.Vars(r)
-	groupID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	groupIDStr := r.PathValue("id")
+	groupID, err := strconv.Atoi(groupIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// groupID, err := strconv.Atoi(vars["id"])
+
 	if err != nil || groupID <= 0 {
 		json.NewEncoder(w).Encode(domain.GroupEventsResponse{
 			Success: false,
@@ -514,8 +548,14 @@ func (h *GroupHandler) UpdateGroupEvent(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	vars := mux.Vars(r)
-	groupID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	groupIDStr := r.PathValue("id")
+	groupID, err := strconv.Atoi(groupIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// groupID, err := strconv.Atoi(vars["id"])
+
 	if err != nil || groupID <= 0 {
 		json.NewEncoder(w).Encode(domain.GroupEventResponse{
 			Success: false,
@@ -524,7 +564,13 @@ func (h *GroupHandler) UpdateGroupEvent(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	eventID, err := strconv.Atoi(vars["eventId"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	eventIDStr := r.PathValue("eventId")
+	eventID, err := strconv.Atoi(eventIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// eventID, err := strconv.Atoi(vars["eventId"])
+
 	if err != nil || eventID <= 0 {
 		json.NewEncoder(w).Encode(domain.GroupEventResponse{
 			Success: false,
@@ -572,8 +618,14 @@ func (h *GroupHandler) DeleteGroupEvent(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	vars := mux.Vars(r)
-	groupID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	groupIDStr := r.PathValue("id")
+	groupID, err := strconv.Atoi(groupIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// groupID, err := strconv.Atoi(vars["id"])
+
 	if err != nil || groupID <= 0 {
 		json.NewEncoder(w).Encode(domain.GroupEventResponse{
 			Success: false,
@@ -582,7 +634,13 @@ func (h *GroupHandler) DeleteGroupEvent(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	eventID, err := strconv.Atoi(vars["eventId"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	eventIDStr := r.PathValue("eventId")
+	eventID, err := strconv.Atoi(eventIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// eventID, err := strconv.Atoi(vars["eventId"])
+
 	if err != nil || eventID <= 0 {
 		json.NewEncoder(w).Encode(domain.GroupEventResponse{
 			Success: false,
@@ -619,8 +677,14 @@ func (h *GroupHandler) SetGroupEventRSVP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	vars := mux.Vars(r)
-	groupID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	groupIDStr := r.PathValue("id")
+	groupID, err := strconv.Atoi(groupIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// groupID, err := strconv.Atoi(vars["id"])
+
 	if err != nil || groupID <= 0 {
 		json.NewEncoder(w).Encode(domain.GroupEventRSVPResponse{
 			Success: false,
@@ -629,7 +693,13 @@ func (h *GroupHandler) SetGroupEventRSVP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	eventID, err := strconv.Atoi(vars["eventId"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	eventIDStr := r.PathValue("eventId")
+	eventID, err := strconv.Atoi(eventIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// eventID, err := strconv.Atoi(vars["eventId"])
+
 	if err != nil || eventID <= 0 {
 		json.NewEncoder(w).Encode(domain.GroupEventRSVPResponse{
 			Success: false,
@@ -677,8 +747,14 @@ func (h *GroupHandler) UpdateGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vars := mux.Vars(r)
-	groupID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	groupIDStr := r.PathValue("id")
+	groupID, err := strconv.Atoi(groupIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// groupID, err := strconv.Atoi(vars["id"])
+
 	if err != nil || groupID <= 0 {
 		json.NewEncoder(w).Encode(domain.GroupResponse{
 			Success: false,
@@ -726,8 +802,14 @@ func (h *GroupHandler) DeleteGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vars := mux.Vars(r)
-	groupID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	groupIDStr := r.PathValue("id")
+	groupID, err := strconv.Atoi(groupIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// groupID, err := strconv.Atoi(vars["id"])
+
 	if err != nil || groupID <= 0 {
 		json.NewEncoder(w).Encode(domain.GroupResponse{
 			Success: false,
@@ -764,8 +846,14 @@ func (h *GroupHandler) LeaveGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vars := mux.Vars(r)
-	groupID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	groupIDStr := r.PathValue("id")
+	groupID, err := strconv.Atoi(groupIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// groupID, err := strconv.Atoi(vars["id"])
+
 	if err != nil || groupID <= 0 {
 		json.NewEncoder(w).Encode(domain.GroupResponse{
 			Success: false,
@@ -802,8 +890,14 @@ func (h *GroupHandler) UpdateGroupAvatar(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	vars := mux.Vars(r)
-	groupID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	groupIDStr := r.PathValue("id")
+	groupID, err := strconv.Atoi(groupIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// groupID, err := strconv.Atoi(vars["id"])
+
 	if err != nil || groupID <= 0 {
 		json.NewEncoder(w).Encode(domain.GroupResponse{
 			Success: false,
@@ -850,8 +944,14 @@ func (h *GroupHandler) GetGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vars := mux.Vars(r)
-	groupID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	groupIDStr := r.PathValue("id")
+	groupID, err := strconv.Atoi(groupIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// groupID, err := strconv.Atoi(vars["id"])
+
 	if err != nil || groupID <= 0 {
 		json.NewEncoder(w).Encode(domain.GroupResponse{
 			Success: false,

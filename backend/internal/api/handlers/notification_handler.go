@@ -7,8 +7,8 @@ import (
 	"social-network/internal/service"
 	"social-network/packages/logger"
 	"strconv"
-
-	"github.com/gorilla/mux"
+	// WITH GORILLA PKG IMPLEMENTATION
+	// "github.com/gorilla/mux"
 )
 
 type NotificationHandler struct {
@@ -102,8 +102,14 @@ func (h *NotificationHandler) MarkRead(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vars := mux.Vars(r)
-	notificationID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	notificationIDStr := r.PathValue("id")
+	notificationID, err := strconv.Atoi(notificationIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// notificationID, err := strconv.Atoi(vars["id"])
+
 	if err != nil || notificationID <= 0 {
 		json.NewEncoder(w).Encode(domain.NotificationResponse{
 			Success: false,

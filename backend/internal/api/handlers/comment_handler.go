@@ -7,8 +7,8 @@ import (
 	"social-network/internal/service"
 	"social-network/packages/logger"
 	"strconv"
-
-	"github.com/gorilla/mux"
+	// WITH GORILLA PKG IMPLEMENTATION
+	// "github.com/gorilla/mux"
 )
 
 type CommentHandler struct {
@@ -38,8 +38,14 @@ func (h *CommentHandler) ListComments(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vars := mux.Vars(r)
-	postID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	postIDStr := r.PathValue("id")
+	postID, err := strconv.Atoi(postIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// postID, err := strconv.Atoi(vars["id"])
+
 	if err != nil || postID <= 0 {
 		json.NewEncoder(w).Encode(domain.CommentsResponse{
 			Success: false,
@@ -89,9 +95,13 @@ func (h *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// WITH GORILLA PKG IMPLEMANTATION
-	vars := mux.Vars(r)
-	postID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	postIDStr := r.PathValue("id")
+	postID, err := strconv.Atoi(postIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// postID, err := strconv.Atoi(vars["id"])
 
 	if err != nil || postID <= 0 {
 		json.NewEncoder(w).Encode(domain.CommentResponse{
@@ -147,8 +157,14 @@ func (h *CommentHandler) UpdateComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vars := mux.Vars(r)
-	postID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	postIDStr := r.PathValue("id")
+	postID, err := strconv.Atoi(postIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// postID, err := strconv.Atoi(vars["id"])
+
 	if err != nil || postID <= 0 {
 		json.NewEncoder(w).Encode(domain.CommentResponse{
 			Success: false,
@@ -157,7 +173,13 @@ func (h *CommentHandler) UpdateComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	commentID, err := strconv.Atoi(vars["commentId"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	commentIDStr := r.PathValue("commentId")
+	commentID, err := strconv.Atoi(commentIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// commentID, err := strconv.Atoi(vars["commentId"])
+
 	if err != nil || commentID <= 0 {
 		json.NewEncoder(w).Encode(domain.CommentResponse{
 			Success: false,
@@ -213,8 +235,14 @@ func (h *CommentHandler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vars := mux.Vars(r)
-	postID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	postIDStr := r.PathValue("id")
+	postID, err := strconv.Atoi(postIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// postID, err := strconv.Atoi(vars["id"])
+
 	if err != nil || postID <= 0 {
 		json.NewEncoder(w).Encode(domain.CommentResponse{
 			Success: false,
@@ -223,7 +251,13 @@ func (h *CommentHandler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	commentID, err := strconv.Atoi(vars["commentId"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	commentIDStr := r.PathValue("commentId")
+	commentID, err := strconv.Atoi(commentIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// commentID, err := strconv.Atoi(vars["commentId"])
+
 	if err != nil || commentID <= 0 {
 		json.NewEncoder(w).Encode(domain.CommentResponse{
 			Success: false,

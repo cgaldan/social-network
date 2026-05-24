@@ -7,8 +7,8 @@ import (
 	"social-network/internal/service"
 	"social-network/packages/logger"
 	"strconv"
-
-	"github.com/gorilla/mux"
+	// WITH GORILLA PKG IMPLEMENTATION
+	// "github.com/gorilla/mux"
 )
 
 type MessageHandler struct {
@@ -92,8 +92,14 @@ func (h *MessageHandler) UpdateMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vars := mux.Vars(r)
-	messageID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	messageIDStr := r.PathValue("id")
+	messageID, err := strconv.Atoi(messageIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// messageID, err := strconv.Atoi(vars["id"])
+
 	if err != nil || messageID <= 0 {
 		json.NewEncoder(w).Encode(domain.MessageResponse{
 			Success: false,
@@ -149,8 +155,14 @@ func (h *MessageHandler) DeleteMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vars := mux.Vars(r)
-	messageID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	messageIDStr := r.PathValue("id")
+	messageID, err := strconv.Atoi(messageIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// messageID, err := strconv.Atoi(vars["id"])
+
 	if err != nil || messageID <= 0 {
 		json.NewEncoder(w).Encode(domain.MessageResponse{
 			Success: false,
@@ -187,8 +199,14 @@ func (h *MessageHandler) ListMessages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vars := mux.Vars(r)
-	convID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	convIDStr := r.PathValue("id")
+	convID, err := strconv.Atoi(convIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// convID, err := strconv.Atoi(vars["id"])
+
 	if err != nil || convID <= 0 {
 		json.NewEncoder(w).Encode(domain.MessagesResponse{
 			Success: false,

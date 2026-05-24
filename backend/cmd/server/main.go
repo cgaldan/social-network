@@ -63,7 +63,7 @@ func main() {
 		appLogger.Fatal("Failed to register consumers", "error", err)
 	}
 
-	router := router.NewRouter(services, config, hub, appLogger)
+	router := router.NewRouterNoGorilla(services, config, hub, appLogger)
 
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%s", config.Server.Port),

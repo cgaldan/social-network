@@ -7,8 +7,8 @@ import (
 	"social-network/internal/service"
 	"social-network/packages/logger"
 	"strconv"
-
-	"github.com/gorilla/mux"
+	// WITH GORILLA PKG IMPLEMENTATION
+	// "github.com/gorilla/mux"
 )
 
 type ConversationHandler struct {
@@ -120,8 +120,14 @@ func (h *ConversationHandler) MarkRead(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vars := mux.Vars(r)
-	convID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	convIDStr := r.PathValue("id")
+	convID, err := strconv.Atoi(convIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// convID, err := strconv.Atoi(vars["id"])
+
 	if err != nil || convID <= 0 {
 		json.NewEncoder(w).Encode(domain.ConversationResponse{
 			Success: false,

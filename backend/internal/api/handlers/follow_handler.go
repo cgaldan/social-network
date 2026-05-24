@@ -7,8 +7,8 @@ import (
 	"social-network/internal/service"
 	"social-network/packages/logger"
 	"strconv"
-
-	"github.com/gorilla/mux"
+	// WITH GORILLA PKG IMPLEMENTATION
+	// "github.com/gorilla/mux"
 )
 
 type FollowHandler struct {
@@ -46,8 +46,14 @@ func (h *FollowHandler) FollowUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vars := mux.Vars(r)
-	followeeID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	followeeIDStr := r.PathValue("id")
+	followeeID, err := strconv.Atoi(followeeIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// followeeID, err := strconv.Atoi(vars["id"])
+
 	if err != nil || followeeID <= 0 {
 		json.NewEncoder(w).Encode(domain.FollowResponse{
 			Success: false,
@@ -90,8 +96,13 @@ func (h *FollowHandler) AcceptFollowRequest(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	vars := mux.Vars(r)
-	followID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	followIDStr := r.PathValue("id")
+	followID, err := strconv.Atoi(followIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// followID, err := strconv.Atoi(vars["id"])
 
 	if err != nil || followID <= 0 {
 		json.NewEncoder(w).Encode(domain.FollowResponse{
@@ -148,8 +159,14 @@ func (h *FollowHandler) DeclineFollowRequest(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	vars := mux.Vars(r)
-	followID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	followIDStr := r.PathValue("id")
+	followID, err := strconv.Atoi(followIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// followID, err := strconv.Atoi(vars["id"])
+
 	if err != nil || followID <= 0 {
 		json.NewEncoder(w).Encode(domain.FollowResponse{
 			Success: false,
@@ -205,8 +222,14 @@ func (h *FollowHandler) UnfollowUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vars := mux.Vars(r)
-	followeeID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	followeeIDStr := r.PathValue("id")
+	followeeID, err := strconv.Atoi(followeeIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// followeeID, err := strconv.Atoi(vars["id"])
+
 	if err != nil || followeeID <= 0 {
 		json.NewEncoder(w).Encode(domain.FollowResponse{
 			Success: false,
@@ -247,8 +270,14 @@ func (h *FollowHandler) RemoveFollower(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vars := mux.Vars(r)
-	followerID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	followerIDStr := r.PathValue("id")
+	followerID, err := strconv.Atoi(followerIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// followerID, err := strconv.Atoi(vars["id"])
+
 	if err != nil || followerID <= 0 {
 		json.NewEncoder(w).Encode(domain.FollowResponse{
 			Success: false,

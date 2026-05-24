@@ -7,8 +7,8 @@ import (
 	"social-network/internal/service"
 	"social-network/packages/logger"
 	"strconv"
-
-	"github.com/gorilla/mux"
+	// WITH GORILLA PKG IMPLEMENTATION
+	// "github.com/gorilla/mux"
 )
 
 type UserHandler struct {
@@ -75,8 +75,14 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vars := mux.Vars(r)
-	userID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	userIDStr := r.PathValue("id")
+	userID, err := strconv.Atoi(userIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// userID, err := strconv.Atoi(vars["id"])
+
 	if err != nil || userID <= 0 {
 		json.NewEncoder(w).Encode(domain.UserResponse{
 			Success: false,
@@ -114,8 +120,14 @@ func (h *UserHandler) ListUserPosts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vars := mux.Vars(r)
-	targetID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	targetIDStr := r.PathValue("id")
+	targetID, err := strconv.Atoi(targetIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// targetID, err := strconv.Atoi(vars["id"])
+
 	if err != nil || targetID <= 0 {
 		json.NewEncoder(w).Encode(domain.PostsResponse{
 			Success: false,
@@ -173,8 +185,14 @@ func (h *UserHandler) ListUserFollowers(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	vars := mux.Vars(r)
-	targetID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	targetIDStr := r.PathValue("id")
+	targetID, err := strconv.Atoi(targetIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// targetID, err := strconv.Atoi(vars["id"])
+
 	if err != nil || targetID <= 0 {
 		json.NewEncoder(w).Encode(domain.UsersResponse{
 			Success: false,
@@ -232,8 +250,14 @@ func (h *UserHandler) ListUserFollowing(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	vars := mux.Vars(r)
-	targetID, err := strconv.Atoi(vars["id"])
+	// WITHOUT GORILLA PKG IMPLEMENTATION
+	targetIDStr := r.PathValue("id")
+	targetID, err := strconv.Atoi(targetIDStr)
+
+	// WITH GORILLA PKG IMPLEMENTATION
+	// vars := mux.Vars(r)
+	// targetID, err := strconv.Atoi(vars["id"])
+
 	if err != nil || targetID <= 0 {
 		json.NewEncoder(w).Encode(domain.UsersResponse{
 			Success: false,
