@@ -70,3 +70,45 @@ func RunMigrations(db *sql.DB) error {
 
 	return nil
 }
+
+func RollbackMigrations(db *sql.DB) error {
+	m, err := newMigrator(db)
+	if err != nil {
+		return err
+	}
+
+	if err := m.Down(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		return fmt.Errorf("failed to rollback migrations: %w", err)
+	}
+
+	return nil
+}
+
+func MigrateSteps(db *sql.DB, n int) error {
+	m, err := newMigrator(db)
+	if err != nil {
+		return err
+	}
+
+	if err := m.Steps(n); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		return fmt.Errorf("failed to step migrations by %d: %w", n, err)
+	}
+
+	return nil
+}
+
+func MigrationVersion(db *sql.DB) (version uint, dirty bool, err error) {
+	m, err := newMigrator(db)
+	if err != nil {
+		return 0, false, err
+	}
+
+	v, d, err := m.Version()
+	if err != nil && !errors.Is(err, migrate.ErrNilVersion) {
+		return 0, false, fmt.Errorf("failed to read migration version: %w", err)
+	}
+	if errors.Is(err, migrate.ErrNilVersion) {
+		return 0, false, nil
+	}
+	return v, d, nil
+}
