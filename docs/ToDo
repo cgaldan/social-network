@@ -1,0 +1,11 @@
+# Backend
+
+- Pass Context everywhere
+- Add security for image URLs
+- If follow private profile and before accept changes to public request should be removed
+- Client in second tab case
+
+# Frontend
+
+- Add error for wrong date in register
+- Search by category work on every hit
