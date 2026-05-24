@@ -47,7 +47,7 @@ docker compose up --build
 - Frontend: [http://localhost:3000](http://localhost:3000)
 - Backend:  [http://localhost:8000](http://localhost:8000)
 
-Database migrations are applied automatically on backend startup.
+Database migrations are applied automatically on backend startup. To roll back, step, or inspect schema versions, see [docs/migrations.md](docs/migrations.md).
 
 Run it detached with `docker compose up -d --build`, stop with `docker compose down`, and stop **and** wipe the SQLite volume with `docker compose down -v`.
 
@@ -253,8 +253,10 @@ social-network/
 | `make run` | Run the server |
 | `make build` | Build a static binary into `bin/forum-backend` |
 | `make test` | Run all tests with race detector and coverage report |
-| `make migrate` | Apply pending migrations |
-| `make migrate-down` | Roll back the last migration |
+| `make migrate-up` | Apply all pending migrations |
+| `make migrate-down` | Roll back all migrations (destructive) |
+| `make migrate-down-one` | Roll back the most recent migration |
+| `make migrate-version` | Print current schema version |
 | `make lint` | Run linter |
 | `make fmt` | Format code |
 | `make clean` | Remove build artifacts |
