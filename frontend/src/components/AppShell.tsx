@@ -221,15 +221,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-3">
             <ThemeToggle />
             {user ? (
-              <Link href="/profile">
-                <Avatar
-                  src={user.avatar_path}
-                  firstName={user.first_name}
-                  lastName={user.last_name}
-                  nickname={user.nickname}
-                  size={32}
-                />
-              </Link>
+              <>
+                <Link href="/profile">
+                  <Avatar
+                    src={user.avatar_path}
+                    firstName={user.first_name}
+                    lastName={user.last_name}
+                    nickname={user.nickname}
+                    size={32}
+                  />
+                </Link>
+                <button
+                  onClick={onLogout}
+                  aria-label="Sign out"
+                  title="Sign out"
+                  className="rounded-md p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-red-600"
+                >
+                  ➜]
+                </button>
+              </>
             ) : null}
           </div>
         </header>
