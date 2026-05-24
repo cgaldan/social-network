@@ -375,9 +375,6 @@ func (s *AuthService) validateCommonUserData(email, firstName, lastName string, 
 	if nickname == "" || len(nickname) < 3 {
 		return fmt.Errorf("nickname must be at least 3 characters")
 	}
-	if gender == "" {
-		return fmt.Errorf("gender is required")
-	}
 	if aboutMe != "" && len(aboutMe) > 500 {
 		return fmt.Errorf("about me must be less than 500 characters")
 	}

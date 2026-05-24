@@ -108,16 +108,15 @@ export default function RegisterPage() {
         <Field label="Password" name="password" type="password" autoComplete="new-password" value={form.password} onChange={(v) => update("password", v)} required />
         <Field label="Date of birth" name="date_of_birth" type="date" autoComplete="bday" value={form.date_of_birth} onChange={(v) => update("date_of_birth", v)} required />
         <label className="block">
-          <span className="text-sm font-medium text-slate-700">Gender</span>
+          <span className="text-sm font-medium text-slate-700">Gender (optional)</span>
           <select
             name="gender"
             value={form.gender}
             onChange={(e) => update("gender", e.target.value)}
-            required
             autoComplete="sex"
             className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
           >
-            <option value="">Select…</option>
+            <option value="">Prefer not to say</option>
             <option value="male">Male</option>
             <option value="female">Female</option>
             <option value="other">Other</option>
