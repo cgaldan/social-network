@@ -7,6 +7,7 @@ import (
 
 const (
 	FollowRequestedEvent        EventType = "follow.requested"
+	FollowAcceptedEvent         EventType = "follow.accepted"
 	GroupInvitationCreatedEvent EventType = "group.invitation.created"
 	GroupJoinRequestedEvent     EventType = "group.join_requested"
 	GroupEventCreatedEvent      EventType = "group.event.created"
@@ -24,6 +25,28 @@ func NewFollowRequestedEvent(followerID, followeeID, followID int, actorName str
 	return &FollowRequestedEventData{
 		BaseEvent: BaseEvent{
 			EventType: FollowRequestedEvent,
+			CreatedAt: time.Now(),
+			ID:        strconv.Itoa(followID),
+		},
+		FollowerID: followerID,
+		FolloweeID: followeeID,
+		FollowID:   followID,
+		ActorName:  actorName,
+	}
+}
+
+type FollowAcceptedEventData struct {
+	BaseEvent
+	FollowerID int
+	FolloweeID int
+	FollowID   int
+	ActorName  string
+}
+
+func NewFollowAcceptedEvent(followerID, followeeID, followID int, actorName string) *FollowAcceptedEventData {
+	return &FollowAcceptedEventData{
+		BaseEvent: BaseEvent{
+			EventType: FollowAcceptedEvent,
 			CreatedAt: time.Now(),
 			ID:        strconv.Itoa(followID),
 		},

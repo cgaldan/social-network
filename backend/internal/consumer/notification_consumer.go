@@ -27,6 +27,9 @@ func (c *NotificationConsumer) RegisterHandlers() error {
 	if err := c.eventBus.Subscribe(event.FollowRequestedEvent, c.handleFollowRequested); err != nil {
 		return fmt.Errorf("failed to subscribe to follow requested events: %w", err)
 	}
+	if err := c.eventBus.Subscribe(event.FollowAcceptedEvent, c.handleFollowAccepted); err != nil {
+		return fmt.Errorf("failed to subscribe to follow accepted events: %w", err)
+	}
 	if err := c.eventBus.Subscribe(event.GroupInvitationCreatedEvent, c.handleGroupInvitationCreated); err != nil {
 		return fmt.Errorf("failed to subscribe to group invitation created events: %w", err)
 	}
@@ -58,6 +61,36 @@ func (c *NotificationConsumer) handleFollowRequested(e event.Event) error {
 		Type:        string(event.FollowRequestedEvent),
 		Title:       "New follow request",
 		Body:        "Someone requested to follow you.",
+		EntityType:  &entityType,
+		EntityID:    &entityID,
+		ActionURL:   &actionURL,
+		Metadata:    metadata(map[string]string{"actor_name": evt.ActorName}),
+	})
+	return err
+}
+
+func (c *NotificationConsumer) handleFollowAccepted(e event.Event) error {
+	evt, ok := e.(*event.FollowAcceptedEventData)
+	if !ok {
+		return fmt.Errorf("invalid event type for follow accepted handler")
+	}
+
+	actorID := evt.FolloweeID
+	entityType := "follow"
+	entityID := evt.FollowID
+	actionURL := fmt.Sprintf("/users/%d", evt.FolloweeID)
+
+	body := "Your follow request was accepted."
+	if evt.ActorName != "" {
+		body = fmt.Sprintf("%s accepted your follow request.", evt.ActorName)
+	}
+
+	_, err := c.notificationService.CreateNotification(domain.CreateNotificationRequest{
+		RecipientID: evt.FollowerID,
+		ActorID:     &actorID,
+		Type:        string(event.FollowAcceptedEvent),
+		Title:       "Follow request accepted",
+		Body:        body,
 		EntityType:  &entityType,
 		EntityID:    &entityID,
 		ActionURL:   &actionURL,

@@ -124,7 +124,32 @@ func (s *FollowService) AcceptFollowRequest(userID int, followRequest *domain.Fo
 		return err
 	}
 
+	s.publishFollowAccepted(followRequest, userID)
+
 	return nil
+}
+
+func (s *FollowService) publishFollowAccepted(followRequest *domain.Follow, accepterID int) {
+	if s.eventBus == nil {
+		return
+	}
+
+	actorName := ""
+	actor, err := s.userRepo.GetUserByID(accepterID)
+	if err != nil {
+		s.logger.Error("Failed to get actor for follow accepted event", "error", err, "accepterID", accepterID)
+	} else if actor != nil {
+		actorName = displayUserName(actor)
+	}
+
+	if err := s.eventBus.Publish(event.NewFollowAcceptedEvent(
+		followRequest.FollowerID,
+		followRequest.FollowingID,
+		followRequest.ID,
+		actorName,
+	)); err != nil {
+		s.logger.Error("Failed to publish follow accepted event", "error", err, "followID", followRequest.ID)
+	}
 }
 
 func (s *FollowService) DeclineFollowRequest(userID int, followRequest *domain.Follow) (err error) {
