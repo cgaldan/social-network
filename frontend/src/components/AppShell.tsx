@@ -216,7 +216,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               height={28}
               className="h-7 w-7"
             />
-            Social
+            Femus
           </Link>
           <div className="flex items-center gap-3">
             <ThemeToggle />
@@ -251,6 +251,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <nav className="sticky bottom-0 grid grid-cols-6 border-t border-slate-200 bg-white md:hidden">
           {NAV.map((item) => {
             const active = pathname === item.href || pathname.startsWith(item.href + "/");
+            let badge = 0;
+            if (item.href === "/notifications") badge = unread;
+            else if (item.href === "/messages") badge = unreadMessages;
             return (
               <Link
                 key={item.href}
@@ -259,7 +262,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   active ? "text-indigo-600" : "text-slate-600"
                 }`}
               >
-                <span aria-hidden>{item.icon}</span>
+                <span aria-hidden className="relative inline-flex">
+                  {item.icon}
+                  {badge > 0 ? (
+                    <span
+                      aria-label={`${badge} unread`}
+                      className="absolute -right-2 -top-1 inline-flex min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-semibold leading-none text-white ring-2 ring-white"
+                    >
+                      {badge > 99 ? "99+" : badge}
+                    </span>
+                  ) : null}
+                </span>
                 <span className="mt-0.5">{item.label}</span>
               </Link>
             );
