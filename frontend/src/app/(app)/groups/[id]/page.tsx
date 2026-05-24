@@ -43,7 +43,9 @@ export default function GroupDetailPage() {
   const [editEventDate, setEditEventDate] = useState("");
   const [savingEvent, setSavingEvent] = useState(false);
 
-  const [inviteStatus, setInviteStatus] = useState<string | null>(null);
+  const [inviteStatus, setInviteStatus] = useState<
+    { kind: "success" | "error"; message: string } | null
+  >(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
@@ -230,9 +232,12 @@ export default function GroupDetailPage() {
     setInviteStatus(null);
     try {
       await api.groups.invite(groupId, target.id);
-      setInviteStatus(`Invitation sent to @${target.nickname}`);
+      setInviteStatus({ kind: "success", message: `Invitation sent to @${target.nickname}` });
     } catch (err) {
-      setInviteStatus(err instanceof ApiError ? err.message : "Failed to send invite");
+      setInviteStatus({
+        kind: "error",
+        message: err instanceof ApiError ? err.message : "Failed to send invite",
+      });
     }
   };
 
@@ -455,7 +460,17 @@ export default function GroupDetailPage() {
           Invite a user
         </p>
         <UserPicker onSelect={onInvite} placeholder="Search users to invite…" />
-        {inviteStatus ? <p className="mt-2 text-xs text-slate-500">{inviteStatus}</p> : null}
+        {inviteStatus ? (
+          <p
+            className={
+              inviteStatus.kind === "error"
+                ? "mt-2 rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700"
+                : "mt-2 text-xs text-emerald-600"
+            }
+          >
+            {inviteStatus.message}
+          </p>
+        ) : null}
       </div>
 
       <div className="flex gap-2 border-b border-slate-200">

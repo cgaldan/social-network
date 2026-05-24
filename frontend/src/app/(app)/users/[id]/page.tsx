@@ -151,6 +151,8 @@ export default function UserProfilePage() {
 
   const onTogglePrivacy = async () => {
     if (!profile || profile.follow_status !== "self") return;
+    const next = profile.is_public ? "private" : "public";
+    if (!confirm(`Change your profile to ${next}?`)) return;
     setActing(true);
     try {
       const res = await api.auth.update({ is_public: !profile.is_public });
