@@ -30,6 +30,15 @@ export default function MessagesPage() {
   const { on, connected } = useWebSocket();
   const { decrement: decrementMessages } = useMessageCount();
   const [activeId, setActiveId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const param = params.get("conversation");
+    if (!param) return;
+    const id = Number(param);
+    if (Number.isFinite(id) && id > 0) setActiveId(id);
+  }, []);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);

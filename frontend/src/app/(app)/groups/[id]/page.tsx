@@ -429,6 +429,12 @@ export default function GroupDetailPage() {
 
       {!editingGroup ? (
         <div className="flex flex-wrap gap-3 text-sm">
+          <Link
+            href={`/messages?conversation=${group.conversation_id}`}
+            className="rounded-lg border border-indigo-300 bg-indigo-50 px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100"
+          >
+            💬 Open chat
+          </Link>
           {isCreator ? (
             <>
               <button
