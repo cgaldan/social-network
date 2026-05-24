@@ -42,7 +42,18 @@ func (s *PostService) GetPostByID(userID, postID int) (*domain.Post, error) {
 		return post, nil
 	}
 
-	if post.UserID == userID || post.PrivacyLevel == "public" {
+	if post.UserID == userID {
+		if post.PrivacyLevel == "private" {
+			audience, err := s.postRepo.GetPostAudience(post.ID)
+			if err != nil {
+				s.logger.Error("Failed to load post audience", "error", err, "postID", postID)
+				return nil, fmt.Errorf("failed to get post")
+			}
+			post.Audience = audience
+		}
+		return post, nil
+	}
+	if post.PrivacyLevel == "public" {
 		return post, nil
 	}
 	if post.PrivacyLevel == "almost_private" && s.followRepo != nil {

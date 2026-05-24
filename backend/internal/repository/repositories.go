@@ -61,6 +61,7 @@ type PostRepositoryInterface interface {
 	DeletePost(userID, postID int) error
 	SetPostAudience(postID int, userIDs []int) error
 	IsInPostAudience(postID, userID int) (bool, error)
+	GetPostAudience(postID int) ([]int, error)
 }
 
 type CommentRepositoryInterface interface {

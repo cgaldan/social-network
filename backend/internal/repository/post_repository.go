@@ -384,3 +384,24 @@ func (r *PostRepository) IsInPostAudience(postID, userID int) (bool, error) {
 	}
 	return n > 0, nil
 }
+
+func (r *PostRepository) GetPostAudience(postID int) ([]int, error) {
+	rows, err := r.db.Query(`SELECT user_id FROM post_audiences WHERE post_id = ?`, postID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query audience: %w", err)
+	}
+	defer rows.Close()
+
+	ids := make([]int, 0)
+	for rows.Next() {
+		var uid int
+		if err := rows.Scan(&uid); err != nil {
+			return nil, fmt.Errorf("failed to scan audience row: %w", err)
+		}
+		ids = append(ids, uid)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("audience rows error: %w", err)
+	}
+	return ids, nil
+}

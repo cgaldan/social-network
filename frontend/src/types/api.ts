@@ -63,6 +63,7 @@ export interface Post {
   created_at: string;
   updated_at: string;
   author: string;
+  audience?: number[];
 }
 
 export interface CreatePostPayload {

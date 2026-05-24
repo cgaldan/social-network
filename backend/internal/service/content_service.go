@@ -105,6 +105,17 @@ func (s *ContentService) UpdatePost(userID, postID int, data domain.UpdatePostRe
 		return nil, fmt.Errorf("failed to update post")
 	}
 
+	if post.GroupID == 0 {
+		audience := data.Audience
+		if data.PrivacyLevel != "private" {
+			audience = nil
+		}
+		if err := s.postRepo.SetPostAudience(postID, audience); err != nil {
+			s.logger.Error("Failed to set post audience", "error", err, "postID", postID)
+			return nil, fmt.Errorf("failed to set post audience")
+		}
+	}
+
 	post, err = s.postRepo.GetPostByID(postID)
 	if err != nil {
 		s.logger.Error("Failed to retrieve updated post", "error", err, "postID", postID)

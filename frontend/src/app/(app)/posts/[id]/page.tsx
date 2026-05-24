@@ -9,7 +9,8 @@ import { InfiniteScrollSentinel } from "@/components/InfiniteScrollSentinel";
 import { usePaginatedList } from "@/hooks/usePaginatedList";
 import { api, ApiError, resolveMediaUrl } from "@/lib/api";
 import { formatRelative } from "@/lib/format";
-import type { Comment, Post, PrivacyLevel } from "@/types/api";
+import { Avatar } from "@/components/Avatar";
+import type { Comment, Post, PrivacyLevel, UserSummary } from "@/types/api";
 
 const COMMENTS_PAGE_SIZE = 20;
 
@@ -33,6 +34,9 @@ export default function PostDetailPage() {
   const [editCategory, setEditCategory] = useState("");
   const [editPrivacy, setEditPrivacy] = useState<PrivacyLevel>("public");
   const [editMediaUrl, setEditMediaUrl] = useState("");
+  const [editAudience, setEditAudience] = useState<Set<number>>(new Set());
+  const [editFollowers, setEditFollowers] = useState<UserSummary[]>([]);
+  const [loadingEditFollowers, setLoadingEditFollowers] = useState(false);
   const [savingPost, setSavingPost] = useState(false);
   const [uploadingEdit, setUploadingEdit] = useState(false);
   const editFileRef = useRef<HTMLInputElement>(null);
@@ -139,14 +143,47 @@ export default function PostDetailPage() {
     setEditCategory(post.category);
     setEditPrivacy(post.privacy_level);
     setEditMediaUrl(post.media_url ?? "");
+    setEditAudience(new Set(post.audience ?? []));
     setEditingPost(true);
   };
 
   const onCancelEditPost = () => {
     setEditingPost(false);
+    setEditAudience(new Set());
     setError(null);
     if (editFileRef.current) editFileRef.current.value = "";
   };
+
+  const toggleEditAudience = (uid: number) => {
+    setEditAudience((prev) => {
+      const next = new Set(prev);
+      if (next.has(uid)) next.delete(uid);
+      else next.add(uid);
+      return next;
+    });
+  };
+
+  const showEditAudiencePicker =
+    editingPost && editPrivacy === "private" && (post?.group_id ?? 0) === 0;
+
+  useEffect(() => {
+    if (!showEditAudiencePicker || !user) return;
+    if (editFollowers.length > 0) return;
+    let cancelled = false;
+    setLoadingEditFollowers(true);
+    api.users
+      .followers(user.id, { limit: 100 })
+      .then((res) => {
+        if (!cancelled) setEditFollowers(res.users ?? []);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setLoadingEditFollowers(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [showEditAudiencePicker, user, editFollowers.length]);
 
   const onEditFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -175,9 +212,14 @@ export default function PostDetailPage() {
         category: editCategory,
         privacy_level: editPrivacy,
         media_url: editMediaUrl || undefined,
+        audience:
+          editPrivacy === "private" && (post.group_id ?? 0) === 0
+            ? Array.from(editAudience)
+            : undefined,
       });
       setPost(res.post);
       setEditingPost(false);
+      setEditAudience(new Set());
       if (editFileRef.current) editFileRef.current.value = "";
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to update post");
@@ -313,6 +355,58 @@ export default function PostDetailPage() {
               <option value="private">Private</option>
             </select>
           </div>
+          {showEditAudiencePicker ? (
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs font-medium text-slate-700">
+                Pick the followers who can see this post
+              </p>
+              <p className="mt-0.5 text-[11px] text-slate-500">
+                Leave empty for visible to you only.
+              </p>
+              {loadingEditFollowers ? (
+                <p className="mt-2 text-xs text-slate-500">Loading followers…</p>
+              ) : editFollowers.length === 0 ? (
+                <p className="mt-2 text-xs text-slate-500">
+                  You don&apos;t have any followers yet.
+                </p>
+              ) : (
+                <ul className="mt-2 max-h-48 space-y-1 overflow-y-auto">
+                  {editFollowers.map((f) => {
+                    const checked = editAudience.has(f.id);
+                    return (
+                      <li key={f.id}>
+                        <label className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-white">
+                          <input
+                            type="checkbox"
+                            name={`edit-audience-${f.id}`}
+                            checked={checked}
+                            onChange={() => toggleEditAudience(f.id)}
+                            className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                          />
+                          <Avatar
+                            src={f.avatar_path}
+                            firstName={f.first_name}
+                            lastName={f.last_name}
+                            nickname={f.nickname}
+                            size={24}
+                          />
+                          <span className="truncate text-slate-700">
+                            {f.first_name} {f.last_name}{" "}
+                            <span className="text-slate-400">@{f.nickname}</span>
+                          </span>
+                        </label>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+              {editFollowers.length > 0 ? (
+                <p className="mt-2 text-[11px] text-slate-500">
+                  {editAudience.size} of {editFollowers.length} selected
+                </p>
+              ) : null}
+            </div>
+          ) : null}
           <div>
             <label htmlFor={editFileId} className="block text-xs font-medium text-slate-600">Image (optional)</label>
             <input

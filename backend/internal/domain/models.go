@@ -34,6 +34,7 @@ type Post struct {
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 	Author       string    `json:"author"`
+	Audience     []int     `json:"audience,omitempty"`
 }
 
 type Comment struct {
